@@ -166,7 +166,8 @@ public partial class ProjectDetailViewModel : ViewModelBase
                 };
 
                 await _projectService.UpdateProjectAsync(updateDto);
-                await _dialogService.ShowInformationAsync("Project updated successfully.", "Success");
+                // Store the ID so the list can select it
+                _navigationService.ProjectIdToSelect = _projectId.Value;
             }
             else
             {
@@ -177,8 +178,9 @@ public partial class ProjectDetailViewModel : ViewModelBase
                     ClientId = SelectedClient?.Id
                 };
 
-                await _projectService.CreateProjectAsync(createDto);
-                await _dialogService.ShowInformationAsync("Project created successfully.", "Success");
+                var createdProject = await _projectService.CreateProjectAsync(createDto);
+                // Store the ID so the list can select it
+                _navigationService.ProjectIdToSelect = createdProject.Id;
             }
 
             _navigationService.GoBack();

@@ -8,6 +8,8 @@ namespace PomodoroTimeTracker.WinUI3.Services;
 public class NavigationService : INavigationService
 {
     public Frame? NavigationFrame { get; set; }
+    public int? ClientIdToSelect { get; set; }
+    public int? ProjectIdToSelect { get; set; }
 
     public void NavigateTo(Type pageType)
     {

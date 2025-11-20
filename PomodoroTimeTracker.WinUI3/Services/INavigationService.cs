@@ -31,4 +31,14 @@ public interface INavigationService
     /// Check if can go back
     /// </summary>
     bool CanGoBack { get; }
+
+    /// <summary>
+    /// Store the ID of a client to select after navigation (after create or update)
+    /// </summary>
+    int? ClientIdToSelect { get; set; }
+
+    /// <summary>
+    /// Store the ID of a project to select after navigation (after create or update)
+    /// </summary>
+    int? ProjectIdToSelect { get; set; }
 }

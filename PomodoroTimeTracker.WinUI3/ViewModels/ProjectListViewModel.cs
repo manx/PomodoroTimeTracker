@@ -76,6 +76,17 @@ public partial class ProjectListViewModel : ViewModelBase
             IsLoading = true;
             var projects = await _projectService.GetAllProjectsAsync();
             Projects = new ObservableCollection<ProjectDto>(projects);
+
+            // Select project if one was just saved (created or updated)
+            if (_navigationService.ProjectIdToSelect.HasValue)
+            {
+                var projectToSelect = Projects.FirstOrDefault(p => p.Id == _navigationService.ProjectIdToSelect.Value);
+                if (projectToSelect != null)
+                {
+                    SelectedProject = projectToSelect;
+                }
+                _navigationService.ProjectIdToSelect = null; // Clear the flag
+            }
         }
         catch (Exception ex)
         {

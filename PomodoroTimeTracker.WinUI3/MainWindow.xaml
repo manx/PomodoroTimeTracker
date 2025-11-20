@@ -10,9 +10,7 @@
 
     <Grid>
         <NavigationView x:Name="NavView"
-                        IsBackButtonVisible="Visible"
-                        IsBackEnabled="{x:Bind ContentFrame.CanGoBack, Mode=OneWay}"
-                        BackRequested="NavView_BackRequested"
+                        IsBackButtonVisible="Collapsed"
                         ItemInvoked="NavView_ItemInvoked"
                         PaneDisplayMode="Left"
                         IsSettingsVisible="False">
@@ -32,11 +30,11 @@
                 <NavigationViewItemSeparator/>
 
                 <NavigationViewItem Icon="PreviewLink" Content="Statistics" Tag="Statistics"/>
-
-                <NavigationViewItemSeparator/>
-
-                <NavigationViewItem Icon="Setting" Content="Settings" Tag="Settings"/>
             </NavigationView.MenuItems>
+
+            <NavigationView.PaneFooter>
+                <NavigationViewItem Icon="Setting" Content="Settings" Tag="Settings"/>
+            </NavigationView.PaneFooter>
 
             <Frame x:Name="ContentFrame" Margin="24"/>
         </NavigationView>

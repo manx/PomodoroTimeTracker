@@ -86,6 +86,18 @@ public partial class ClientListViewModel : ViewModelBase
             var clients = await _clientService.GetAllClientsAsync();
             Clients = new ObservableCollection<ClientDto>(clients);
             _logger.LogInformation("Successfully loaded {Count} clients in UI", Clients.Count);
+
+            // Select client if one was just saved (created or updated)
+            if (_navigationService.ClientIdToSelect.HasValue)
+            {
+                var clientToSelect = Clients.FirstOrDefault(c => c.Id == _navigationService.ClientIdToSelect.Value);
+                if (clientToSelect != null)
+                {
+                    SelectedClient = clientToSelect;
+                    _logger.LogInformation("Selected client {ClientId}", clientToSelect.Id);
+                }
+                _navigationService.ClientIdToSelect = null; // Clear the flag
+            }
         }
         catch (Exception ex)
         {

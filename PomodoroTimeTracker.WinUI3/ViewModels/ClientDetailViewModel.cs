@@ -118,7 +118,8 @@ public partial class ClientDetailViewModel : ViewModelBase
                 };
 
                 await _clientService.UpdateClientAsync(updateDto);
-                await _dialogService.ShowInformationAsync("Client updated successfully.", "Success");
+                // Store the ID so the list can select it
+                _navigationService.ClientIdToSelect = _clientId.Value;
             }
             else
             {
@@ -129,8 +130,9 @@ public partial class ClientDetailViewModel : ViewModelBase
                     Description = string.IsNullOrWhiteSpace(Description) ? null : Description
                 };
 
-                await _clientService.CreateClientAsync(createDto);
-                await _dialogService.ShowInformationAsync("Client created successfully.", "Success");
+                var createdClient = await _clientService.CreateClientAsync(createDto);
+                // Store the ID so the list can select it
+                _navigationService.ClientIdToSelect = createdClient.Id;
             }
 
             // Navigate back to list

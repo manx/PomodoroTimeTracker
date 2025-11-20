@@ -40,14 +40,6 @@ namespace PomodoroTimeTracker.WinUI3
             }
         }
 
-        private void NavView_BackRequested(NavigationView sender, NavigationViewBackRequestedEventArgs args)
-        {
-            if (ContentFrame.CanGoBack)
-            {
-                ContentFrame.GoBack();
-            }
-        }
-
         private async void NavigateToPage(string? tag)
         {
             Type? pageType = tag switch
