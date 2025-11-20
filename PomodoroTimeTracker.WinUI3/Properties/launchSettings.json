@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "PomodoroTimeTracker.WinUI3 (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "PomodoroTimeTracker.WinUI3 (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

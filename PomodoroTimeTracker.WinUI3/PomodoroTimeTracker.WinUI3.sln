@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33103.201
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FB4504D9-801D-4F22-9838-63CCCAA80B76}") = "PomodoroTimeTracker.WinUI3", "PomodoroTimeTracker.WinUI3.csproj", "{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM64 = Debug|ARM64
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|ARM64 = Release|ARM64
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Debug|ARM64.Build.0 = Debug|ARM64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Debug|ARM64.Deploy.0 = Debug|ARM64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Debug|x64.ActiveCfg = Debug|x64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Debug|x64.Build.0 = Debug|x64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Debug|x64.Deploy.0 = Debug|x64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Debug|x86.ActiveCfg = Debug|x86
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Debug|x86.Build.0 = Debug|x86
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Debug|x86.Deploy.0 = Debug|x86
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Release|ARM64.ActiveCfg = Release|ARM64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Release|ARM64.Build.0 = Release|ARM64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Release|ARM64.Deploy.0 = Release|ARM64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Release|x64.ActiveCfg = Release|x64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Release|x64.Build.0 = Release|x64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Release|x64.Deploy.0 = Release|x64
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Release|x86.ActiveCfg = Release|x86
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Release|x86.Build.0 = Release|x86
+		{6E2EF9A9-4C03-4CAD-BA91-B98C96CC3A2E}.Release|x86.Deploy.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {93946065-CF4F-475A-81B5-0BFF7DE2B74C}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="PomodoroTimeTracker.WinUI3.Views.PomodoroSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:PomodoroTimeTracker.WinUI3.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:viewmodels="using:PomodoroTimeTracker.WinUI3.ViewModels" 
+    d:DataContext="{d:DesignInstance Type=viewmodels:PomodoroSettingsViewModel}"
+    mc:Ignorable="d">
+
+    <ScrollViewer>
+        <StackPanel
+            MaxWidth="600"
+            Margin="24"
+            Spacing="16">
+
+            <TextBlock
+                FontSize="28"
+                FontWeight="Bold"
+                Text="Pomodoro Settings" />
+
+            <TextBlock
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="Configure your Pomodoro timer durations and intervals"
+                TextWrapping="Wrap" />
+
+            <Border
+                Margin="0,16,0,0"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+                <StackPanel Spacing="16">
+
+                    <!--  Work Duration  -->
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Work Duration (minutes)" />
+                        <NumberBox
+                            x:Name="WorkDurationBox"
+                            MinWidth="200"
+                            HorizontalAlignment="Left"
+                            LargeChange="5"
+                            Maximum="120"
+                            Minimum="1"
+                            SmallChange="1"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.WorkDurationMinutes, Mode=TwoWay}" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="The duration of each work session"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!--  Auto Calculate Button  -->
+                    <Button
+                        Command="{x:Bind ViewModel.CalculateDefaultBreaksCommand}"
+                        Content="Auto-calculate break durations from work duration"
+                        Style="{StaticResource AccentButtonStyle}" />
+
+                    <!--  Short Break Duration  -->
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Short Break Duration (minutes)" />
+                        <NumberBox
+                            x:Name="ShortBreakBox"
+                            MinWidth="200"
+                            HorizontalAlignment="Left"
+                            LargeChange="1"
+                            Maximum="60"
+                            Minimum="1"
+                            SmallChange="1"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.ShortBreakDurationMinutes, Mode=TwoWay}" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="The duration of short breaks between work sessions"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!--  Long Break Duration  -->
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Long Break Duration (minutes)" />
+                        <NumberBox
+                            x:Name="LongBreakBox"
+                            MinWidth="200"
+                            HorizontalAlignment="Left"
+                            LargeChange="5"
+                            Maximum="60"
+                            Minimum="1"
+                            SmallChange="1"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.LongBreakDurationMinutes, Mode=TwoWay}" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="The duration of long breaks after completing several work sessions"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!--  Long Break Interval  -->
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Long Break Interval" />
+                        <NumberBox
+                            x:Name="LongBreakIntervalBox"
+                            MinWidth="200"
+                            HorizontalAlignment="Left"
+                            LargeChange="1"
+                            Maximum="10"
+                            Minimum="2"
+                            SmallChange="1"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.LongBreakInterval, Mode=TwoWay}" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Take a long break after this many work sessions"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                </StackPanel>
+            </Border>
+
+            <!--  Notification Settings  -->
+            <TextBlock
+                Margin="0,16,0,0"
+                FontSize="20"
+                FontWeight="SemiBold"
+                Text="Completion Notifications" />
+
+            <Border
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+                <StackPanel Spacing="12">
+
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="Choose how you want to be notified when a timer completes:"
+                        TextWrapping="Wrap" />
+
+                    <ToggleSwitch
+                        Header="Show Notification"
+                        IsOn="{x:Bind ViewModel.ShowNotification, Mode=TwoWay}"
+                        OffContent="Windows notification disabled"
+                        OnContent="Show Windows notification" />
+
+                    <ToggleSwitch
+                        Header="Play Sound"
+                        IsOn="{x:Bind ViewModel.PlaySound, Mode=TwoWay}"
+                        OffContent="Sound alert disabled"
+                        OnContent="Play sound alert" />
+
+                    <ToggleSwitch
+                        Header="Flash Window"
+                        IsOn="{x:Bind ViewModel.FlashWindow, Mode=TwoWay}"
+                        OffContent="Window flash disabled"
+                        OnContent="Flash window to get attention" />
+
+                </StackPanel>
+            </Border>
+
+            <!--  Alarm Settings  -->
+            <TextBlock
+                Margin="0,16,0,0"
+                FontSize="20"
+                FontWeight="SemiBold"
+                Text="Alarm Settings" />
+
+            <Border
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+                <StackPanel Spacing="16">
+
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="Configure alarm sounds when the timer completes:"
+                        TextWrapping="Wrap" />
+
+                    <!--  Wrap Up Period  -->
+                    <StackPanel Spacing="8">
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Text="Wrap Up Period Duration (minutes)" />
+                            <NumberBox
+                                MinWidth="200"
+                                HorizontalAlignment="Left"
+                                LargeChange="1"
+                                Maximum="30"
+                                Minimum="1"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Inline"
+                                Value="{x:Bind ViewModel.WrapUpPeriodMinutes, Mode=TwoWay}" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Extra time after work period ends to finish your current thought. Wrap up notification plays when work ends, main alarm plays when wrap up period expires."
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Text="Wrap Up Notification Volume" />
+                            <Slider
+                                Maximum="100"
+                                Minimum="0"
+                                StepFrequency="1"
+                                TickFrequency="10"
+                                TickPlacement="Outside"
+                                Value="{x:Bind ViewModel.WrapUpNotificationVolume, Mode=TwoWay}" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="{x:Bind ViewModel.WrapUpNotificationVolume, Mode=OneWay}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!--  Alarm  -->
+                    <StackPanel Spacing="8">
+                        <ToggleSwitch
+                            Header="Alarm"
+                            IsOn="{x:Bind ViewModel.UseAlarm, Mode=TwoWay}"
+                            OffContent="Alarm disabled"
+                            OnContent="Alarm enabled" />
+
+                        <StackPanel
+                            Spacing="4"
+                            Visibility="{x:Bind ViewModel.UseAlarm, Mode=OneWay}">
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Text="Alarm Volume" />
+                            <Slider
+                                Maximum="100"
+                                Minimum="0"
+                                StepFrequency="1"
+                                TickFrequency="10"
+                                TickPlacement="Outside"
+                                Value="{x:Bind ViewModel.AlarmVolume, Mode=TwoWay}" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="{x:Bind ViewModel.AlarmVolume, Mode=OneWay}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                </StackPanel>
+            </Border>
+
+            <!--  Action Buttons  -->
+            <StackPanel
+                Margin="0,8,0,0"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    Command="{x:Bind ViewModel.SaveCommand}"
+                    Content="Save Settings"
+                    IsEnabled="{x:Bind ViewModel.IsNotSaving, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}" />
+                <Button
+                    Command="{x:Bind ViewModel.ResetToDefaultsCommand}"
+                    Content="Reset to Defaults" />
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

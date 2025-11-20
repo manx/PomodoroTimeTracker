@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="PomodoroTimeTracker.WinUI3.Views.ClientListPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:viewmodels="using:PomodoroTimeTracker.WinUI3.ViewModels" 
+    d:DataContext="{d:DesignInstance Type=viewmodels:ClientListViewModel}"
+    mc:Ignorable="d">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0"
+                   Text="Clients"
+                   Style="{StaticResource TitleTextBlockStyle}"
+                   Margin="0,0,0,8"/>
+
+        <!-- Command Bar -->
+        <CommandBar Grid.Row="1"
+                    DefaultLabelPosition="Right"
+                    Margin="0,0,0,16">
+            <AppBarButton Icon="Add"
+                          Label="Add Client"
+                          Command="{x:Bind ViewModel.AddClientCommand}"/>
+            <AppBarButton Icon="Edit"
+                          Label="Edit"
+                          Command="{x:Bind ViewModel.EditClientCommand}"/>
+            <AppBarButton Icon="Delete"
+                          Label="Delete"
+                          Command="{x:Bind ViewModel.DeleteClientCommand}"/>
+            <AppBarSeparator/>
+            <AppBarButton Icon="Refresh"
+                          Label="Refresh"
+                          Command="{x:Bind ViewModel.RefreshCommand}"/>
+        </CommandBar>
+
+        <!-- Client List -->
+        <Grid Grid.Row="2">
+            <!-- Loading Indicator -->
+            <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+                          Width="50"
+                          Height="50"/>
+
+            <!-- List View -->
+            <ListView ItemsSource="{x:Bind ViewModel.Clients, Mode=OneWay}"
+                      SelectedItem="{x:Bind ViewModel.SelectedClient, Mode=TwoWay}"
+                      SelectionMode="Single">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="12,8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Client Name -->
+                            <TextBlock Grid.Row="0"
+                                       Text="{Binding Name}"
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                                       TextWrapping="NoWrap"
+                                       TextTrimming="CharacterEllipsis"/>
+
+                            <!-- Description -->
+                            <TextBlock Grid.Row="1"
+                                       Text="{Binding Description}"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,4,0,0"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+    </Grid>
+</Page>
