@@ -141,20 +141,48 @@
                     Severity="Informational"
                     Title="Wrap Up Period Active" />
 
-                <!--  Timer Display (Simplified - progress shown in separate timer window)  -->
-                <TextBlock
-                    FontFamily="Consolas"
-                    FontSize="96"
-                    FontWeight="Bold"
-                    Text="{x:Bind ViewModel.TimerDisplay, Mode=OneWay}" />
+                <!--  Timer with Progress Meter  -->
+                <Grid Width="400" Height="400">
+                    <!--  Progress Arc Background  -->
+                    <Canvas
+                        Width="360"
+                        Height="360"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                        <!--  Progress Path (Red overlay that decreases clockwise from 12 o'clock)  -->
+                        <Path
+                            x:Name="ProgressPath"
+                            Canvas.Left="0"
+                            Canvas.Top="0"
+                            Data=""
+                            Fill="#FFE74C3C"
+                            Opacity="0.2"
+                            Stretch="None" />
+                    </Canvas>
 
-                <!--  Objective Display  -->
-                <TextBlock
-                    MaxWidth="600"
-                    FontSize="16"
-                    Text="{x:Bind ViewModel.Objective, Mode=OneWay}"
-                    TextWrapping="Wrap"
-                    Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}" />
+                    <!--  Timer and Objective centered in circle  -->
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="16">
+                        <!--  Timer Display  -->
+                        <TextBlock
+                            FontFamily="Consolas"
+                            FontSize="72"
+                            FontWeight="Bold"
+                            Text="{x:Bind ViewModel.TimerDisplay, Mode=OneWay}"
+                            TextAlignment="Center" />
+
+                        <!--  Objective Display  -->
+                        <TextBlock
+                            MaxWidth="300"
+                            FontSize="14"
+                            Text="{x:Bind ViewModel.Objective, Mode=OneWay}"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap"
+                            Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}" />
+                    </StackPanel>
+                </Grid>
 
             </StackPanel>
 
