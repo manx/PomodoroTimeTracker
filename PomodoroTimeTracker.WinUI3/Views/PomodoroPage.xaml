@@ -196,7 +196,7 @@
                 <StackPanel
                     HorizontalAlignment="Center"
                     Orientation="Horizontal"
-                    Spacing="16">
+                    Spacing="32">
 
                     <!--  Pause/Resume Button  -->
                     <Button

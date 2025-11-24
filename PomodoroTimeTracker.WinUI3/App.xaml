@@ -44,6 +44,23 @@
                 <Setter Property="Foreground"
                         Value="{StaticResource WhiteBrush}" />
             </Style>
+
+            <!--  Pomodoro Timer Button Styles - Warm Gray with Red Accent  -->
+            <SolidColorBrush x:Key="PomodoroRedBrush" Color="#E74C3C" />
+            <SolidColorBrush x:Key="PomodoroGrayBrush" Color="#5A5A5A" />
+
+            <Style x:Key="PomodoroButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="{StaticResource PomodoroGrayBrush}" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="CornerRadius" Value="4" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="PomodoroAccentButtonStyle" TargetType="Button" BasedOn="{StaticResource PomodoroButtonStyle}">
+                <Setter Property="Background" Value="{StaticResource PomodoroRedBrush}" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
