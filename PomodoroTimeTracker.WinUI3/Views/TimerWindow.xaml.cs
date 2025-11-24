@@ -1,12 +1,9 @@
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Shapes;
 using PomodoroTimeTracker.WinUI3.ViewModels;
 using System;
 using System.Runtime.InteropServices;
-using Windows.Foundation;
 using Windows.Graphics;
 using WinRT.Interop;
 using WinUIEx;
@@ -82,6 +79,15 @@ public sealed partial class TimerWindow : WindowEx
 
     [DllImport("user32.dll")]
     private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+    // SetWindowPos flags
+    private const uint SWP_NOMOVE = 0x0002;
+    private const uint SWP_NOSIZE = 0x0001;
+    private const uint SWP_NOZORDER = 0x0004;
+    private const uint SWP_FRAMECHANGED = 0x0020;
 
     // DWM window attributes
     private const int DWMWA_NCRENDERING_ENABLED = 1;
@@ -250,6 +256,18 @@ public sealed partial class TimerWindow : WindowEx
 
     private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
     {
+        // Handle WM_NCCALCSIZE to remove the white bar at the top
+        // This tells Windows to use the entire window rectangle as client area
+        if (msg == WM_NCCALCSIZE)
+        {
+            if (wParam != IntPtr.Zero) // TRUE - indicates we should calculate new client rectangle
+            {
+                // Return 0 to use the entire window rectangle as the client area
+                // This removes the default non-client area (including the white bar)
+                return IntPtr.Zero;
+            }
+        }
+
         // Handle right-click messages to show context menu
         // WM_NCRBUTTONUP because SetTitleBar treats the area as non-client
         // WM_PARENTNOTIFY when child controls receive right-click
@@ -277,61 +295,12 @@ public sealed partial class TimerWindow : WindowEx
             return CallWindowProc(_oldWndProc, hWnd, msg, wParam, lParam);
         }
 
-        // Handle sizing to enforce square aspect ratio
-        if (msg == WM_SIZING)
-        {
-            // Get the proposed window rectangle
-            var rect = Marshal.PtrToStructure<RECT>(lParam);
-
-            // Calculate the larger dimension
-            var size = Math.Max(rect.Width, rect.Height);
-
-            // Adjust the rectangle to be square based on which corner is being dragged
-            var edge = wParam.ToInt32();
-
-            // Determine which edges to adjust based on resize direction
-            switch (edge)
-            {
-                case 1: // WMSZ_LEFT
-                case 4: // WMSZ_TOPLEFT
-                case 7: // WMSZ_BOTTOMLEFT
-                    rect.Left = rect.Right - size;
-                    rect.Bottom = rect.Top + size;
-                    break;
-
-                case 2: // WMSZ_RIGHT
-                case 5: // WMSZ_TOPRIGHT
-                case 8: // WMSZ_BOTTOMRIGHT
-                    rect.Right = rect.Left + size;
-                    rect.Bottom = rect.Top + size;
-                    break;
-
-                case 3: // WMSZ_TOP
-                case 6: // WMSZ_BOTTOM
-                    // For top/bottom only (shouldn't happen with corner-only resize)
-                    rect.Right = rect.Left + size;
-                    rect.Bottom = rect.Top + size;
-                    break;
-            }
-
-            // Write the adjusted rectangle back
-            Marshal.StructureToPtr(rect, lParam, true);
-            return new IntPtr(1); // TRUE - we handled it
-        }
-
-        // Intercept hit testing for dragging and corner-only resizing
+        // Intercept hit testing for dragging (allow full window resizing)
         if (msg == WM_NCHITTEST)
         {
             // Let the default handler run first to get resize handles
             var result = CallWindowProc(_oldWndProc, hWnd, msg, wParam, lParam);
             var hitTest = result.ToInt32();
-
-            // Block edge resize handles, only allow corners
-            if (hitTest == HTLEFT || hitTest == HTRIGHT || hitTest == HTTOP || hitTest == HTBOTTOM)
-            {
-                // Convert edge hits to caption (allows dragging instead of resizing)
-                return new IntPtr(2); // HTCAPTION
-            }
 
             // If it's client area, make it draggable
             if (hitTest == 1) // HTCLIENT
@@ -339,7 +308,7 @@ public sealed partial class TimerWindow : WindowEx
                 return new IntPtr(2); // HTCAPTION - allows dragging
             }
 
-            // Allow corner resizing and everything else
+            // Allow all resize handles (edges and corners)
             return result;
         }
 
@@ -363,16 +332,16 @@ public sealed partial class TimerWindow : WindowEx
         this.IsMaximizable = false;
         this.IsMinimizable = false;
 
-        // Set initial size
-        this.Width = 200;
-        this.Height = 200;
+        // Set initial size (narrow vertically, compact horizontally)
+        this.Width = 150;
+        this.Height = 50;
 
         // Position in top-right corner
         var displayArea = DisplayArea.Primary;
         if (displayArea != null)
         {
             var workArea = displayArea.WorkArea;
-            var x = workArea.Width - 220; // 200px width + 20px margin
+            var x = workArea.Width - 170; // 150px width + 20px margin
             var y = 20; // 20px from top
             this.Move(x, y);
         }
@@ -381,10 +350,26 @@ public sealed partial class TimerWindow : WindowEx
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(RootGrid); // Make entire window draggable
 
+        // Extend client area into the frame (makes borders transparent)
+        // This allows the red progress bar to fill the entire window
+        var margins = new MARGINS
+        {
+            cxLeftWidth = -1,      // -1 extends into entire frame
+            cxRightWidth = -1,
+            cyTopHeight = -1,
+            cyBottomHeight = -1
+        };
+        DwmExtendFrameIntoClientArea(_hWnd, ref margins);
+
         // Hook into Win32 window procedure for square aspect ratio and corner resize
         _wndProcDelegate = new WndProcDelegate(WndProc);
         _oldWndProc = GetWindowLongPtr(_hWnd, GWL_WNDPROC);
         SetWindowLongPtr(_hWnd, GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
+
+        // Force window to recalculate frame after all DWM changes
+        // This fixes the white bar issue on initial display
+        SetWindowPos(_hWnd, IntPtr.Zero, 0, 0, 0, 0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
     }
 
 
@@ -399,61 +384,19 @@ public sealed partial class TimerWindow : WindowEx
 
     private void UpdateProgressArc()
     {
-        // Time Timer style: arc decreases clockwise from top (12 o'clock position)
-        // At 100% (start), full circle is shown
-        // At 0% (end), no arc is shown
+        // Rectangular progress bar: fills from left to right
+        // At 100% (start), full width is shown
+        // At 0% (end), no width is shown
 
         var percentage = ViewModel.ProgressPercentage;
-        var angle = (percentage / 100.0) * 360.0; // Convert to degrees
 
-        // Build the geometry programmatically using WinUI 3 API
-        var geometry = BuildArcGeometry(90, 90, 80, angle);
-        ProgressPath.Data = geometry;
-    }
+        // Get the actual window width
+        var windowWidth = RootGrid.ActualWidth;
 
-    private PathGeometry BuildArcGeometry(double centerX, double centerY, double radius, double angleDegrees)
-    {
-        var pathGeometry = new PathGeometry();
-        var pathFigure = new PathFigure();
+        // Calculate the width of the progress rectangle
+        var progressWidth = windowWidth * (percentage / 100.0);
 
-        // If angle is 0 or less, show nothing (empty path)
-        if (angleDegrees <= 0)
-        {
-            pathGeometry.Figures.Add(pathFigure);
-            return pathGeometry;
-        }
-
-        // Convert to radians (start from top, -90 degrees offset)
-        var startAngleRad = -Math.PI / 2; // -90 degrees (12 o'clock)
-        var endAngleRad = startAngleRad + (angleDegrees * Math.PI / 180.0);
-
-        // Calculate start and end points
-        var startX = centerX + radius * Math.Cos(startAngleRad);
-        var startY = centerY + radius * Math.Sin(startAngleRad);
-        var endX = centerX + radius * Math.Cos(endAngleRad);
-        var endY = centerY + radius * Math.Sin(endAngleRad);
-
-        // Start the path at the start point
-        pathFigure.StartPoint = new Point(startX, startY);
-
-        // Add arc segment
-        var arcSegment = new ArcSegment
-        {
-            Point = new Point(endX, endY),
-            Size = new Size(radius, radius),
-            SweepDirection = SweepDirection.Clockwise,
-            IsLargeArc = angleDegrees > 180
-        };
-        pathFigure.Segments.Add(arcSegment);
-
-        // Add line to center
-        var lineSegment = new LineSegment { Point = new Point(centerX, centerY) };
-        pathFigure.Segments.Add(lineSegment);
-
-        // Close the path
-        pathFigure.IsClosed = true;
-
-        pathGeometry.Figures.Add(pathFigure);
-        return pathGeometry;
+        // Update the rectangle width
+        ProgressRectangle.Width = progressWidth;
     }
 }

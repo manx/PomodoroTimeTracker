@@ -39,69 +39,36 @@
             </MenuFlyout>
         </Grid.ContextFlyout>
 
+        <!--  Rectangular Progress Bar (fills from left to right)  -->
+        <Grid>
+            <!--  Progress Rectangle (Red overlay that increases from left to right)  -->
+            <Rectangle
+                x:Name="ProgressRectangle"
+                HorizontalAlignment="Left"
+                Fill="#FFE74C3C"
+                Opacity="0.3" />
+        </Grid>
+
         <!--  Main content area  -->
-        <StackPanel
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Spacing="8">
-
-            <!--  Viewbox to scale timer proportionally  -->
-            <Viewbox Stretch="Uniform">
-                <Grid Width="200" Height="200">
-                    <!--  Rounded background  -->
-                    <Border
-                        Width="200"
-                        Height="200"
-                        Background="Black"
-                        CornerRadius="100" />
-
-                    <!--  Time Timer Style Progress Meter  -->
-                    <Grid>
-                        <!--  Custom Progress Arc - Time Timer Style (Red overlay)  -->
-                        <Canvas
-                            Width="180"
-                            Height="180"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-
-                            <!--  Progress Path (Red overlay that decreases clockwise from 12 o'clock)  -->
-                            <Path
-                                x:Name="ProgressPath"
-                                Canvas.Left="0"
-                                Canvas.Top="0"
-                                Data=""
-                                Fill="#FFE74C3C"
-                                Opacity="0.3"
-                                Stretch="None" />
-                        </Canvas>
-
-                        <!--  Timer Text  -->
-                        <Viewbox
-                            Width="140"
-                            Height="60"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                            <TextBlock
-                                FontFamily="Consolas"
-                                FontSize="36"
-                                FontWeight="Bold"
-                                Text="{x:Bind ViewModel.TimerDisplay, Mode=OneWay}" />
-                        </Viewbox>
-                    </Grid>
-                </Grid>
+        <Grid Margin="6,2">
+            <!--  Timer Text with Tooltip  -->
+            <Viewbox
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+                <TextBlock
+                    FontFamily="Consolas"
+                    FontSize="24"
+                    FontWeight="Bold"
+                    Text="{x:Bind ViewModel.TimerDisplay, Mode=OneWay}">
+                    <!--  Tooltip shows objective on hover (only during work sessions)  -->
+                    <ToolTipService.ToolTip>
+                        <ToolTip
+                            Content="{x:Bind ViewModel.Objective, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}" />
+                    </ToolTipService.ToolTip>
+                </TextBlock>
             </Viewbox>
-
-            <!--  Objective Display (only show during work sessions, not breaks)  -->
-            <TextBlock
-                MaxWidth="180"
-                Padding="8"
-                FontSize="11"
-                Text="{x:Bind ViewModel.Objective, Mode=OneWay}"
-                TextAlignment="Center"
-                TextWrapping="Wrap"
-                Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}" />
-
-        </StackPanel>
+        </Grid>
 
     </Grid>
 </winuiex:WindowEx>
