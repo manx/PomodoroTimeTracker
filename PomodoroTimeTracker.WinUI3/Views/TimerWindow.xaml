@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<winuiex:WindowEx
+    x:Class="PomodoroTimeTracker.WinUI3.Views.TimerWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:PomodoroTimeTracker.WinUI3.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodels="using:PomodoroTimeTracker.WinUI3.ViewModels"
+    xmlns:winuiex="using:WinUIEx"
+    d:DataContext="{d:DesignInstance Type=viewmodels:PomodoroViewModel}"
+    mc:Ignorable="d">
+
+    <Grid
+        x:Name="RootGrid"
+        Background="Black">
+
+        <!--  Context Menu for Right-Click  -->
+        <Grid.ContextFlyout>
+            <MenuFlyout>
+                <MenuFlyoutItem
+                    x:Name="PauseMenuItem"
+                    Click="PauseMenuItem_Click"
+                    Text="Pause" />
+                <MenuFlyoutItem
+                    x:Name="StopMenuItem"
+                    Click="StopMenuItem_Click"
+                    Text="Stop" />
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem
+                    Click="AddOneMinute_Click"
+                    Text="+ 1 minute" />
+                <MenuFlyoutItem
+                    Click="AddTwoMinutes_Click"
+                    Text="+ 2 minutes" />
+                <MenuFlyoutItem
+                    Click="AddFiveMinutes_Click"
+                    Text="+ 5 minutes" />
+            </MenuFlyout>
+        </Grid.ContextFlyout>
+
+        <!--  Viewbox to scale everything proportionally  -->
+        <Viewbox Stretch="Uniform">
+            <Grid Width="200" Height="200">
+                <!--  Rounded background  -->
+                <Border
+                    Width="200"
+                    Height="200"
+                    Background="Black"
+                    CornerRadius="100" />
+
+                <!--  Time Timer Style Progress Meter  -->
+                <Grid>
+                    <!--  Custom Progress Arc - Time Timer Style (Red overlay)  -->
+                    <Canvas
+                        Width="180"
+                        Height="180"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+
+                        <!--  Progress Path (Red overlay that decreases clockwise from 12 o'clock)  -->
+                        <Path
+                            x:Name="ProgressPath"
+                            Canvas.Left="0"
+                            Canvas.Top="0"
+                            Data=""
+                            Fill="#FFE74C3C"
+                            Opacity="0.3"
+                            Stretch="None" />
+                    </Canvas>
+
+                    <!--  Timer Text  -->
+                    <Viewbox
+                        Width="140"
+                        Height="60"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                        <TextBlock
+                            FontFamily="Consolas"
+                            FontSize="36"
+                            FontWeight="Bold"
+                            Text="{x:Bind ViewModel.TimerDisplay, Mode=OneWay}" />
+                    </Viewbox>
+                </Grid>
+            </Grid>
+        </Viewbox>
+
+    </Grid>
+</winuiex:WindowEx>

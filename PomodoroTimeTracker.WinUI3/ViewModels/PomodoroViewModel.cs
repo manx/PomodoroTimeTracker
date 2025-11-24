@@ -378,6 +378,51 @@ public partial class PomodoroViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Adds time to the current pomodoro session.
+    /// Can be called during Running, Paused, or WrapUp states.
+    /// During WrapUp, extends the wrap up period instead of the work period.
+    /// </summary>
+    /// <param name="minutes">Number of minutes to add</param>
+    public void AddMinutes(int minutes)
+    {
+        // Only allow adding time during active work sessions and wrap up period (not during breaks)
+        if (State != PomodoroState.Running &&
+            State != PomodoroState.Paused &&
+            State != PomodoroState.WrapUp)
+        {
+            return;
+        }
+
+        // Add the minutes (convert to seconds)
+        _remainingSeconds += minutes * 60;
+
+        // Update the display
+        UpdateTimerDisplay();
+    }
+
+    /// <summary>
+    /// Gets the elapsed time in seconds for the current work session.
+    /// Returns the time that has passed since the work period started.
+    /// </summary>
+    public int ElapsedSeconds
+    {
+        get
+        {
+            // During work period (Running/Paused), elapsed = total work duration - remaining
+            // During WrapUp, the work period is complete, so use the original work duration
+            if (State == PomodoroState.Running || State == PomodoroState.Paused)
+            {
+                return _workDurationSeconds - _remainingSeconds;
+            }
+            else if (State == PomodoroState.WrapUp)
+            {
+                return _workDurationSeconds;
+            }
+            return 0;
+        }
+    }
+
     #endregion
 
     #region Private Methods
