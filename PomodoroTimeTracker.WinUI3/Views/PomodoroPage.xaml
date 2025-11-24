@@ -16,6 +16,7 @@
             <StackPanel
                 MaxWidth="600"
                 Margin="24"
+                HorizontalAlignment="Left"
                 Spacing="24">
 
                 <TextBlock
@@ -24,6 +25,7 @@
                     Text="Start Pomodoro" />
 
                 <Border
+                    MinHeight="500"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
@@ -71,6 +73,7 @@
                                 Text="{x:Bind ViewModel.Objective, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 TextWrapping="Wrap" />
                             <TextBlock
+                                Height="16"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Text="{x:Bind ViewModel.Objective.Length, Mode=OneWay}"
@@ -117,13 +120,13 @@
             <!--  Timer Display  -->
             <StackPanel
                 Grid.Row="0"
-                HorizontalAlignment="Center"
+                Margin="24,0,0,0"
+                HorizontalAlignment="Left"
                 VerticalAlignment="Center"
                 Spacing="32">
 
                 <!--  Session Type  -->
                 <TextBlock
-                    HorizontalAlignment="Center"
                     FontSize="24"
                     FontWeight="SemiBold"
                     Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
@@ -131,42 +134,19 @@
 
                 <!--  Wrap Up Period Info  -->
                 <InfoBar
-                    MaxWidth="400"
+                    MaxWidth="600"
                     IsClosable="False"
                     IsOpen="{x:Bind ViewModel.IsWrapUpState, Mode=OneWay}"
                     Message="Work time complete! You can continue working during this wrap up period to finish your current thought."
                     Severity="Informational"
                     Title="Wrap Up Period Active" />
 
-                <!--  Timer Circle  -->
-                <Viewbox
-                    Width="300"
-                    Height="300">
-                    <Grid>
-                        <!--  Background Circle  -->
-                        <Ellipse
-                            Width="300"
-                            Height="300"
-                            Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
-                            StrokeThickness="8" />
-
-                        <!--  Progress Ring  -->
-                        <ProgressRing
-                            Width="300"
-                            Height="300"
-                            IsIndeterminate="False"
-                            Value="{x:Bind ViewModel.ProgressPercentage, Mode=OneWay}" />
-
-                        <!--  Timer Text  -->
-                        <TextBlock
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            FontFamily="Consolas"
-                            FontSize="72"
-                            FontWeight="Bold"
-                            Text="{x:Bind ViewModel.TimerDisplay, Mode=OneWay}" />
-                    </Grid>
-                </Viewbox>
+                <!--  Timer Display (Simplified - progress shown in separate timer window)  -->
+                <TextBlock
+                    FontFamily="Consolas"
+                    FontSize="96"
+                    FontWeight="Bold"
+                    Text="{x:Bind ViewModel.TimerDisplay, Mode=OneWay}" />
 
                 <!--  Objective Display  -->
                 <Border

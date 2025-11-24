@@ -2,6 +2,14 @@
 
 This document contains technical notes, implementation details, and development history for the Pomodoro Time Tracker application.
 
+## Development Guidelines
+
+### Git Operations
+**IMPORTANT:** Always use git MCP tools instead of bash commands for git operations:
+- Use `mcp__git__status`, `mcp__git__add`, `mcp__git__commit` instead of `git status`, `git add`, `git commit`
+- Use `mcp__git__bulk_action` for multiple sequential operations (stage + commit + push)
+- The MCP tools provide better integration and error handling
+
 ## Recent Development Session (2025-01-20)
 
 ### Wrap Up Period Implementation
@@ -425,6 +433,7 @@ public PomodoroState State
 3. TODO: Add integration tests for service layer
 4. TODO: Error handling improvements (user-friendly messages)
 5. TODO: Navigation to Pomodoro page (currently not wired in MainWindow)
+6. TODO: Check if Microsoft has fixed WinUI 3 transparent borderless window issue (https://github.com/microsoft/microsoft-ui-xaml/issues/1247) - Currently there's a visible white bar at the top of the timer window that cannot be removed due to framework limitations. Using WinUIEx library as workaround.
 
 ### Performance Considerations
 - Timer runs on UI thread (acceptable for 1-second intervals)
@@ -469,3 +478,4 @@ dotnet ef migrations remove --project PomodoroTimeTracker.Infrastructure --start
 - [MVVM Pattern](https://docs.microsoft.com/en-us/dotnet/architecture/maui/mvvm)
 - [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
 - [Pomodoro Technique](https://francescocirillo.com/pages/pomodoro-technique)
+- to memorize Always use dotnet MCP tools instead of bash
