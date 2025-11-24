@@ -80,7 +80,6 @@
                                 TextAlignment="Right" />
                         </StackPanel>
 
-
                         <!--  Duration  -->
                         <StackPanel Spacing="8">
                             <TextBlock
