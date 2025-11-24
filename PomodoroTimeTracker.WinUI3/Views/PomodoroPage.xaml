@@ -124,7 +124,7 @@
                 Margin="24,0,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center"
-                Spacing="32">
+                Spacing="16">
 
                 <!--  Session Type  -->
                 <TextBlock
