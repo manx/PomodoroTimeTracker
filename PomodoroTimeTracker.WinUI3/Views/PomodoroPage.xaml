@@ -149,26 +149,12 @@
                     Text="{x:Bind ViewModel.TimerDisplay, Mode=OneWay}" />
 
                 <!--  Objective Display  -->
-                <Border
-                    MaxWidth="400"
-                    Padding="16"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}">
-                    <StackPanel Spacing="8">
-                        <TextBlock
-                            FontSize="12"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="OBJECTIVE" />
-                        <TextBlock
-                            FontSize="16"
-                            Text="{x:Bind ViewModel.Objective, Mode=OneWay}"
-                            TextWrapping="Wrap" />
-                    </StackPanel>
-                </Border>
+                <TextBlock
+                    MaxWidth="600"
+                    FontSize="16"
+                    Text="{x:Bind ViewModel.Objective, Mode=OneWay}"
+                    TextWrapping="Wrap"
+                    Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}" />
 
             </StackPanel>
 
@@ -176,7 +162,7 @@
             <StackPanel
                 Grid.Row="1"
                 Margin="24"
-                HorizontalAlignment="Center"
+                HorizontalAlignment="Left"
                 Orientation="Horizontal"
                 Spacing="16">
 
