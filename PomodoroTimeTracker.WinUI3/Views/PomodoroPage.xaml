@@ -190,7 +190,7 @@
             <!--  Control Buttons  -->
             <StackPanel
                 Grid.Row="1"
-                Margin="24"
+                Margin="24,0,24,24"
                 HorizontalAlignment="Left"
                 Orientation="Horizontal"
                 Spacing="16">
