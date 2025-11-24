@@ -117,24 +117,25 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!--  Timer Display  -->
+            <!--  Container for all timer components - aligned to left with consistent margin  -->
             <StackPanel
                 Grid.Row="0"
-                Margin="24,0,0,0"
+                Width="360"
+                Margin="4,0,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center"
-                Spacing="16">
+                Spacing="-10">
 
-                <!--  Session Type  -->
+                <!--  Session Type - centered within container  -->
                 <TextBlock
                     FontSize="24"
                     FontWeight="SemiBold"
                     Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                    Text="{x:Bind ViewModel.SessionTypeLabel, Mode=OneWay}" />
+                    Text="{x:Bind ViewModel.SessionTypeLabel, Mode=OneWay}"
+                    TextAlignment="Center" />
 
                 <!--  Wrap Up Period Info  -->
                 <InfoBar
-                    MaxWidth="600"
                     IsClosable="False"
                     IsOpen="{x:Bind ViewModel.IsWrapUpState, Mode=OneWay}"
                     Message="Work time complete! You can continue working during this wrap up period to finish your current thought."
@@ -142,7 +143,7 @@
                     Title="Wrap Up Period Active" />
 
                 <!--  Timer with Progress Meter  -->
-                <Grid Width="400" Height="400">
+                <Grid Width="360" Height="400">
                     <!--  Progress Arc Background  -->
                     <Canvas
                         Width="360"
@@ -186,49 +187,53 @@
 
             </StackPanel>
 
-            <!--  Control Buttons  -->
-            <StackPanel
+            <!--  Control Buttons Container - same width and alignment as timer components  -->
+            <Grid
                 Grid.Row="1"
-                Margin="24,0,24,24"
-                HorizontalAlignment="Left"
-                Orientation="Horizontal"
-                Spacing="16">
+                Width="360"
+                Margin="4,-10,0,24"
+                HorizontalAlignment="Left">
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="16">
 
-                <!--  Pause/Resume Button  -->
-                <Button
-                    Width="120"
-                    Height="48"
-                    Command="{x:Bind ViewModel.PauseResumeCommand}"
-                    Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}">
-                    <StackPanel
-                        Orientation="Horizontal"
-                        Spacing="8">
-                        <FontIcon
-                            FontSize="16"
-                            Glyph="{x:Bind ViewModel.PauseResumeIcon, Mode=OneWay}" />
-                        <TextBlock Text="{x:Bind ViewModel.PauseResumeText, Mode=OneWay}" />
-                    </StackPanel>
-                </Button>
+                    <!--  Pause/Resume Button  -->
+                    <Button
+                        Width="120"
+                        Height="48"
+                        Command="{x:Bind ViewModel.PauseResumeCommand}"
+                        Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}">
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <FontIcon
+                                FontSize="16"
+                                Glyph="{x:Bind ViewModel.PauseResumeIcon, Mode=OneWay}" />
+                            <TextBlock Text="{x:Bind ViewModel.PauseResumeText, Mode=OneWay}" />
+                        </StackPanel>
+                    </Button>
 
-                <!--  Stop Button  -->
-                <Button
-                    Width="120"
-                    Height="48"
-                    Command="{x:Bind ViewModel.StopCommand}"
-                    Style="{StaticResource AccentButtonStyle}"
-                    Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}">
-                    <StackPanel
-                        Orientation="Horizontal"
-                        Spacing="8">
-                        <FontIcon
-                            FontSize="16"
-                            Glyph="&#xE71A;" />
-                        <TextBlock Text="Stop" />
-                    </StackPanel>
-                </Button>
+                    <!--  Stop Button  -->
+                    <Button
+                        Width="120"
+                        Height="48"
+                        Command="{x:Bind ViewModel.StopCommand}"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}">
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <FontIcon
+                                FontSize="16"
+                                Glyph="&#xE71A;" />
+                            <TextBlock Text="Stop" />
+                        </StackPanel>
+                    </Button>
 
-            </StackPanel>
+                </StackPanel>
 
+            </Grid>
         </Grid>
     </Grid>
 </Page>
