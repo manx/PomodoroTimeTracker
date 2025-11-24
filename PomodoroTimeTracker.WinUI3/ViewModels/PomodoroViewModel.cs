@@ -67,6 +67,12 @@ public enum StopDialogResult
 /// </summary>
 public partial class PomodoroViewModel : ViewModelBase
 {
+    /// <summary>
+    /// Maximum length for the objective text field.
+    /// TODO: Move to configuration/settings in the future.
+    /// </summary>
+    public const int ObjectiveMaxLength = 120;
+
     private readonly IPomodoroSessionService _sessionService;
     private readonly IPomodoroSettingsService _settingsService;
     private readonly IClientService _clientService;
@@ -265,7 +271,7 @@ public partial class PomodoroViewModel : ViewModelBase
     /// <summary>
     /// Gets the character count display for the objective field (e.g., "25/120").
     /// </summary>
-    public string ObjectiveCharacterCount => $"{Objective.Length}/120";
+    public string ObjectiveCharacterCount => $"{Objective.Length}/{ObjectiveMaxLength}";
 
     /// <summary>
     /// Gets or sets the session duration in minutes.

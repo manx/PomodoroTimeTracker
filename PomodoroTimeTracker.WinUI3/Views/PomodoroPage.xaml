@@ -68,7 +68,7 @@
                             <TextBox
                                 Height="60"
                                 AcceptsReturn="True"
-                                MaxLength="120"
+                                MaxLength="{x:Bind viewmodels:PomodoroViewModel.ObjectiveMaxLength}"
                                 PlaceholderText="What will you work on during this Pomodoro?"
                                 Text="{x:Bind ViewModel.Objective, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 TextWrapping="Wrap" />
