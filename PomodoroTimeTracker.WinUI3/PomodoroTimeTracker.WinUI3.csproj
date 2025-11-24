@@ -49,6 +49,8 @@
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
 
         <Manifest Include="$(ApplicationManifest)" />
+
+        <PackageReference Include="WinUIEx" Version="2.9.0" />
     </ItemGroup>
 
     <!-- 

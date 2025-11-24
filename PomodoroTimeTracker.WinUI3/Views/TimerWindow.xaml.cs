@@ -127,8 +127,6 @@ public sealed partial class TimerWindow : WindowEx
     private WndProcDelegate? _wndProcDelegate;
     private IntPtr _oldWndProc;
     private IntPtr _hWnd;
-
-    private AppWindow? _appWindow;
     private MenuFlyout? _stopSubmenu;
 
     public PomodoroViewModel ViewModel { get; }
@@ -150,10 +148,7 @@ public sealed partial class TimerWindow : WindowEx
     private void RootGrid_RightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
     {
         // Update the Pause menu item text based on current state
-        if (PauseMenuItem != null)
-        {
-            PauseMenuItem.Text = ViewModel.IsPausedState ? "Resume" : "Pause";
-        }
+        PauseMenuItem?.Text = ViewModel.IsPausedState ? "Resume" : "Pause";
 
         // Context menu will show automatically via Grid.ContextFlyout
     }

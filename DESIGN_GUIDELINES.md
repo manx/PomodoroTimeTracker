@@ -777,3 +777,388 @@ This would enable:
 - Cancellation when navigating away before load completes
 - Timeout support for slow operations
 - Better resource management
+
+## WinUI 3 Specific Patterns and Solutions
+
+This section documents WinUI 3-specific technical challenges and their solutions.
+
+### Borderless Windows with Resize Functionality
+
+**Challenge:** Creating a completely borderless window (no title bar, no visible borders) while maintaining resize functionality.
+
+**Key Problem:** WinUI 3's `AppWindow.Presenter.SetBorderAndTitleBar(false, false)` doesn't fully remove borders, and `WM_NCCALCSIZE` can break resize if implemented incorrectly.
+
+**✅ Complete Solution:**
+
+```csharp
+public sealed partial class TimerWindow : Window
+{
+    // Win32 API imports
+    private const int WM_NCCALCSIZE = 0x0083;
+    private const int WM_NCHITTEST = 0x0084;
+    private const int HTTOPLEFT = 13;
+    private const int HTTOPRIGHT = 14;
+    private const int HTBOTTOMLEFT = 16;
+    private const int HTBOTTOMRIGHT = 17;
+
+    [DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr CallWindowProc(IntPtr lpPrevWndFunc, IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+    [DllImport("user32.dll")]
+    private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmExtendFrameIntoClientArea(IntPtr hWnd, ref MARGINS pMarInset);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MARGINS
+    {
+        public int cxLeftWidth;
+        public int cxRightWidth;
+        public int cyTopHeight;
+        public int cyBottomHeight;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    private const int GWL_STYLE = -16;
+    private const int GWL_EXSTYLE = -20;
+    private const int WS_CAPTION = 0x00C00000;
+    private const int WS_THICKFRAME = 0x00040000;
+
+    private IntPtr _hWnd;
+    private IntPtr _oldWndProc;
+    private WndProcDelegate? _wndProcDelegate;
+    private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+    public TimerWindow()
+    {
+        this.InitializeComponent();
+        InitializeWindow();
+
+        // Trigger border removal after window is activated
+        this.Activated += TimerWindow_Activated;
+    }
+
+    private void TimerWindow_Activated(object sender, WindowActivatedEventArgs args)
+    {
+        // Only do this once on first activation
+        this.Activated -= TimerWindow_Activated;
+
+        // Force a window style refresh to apply the borderless style
+        if (_appWindow != null)
+        {
+            var currentSize = _appWindow.Size;
+            _appWindow.Resize(new SizeInt32(currentSize.Width + 1, currentSize.Height + 1));
+            _appWindow.Resize(currentSize);
+        }
+    }
+
+    private void InitializeWindow()
+    {
+        _hWnd = WindowNative.GetWindowHandle(this);
+        var windowId = Win32Interop.GetWindowIdFromWindow(_hWnd);
+        _appWindow = AppWindow.GetFromWindowId(windowId);
+
+        if (_appWindow != null)
+        {
+            var presenter = _appWindow.Presenter as OverlappedPresenter;
+            if (presenter != null)
+            {
+                presenter.SetBorderAndTitleBar(false, false);
+                presenter.IsAlwaysOnTop = true;
+                presenter.IsResizable = true;
+            }
+        }
+
+        // Remove all window borders using Win32 styles
+        RemoveWindowBorders();
+
+        // Hook window procedure to handle borderless resize
+        _wndProcDelegate = new WndProcDelegate(WndProc);
+        _oldWndProc = GetWindowLongPtr(_hWnd, -4); // GWL_WNDPROC
+        SetWindowLongPtr(_hWnd, -4, Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
+    }
+
+    private void RemoveWindowBorders()
+    {
+        var style = GetWindowLong(_hWnd, GWL_STYLE);
+        var exStyle = GetWindowLong(_hWnd, GWL_EXSTYLE);
+
+        // Remove caption and borders but keep thick frame for resizing
+        style &= ~WS_CAPTION;
+        style |= WS_THICKFRAME;
+
+        SetWindowLong(_hWnd, GWL_STYLE, style);
+        SetWindowLong(_hWnd, GWL_EXSTYLE, exStyle);
+
+        // Extend DWM frame into entire window (removes non-client area)
+        var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
+        DwmExtendFrameIntoClientArea(_hWnd, ref margins);
+    }
+
+    private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+    {
+        // Remove non-client area to make window fully borderless
+        if (msg == WM_NCCALCSIZE && wParam != IntPtr.Zero)
+        {
+            return IntPtr.Zero; // Entire window is client area
+        }
+
+        // Create invisible resize border through hit testing
+        if (msg == WM_NCHITTEST)
+        {
+            var result = CallWindowProc(_oldWndProc, hWnd, msg, wParam, lParam);
+
+            // Get mouse position
+            var screenPoint = lParam.ToInt32();
+            var x = (short)(screenPoint & 0xFFFF);
+            var y = (short)((screenPoint >> 16) & 0xFFFF);
+
+            GetWindowRect(hWnd, out var rect);
+
+            const int borderWidth = 8; // Invisible hit area for resize
+
+            var leftDist = x - rect.Left;
+            var rightDist = rect.Right - x;
+            var topDist = y - rect.Top;
+            var bottomDist = rect.Bottom - y;
+
+            bool isLeft = leftDist < borderWidth;
+            bool isRight = rightDist < borderWidth;
+            bool isTop = topDist < borderWidth;
+            bool isBottom = bottomDist < borderWidth;
+
+            // Return corner resize handles (only corners, not edges)
+            if (isTop && isLeft) return new IntPtr(HTTOPLEFT);
+            if (isTop && isRight) return new IntPtr(HTTOPRIGHT);
+            if (isBottom && isLeft) return new IntPtr(HTBOTTOMLEFT);
+            if (isBottom && isRight) return new IntPtr(HTBOTTOMRIGHT);
+
+            // Block edge resizing
+            if (isLeft || isRight || isTop || isBottom)
+                return new IntPtr(1); // HTCLIENT
+
+            return result;
+        }
+
+        return CallWindowProc(_oldWndProc, hWnd, msg, wParam, lParam);
+    }
+}
+```
+
+**Key Points:**
+
+1. **Timing Issue**: Border removal must be triggered AFTER window activation using the `Activated` event
+2. **WM_NCCALCSIZE**: Return `IntPtr.Zero` to make entire window client area
+3. **WM_NCHITTEST**: Create invisible 8px border for resize detection
+4. **DWM Margins**: Set to -1 to extend frame into entire client area
+5. **Window Styles**: Remove `WS_CAPTION` but keep `WS_THICKFRAME` for resizing
+6. **Corner-Only Resize**: Manually detect corner positions in hit testing
+
+**Common Pitfalls:**
+- ❌ Removing borders before window activation - won't work
+- ❌ Not preserving `WS_THICKFRAME` - loses resize capability
+- ❌ Forgetting DWM extension - leaves visible borders
+- ❌ Not handling WM_NCHITTEST - no resize handles
+
+### Square Aspect Ratio Window Enforcement
+
+**Challenge:** Force a window to maintain a square aspect ratio during resize operations.
+
+**Key Problem:** Restricting to corner-only resize doesn't automatically maintain square shape - users can still create rectangles.
+
+**✅ Solution:**
+
+```csharp
+// Add to WndProc in the borderless window implementation above
+private const int WM_SIZING = 0x0214;
+
+private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+{
+    // ... WM_NCCALCSIZE and WM_NCHITTEST handlers ...
+
+    // Enforce square aspect ratio during resize
+    if (msg == WM_SIZING)
+    {
+        var rect = Marshal.PtrToStructure<RECT>(lParam);
+        var size = Math.Max(rect.Width, rect.Height);
+        var edge = wParam.ToInt32();
+
+        // Adjust based on which corner is being dragged
+        switch (edge)
+        {
+            case 1: // WMSZ_LEFT
+            case 4: // WMSZ_TOPLEFT
+            case 7: // WMSZ_BOTTOMLEFT
+                rect.Left = rect.Right - size;
+                rect.Bottom = rect.Top + size;
+                break;
+
+            case 2: // WMSZ_RIGHT
+            case 5: // WMSZ_TOPRIGHT
+            case 8: // WMSZ_BOTTOMRIGHT
+                rect.Right = rect.Left + size;
+                rect.Bottom = rect.Top + size;
+                break;
+
+            case 3: // WMSZ_TOP
+            case 6: // WMSZ_BOTTOM
+                rect.Right = rect.Left + size;
+                rect.Bottom = rect.Top + size;
+                break;
+        }
+
+        Marshal.StructureToPtr(rect, lParam, true);
+        return new IntPtr(1); // TRUE - we handled it
+    }
+
+    return CallWindowProc(_oldWndProc, hWnd, msg, wParam, lParam);
+}
+```
+
+**How It Works:**
+
+1. **WM_SIZING Message**: Intercepted during the resize operation (before applied)
+2. **Calculate Square Size**: Use `Math.Max(width, height)` to get target dimension
+3. **Adjust Rectangle**: Modify the proposed rectangle based on which corner is being dragged
+4. **Left/Bottom Corners**: Adjust left edge and bottom edge to maintain square
+5. **Right Corners**: Adjust right edge and bottom edge to maintain square
+6. **Write Back**: Marshal the modified rectangle back to the lParam
+
+**Key Points:**
+
+- Intercept `WM_SIZING` during resize, not after (no flicker)
+- Use larger dimension to ensure window doesn't shrink unexpectedly
+- Adjust edges based on resize direction to feel natural
+- Return `IntPtr(1)` to indicate we handled the message
+
+**Benefits:**
+- ✅ Real-time enforcement during resize
+- ✅ No flickering or jumping
+- ✅ Natural feel - grows in direction user drags
+- ✅ Works with corner-only resize pattern
+
+### Always-on-Top Windows
+
+**Challenge:** Keep a window floating above all other windows.
+
+**✅ Solution:**
+
+```csharp
+private void InitializeWindow()
+{
+    _hWnd = WindowNative.GetWindowHandle(this);
+    var windowId = Win32Interop.GetWindowIdFromWindow(_hWnd);
+    _appWindow = AppWindow.GetFromWindowId(windowId);
+
+    if (_appWindow != null)
+    {
+        var presenter = _appWindow.Presenter as OverlappedPresenter;
+        if (presenter != null)
+        {
+            presenter.IsAlwaysOnTop = true; // Keep window on top
+        }
+    }
+}
+```
+
+**Key Points:**
+- Use `OverlappedPresenter.IsAlwaysOnTop = true`
+- Window stays on top even when unfocused
+- Useful for timers, notifications, floating tools
+
+### Combining Patterns: Borderless + Square + Always-On-Top
+
+The complete implementation combines all three patterns:
+
+```csharp
+public sealed partial class TimerWindow : Window
+{
+    public TimerWindow()
+    {
+        this.InitializeComponent();
+        InitializeWindow();
+        this.Activated += TimerWindow_Activated;
+    }
+
+    private void InitializeWindow()
+    {
+        _hWnd = WindowNative.GetWindowHandle(this);
+        var windowId = Win32Interop.GetWindowIdFromWindow(_hWnd);
+        _appWindow = AppWindow.GetFromWindowId(windowId);
+
+        if (_appWindow != null)
+        {
+            _appWindow.Resize(new SizeInt32(200, 200));
+
+            var presenter = _appWindow.Presenter as OverlappedPresenter;
+            if (presenter != null)
+            {
+                presenter.SetBorderAndTitleBar(false, false); // Borderless
+                presenter.IsAlwaysOnTop = true;                // Float on top
+                presenter.IsResizable = true;                  // Allow resize
+                presenter.IsMaximizable = false;
+                presenter.IsMinimizable = false;
+            }
+        }
+
+        RemoveWindowBorders(); // DWM + window styles
+
+        // Hook WndProc for: WM_NCCALCSIZE, WM_NCHITTEST, WM_SIZING
+        _wndProcDelegate = new WndProcDelegate(WndProc);
+        _oldWndProc = GetWindowLongPtr(_hWnd, -4);
+        SetWindowLongPtr(_hWnd, -4, Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
+    }
+
+    private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+    {
+        if (msg == WM_NCCALCSIZE && wParam != IntPtr.Zero)
+            return IntPtr.Zero; // Borderless
+
+        if (msg == WM_NCHITTEST)
+        {
+            // ... corner-only resize hit testing ...
+        }
+
+        if (msg == WM_SIZING)
+        {
+            // ... square aspect ratio enforcement ...
+        }
+
+        return CallWindowProc(_oldWndProc, hWnd, msg, wParam, lParam);
+    }
+}
+```
+
+**Result:**
+- Completely borderless window
+- Always visible on top of other windows
+- Resizable from corners only
+- Maintains perfect square aspect ratio
+- No flicker, smooth resize experience
+
+**Use Cases:**
+- Floating timer displays
+- Always-visible notification panels
+- Picture-in-picture style windows
+- Widget-style UI elements

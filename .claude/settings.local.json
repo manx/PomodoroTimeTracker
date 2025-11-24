@@ -9,7 +9,12 @@
       "Bash(dotnet sln:*)",
       "Bash(dotnet build:*)",
       "Bash(dotnet ef database update:*)",
-      "mcp__dotnet__dotnet_build"
+      "mcp__dotnet__dotnet_build",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "mcp__git__status",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []
