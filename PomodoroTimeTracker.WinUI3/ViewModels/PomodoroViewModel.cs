@@ -71,7 +71,7 @@ public partial class PomodoroViewModel : ViewModelBase
     /// Maximum length for the objective text field.
     /// TODO: Move to configuration/settings in the future.
     /// </summary>
-    public const int ObjectiveMaxLength = 120;
+    public const int ObjectiveMaxLength = 90;
 
     private readonly IPomodoroSessionService _sessionService;
     private readonly IPomodoroSettingsService _settingsService;
