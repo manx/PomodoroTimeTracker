@@ -2,6 +2,19 @@
 
 This document contains technical notes, implementation details, and development history for the Pomodoro Time Tracker application.
 
+## Project Overview
+
+A WinUI 3 desktop application implementing the Pomodoro Technique with comprehensive time tracking capabilities. Built using Clean Architecture and MVVM patterns.
+
+### Technology Stack
+- **.NET 9.0** with C# 13
+- **WinUI 3** (Windows App SDK 1.8)
+- **Entity Framework Core 9.0** with SQLite
+- **CommunityToolkit.Mvvm** for MVVM helpers
+- **Microsoft.Extensions.Hosting** for dependency injection
+- **WinUIEx** library for borderless window support
+- **Native ARM64 support** for Windows 11
+
 ## Development Guidelines
 
 ### Git Operations
@@ -10,120 +23,342 @@ This document contains technical notes, implementation details, and development 
 - Use `mcp__git__bulk_action` for multiple sequential operations (stage + commit + push)
 - The MCP tools provide better integration and error handling
 
-## Recent Development Session (2025-01-20)
+### .NET Operations
+**IMPORTANT:** Always use dotnet MCP tools instead of bash commands:
+- Use `mcp__dotnet__dotnet_build` instead of `dotnet build`
+- Use `mcp__dotnet__dotnet_test` instead of `dotnet test`
+- Use `mcp__dotnet__dotnet_run` instead of `dotnet run`
+- MCP tools provide better integration and error handling
 
-### Wrap Up Period Implementation
+## Architecture
 
-Reworked the soft stop feature and renamed to "Wrap Up Period" for better clarity:
+### Project Structure
 
-**Previous Behavior (Confusing):**
-- "Soft stop alarm" triggered X minutes BEFORE the work period ended
-- Terminology was unclear and not intuitive
+**PomodoroTimeTracker.Domain** (Core Layer)
+- Business entities: `Client`, `Project`, `PomodoroSession`, `PomodoroSettings`, `TimeEntry`
+- Enums: `SessionType` (Work, ShortBreak, LongBreak)
+- Repository interfaces
+- No external dependencies
 
-**Current Behavior:**
-- Work period ends at intended duration (e.g., 25 min)
-- **Wrap up notification** plays when work period ends
-- **Wrap up period** begins, allowing user to finish current thought
-- Timer counts down the wrap up period (e.g., 3:00 → 2:59 → ... → 0:00)
-- Main alarm plays when wrap up period expires
-- Total time = Work Duration + Wrap Up Period
+**PomodoroTimeTracker.Application** (Business Logic Layer)
+- DTOs for data transfer
+- Service interfaces and implementations:
+  - `IPomodoroSessionService` - Session CRUD and tracking
+  - `IPomodoroSettingsService` - Settings management
+  - `IClientService` - Client management
+  - `IProjectService` - Project management with client filtering
+  - `ITimeEntryService` - Manual time entry (structure in place)
+  - `IStatisticsService` - Reporting (structure in place)
+- References: Domain only
 
-**Terminology:**
-- **Wrap Up Period** - Extra time after work ends to finish up
-- **Wrap Up Notification** - Gentle sound when work period completes
-- **Main Alarm** - Louder alarm when wrap up period expires (break must start)
+**PomodoroTimeTracker.Infrastructure** (Data Layer)
+- Entity Framework Core configurations
+- Repository implementations
+- Unit of Work pattern
+- SQLite database provider
+- Automatic migrations on startup
+- References: Domain, Application
 
-**Implementation Details:**
+**PomodoroTimeTracker.WinUI3** (Presentation Layer)
+- MVVM pattern with ViewModels
+- XAML views and pages
+- UI services: NavigationService, DialogService
+- Timer window with advanced features
+- References: Application (not Infrastructure directly)
 
-**Timer States:**
-- Added `WrapUp` state to `PomodoroState` enum
-- State flow: Setup → Running → WrapUp → Break → (repeat)
-- During WrapUp, pause/resume/stop buttons remain active
+### Architectural Patterns
 
-**Timer Logic:**
-```csharp
-// When work period ends (remainingSeconds == 0 in Running state)
-- Trigger wrap up notification
-- Transition to WrapUp state
-- Reset countdown to wrap up period duration
-- Display "Wrap Up Period" label
-- Show informational InfoBar
+**Clean Architecture**
+- Domain-driven design
+- Dependency inversion (inner layers independent of outer)
+- Separation of concerns
+- Repository pattern for data access
+- Unit of Work for transaction management
 
-// When wrap up period ends (remainingSeconds <= 0 in WrapUp state)
-- Trigger main alarm
-- Mark session as completed
-- Start appropriate break
+**MVVM (Model-View-ViewModel)**
+- ViewModelBase using `CommunityToolkit.Mvvm`
+- `RelayCommand` and `AsyncRelayCommand` for actions
+- Explicit state properties (no value converters)
+- Property change notifications cascade to dependent properties
+- Dialog callback pattern for UI separation
+
+**Design Decision: No Value Converters**
+- Use explicit ViewModel boolean properties instead of XAML converters
+- More straightforward and readable
+- Easier to debug
+- Better IDE support
+- WinUI 3's x:Bind handles bool→Visibility automatically
+- Documented in: DESIGN_GUIDELINES.md
+
+### Data Flow
+```
+User Action → ViewModel Command → Application Service →
+Repository → Database → back through layers → UI Update
 ```
 
-**Session Tracking:**
-- Sessions created at start record intended work duration (e.g., 25 min)
-- Actual work time tracked via StartTime → EndTime
-- If stopped during wrap up period: marked as completed with note
-- If stopped during work: marked as partial with note
+### Dependency Injection
+```csharp
+// Scoped: DbContext, Repositories, Services
+services.AddScoped<IPomodoroSessionService, PomodoroSessionService>();
+services.AddScoped<IPomodoroSettingsService, PomodoroSettingsService>();
+services.AddScoped<IClientService, ClientService>();
+services.AddScoped<IProjectService, ProjectService>();
 
-**UI Updates:**
-- Added InfoBar during wrap up period: "Work time complete! You can continue working during this wrap up period to finish your current thought."
-- Session label shows "Wrap Up Period" during wrap up
-- Progress ring resets and counts down wrap up period
-- Settings page: "Wrap Up Period Duration" and "Wrap Up Notification Volume"
+// Transient: ViewModels
+services.AddTransient<PomodoroViewModel>();
+services.AddTransient<PomodoroSettingsViewModel>();
+services.AddTransient<ClientListViewModel>();
+services.AddTransient<ClientDetailViewModel>();
+services.AddTransient<ProjectListViewModel>();
+services.AddTransient<ProjectDetailViewModel>();
 
-**Database Schema:**
+// Singleton: UI Services
+services.AddSingleton<INavigationService, NavigationService>();
+services.AddSingleton<IDialogService, DialogService>();
+
+// Helper Method
+public static T GetService<T>() where T : class
+{
+    return Services.GetRequiredService<T>();
+}
+```
+
+## Database Schema
+
+### Entities and Relationships
+
+**Client**
+- `Id` (PK)
+- `Name` (200 chars, unique, indexed)
+- `Description` (1000 chars, nullable)
+- `CreatedAt` (DateTime)
+- **Navigation**: `Projects` (1-to-many)
+
+**Project**
+- `Id` (PK)
+- `Name` (200 chars, unique per client)
+- `Description` (1000 chars, nullable)
+- `ClientId` (FK, nullable)
+- `CreatedAt` (DateTime)
+- **Navigation**: `Client`, `PomodoroSessions`, `TimeEntries`
+- **Index**: Composite unique (Name, ClientId)
+
+**PomodoroSession**
+- `Id` (PK)
+- `ProjectId` (FK, nullable)
+- `StartTime` (DateTime, indexed)
+- `EndTime` (DateTime, nullable for active sessions)
+- `DurationMinutes` (int, planned duration)
+- `IsCompleted` (bool)
+- `SessionType` (enum: Work/ShortBreak/LongBreak)
+- `Objective` (string, 90 chars max, session goal)
+- `Notes` (string, 500 chars, nullable)
+- **Navigation**: `Project`
+
+**PomodoroSettings** (Singleton)
+- `Id` (PK)
+- `WorkDurationMinutes` (default: 25)
+- `ShortBreakDurationMinutes` (default: 5)
+- `LongBreakDurationMinutes` (default: 15)
+- `LongBreakInterval` (default: 4)
+- `ShowNotification` (default: true)
+- `PlaySound` (default: true)
+- `FlashWindow` (default: false)
+- `WrapUpPeriodMinutes` (default: 3)
+- `WrapUpNotificationVolume` (0-100, default: 50)
+- `UseAlarm` (default: true)
+- `AlarmVolume` (0-100, default: 50)
+- `LastModified` (DateTime)
+
+**TimeEntry**
+- `Id` (PK)
+- `ProjectId` (FK, nullable)
+- `Description` (500 chars)
+- `StartTime` (DateTime, indexed)
+- `EndTime` (DateTime, nullable for running entries)
+- `DurationMinutes` (int, nullable)
+- `CreatedAt` (DateTime)
+- **Navigation**: `Project`
+
+**Cascade Delete Rules**
+- Client deletion → Projects set ClientId to NULL
+- Project deletion → Sessions/TimeEntries set ProjectId to NULL
+
+### Migration History
+
+**20251119194358_InitialCreate**
+- Created all 5 tables
+- Established relationships and indexes
+- Initial schema with Objective and WrapUpPeriod fields
+
+**20251120133403_RenameToWrapUpTerminology**
 - Renamed `SoftStopDurationMinutes` → `WrapUpPeriodMinutes`
 - Renamed `SoftStopAlarmVolume` → `WrapUpNotificationVolume`
-- Migration: `20251120133403_RenameToWrapUpTerminology`
+- Improved terminology clarity
 
-**Settings Configuration:**
-- "Wrap Up Period Duration (minutes)" - default 3 min
-- "Wrap Up Notification Volume" - plays when work ends
-- Description: "Extra time after work period ends to finish your current thought. Wrap up notification plays when work ends, main alarm plays when wrap up period expires."
-
-## Previous Development Session (2025-01-19)
-
-### Pomodoro Timer Implementation
-
-Implemented complete Pomodoro timer functionality with the following workflow:
-
-#### Workflow Design
-
-**Break Cycle Pattern:**
+**Database Location**
 ```
-Pomodoro #1 � Short Break � Pomodoro #2 � Short Break �
-Pomodoro #3 � Short Break � Pomodoro #4 � Long Break � (repeat)
+%LocalAppData%\PomodoroTimeTracker\pomodoro.db
 ```
 
-**Session Start Flow:**
-1. User selects Client (optional, remembers last)
-2. User selects Project from that client (optional, remembers last)
-3. User enters Objective (required, 60-120 characters)
-4. User can adjust Duration (default from settings)
-5. Start button enabled only when Objective is filled
+## Core Features
 
-**Timer States:**
+### Pomodoro Timer (Fully Implemented)
+
+**Workflow Pattern**
+```
+Work #1 → Short Break → Work #2 → Short Break →
+Work #3 → Short Break → Work #4 → Long Break → (cycle repeats)
+```
+
+**Session Start Flow**
+1. Select Client (optional, remembers last selection)
+2. Select Project from that client (optional, remembers last selection)
+3. Enter Objective (required, 90 characters max)
+4. Adjust Duration if needed (defaults from settings)
+5. Click Start (enabled only when Objective is filled)
+
+**Timer States**
 - **Setup**: Configuring new session
 - **Running**: Timer actively counting down work period
 - **Paused**: Timer stopped, can be resumed
 - **WrapUp**: Wrap up period after work completes (allows finishing current thought)
-- **Break**: Automatic break period (no pause/stop controls)
+- **Break**: Automatic break period (no pause/stop controls available)
 
-**Stop Button Behavior:**
+**State Flow**: Setup → Running → WrapUp → Break → Setup (repeat)
+
+**Stop Button Behavior**
 When Stop is pressed during a running session:
-- Timer automatically pauses
-- Dialog shows with 3 options:
-  - **Resume**: Continue as if only paused
-  - **Save**: Save partial session with "Stopped early at XX:XX" note
-  - **Discard**: Delete session entirely
+1. Timer automatically pauses
+2. Dialog appears with 3 options:
+   - **Resume**: Continue as if only paused
+   - **Save**: Save partial session with "Stopped early at XX:XX" note
+   - **Discard**: Delete session entirely from database
 
-#### Technical Implementation
+**Break Cycle Management**
+- Tracks position in 4-pomodoro cycle using `_pomodoroCount` (0-3)
+- Short break after pomodoros 1-3
+- Long break after pomodoro 4
+- Counter resets to 0 after long break
 
-**PomodoroViewModel.cs:**
-- State management with explicit boolean properties (no converters)
+### Wrap Up Period Feature
+
+**Purpose**: Extra time after work period ends to finish your current thought without counting as overtime.
+
+**Behavior**
+- Work period ends at intended duration (e.g., 25 minutes)
+- **Wrap up notification** plays (gentle sound, low volume)
+- **Wrap up period** begins (default: 3 minutes)
+- Timer counts down: 3:00 → 2:59 → ... → 0:00
+- **Main alarm** plays when wrap up period expires
+- Break must start after wrap up period expires
+- Total time = Work Duration + Wrap Up Period
+
+**UI During Wrap Up**
+- InfoBar message: "Work time complete! You can continue working during this wrap up period to finish your current thought."
+- Session label shows "Wrap Up Period"
+- Progress ring resets and counts down wrap up period
+- Pause/Resume/Stop buttons remain active
+
+**Session Tracking**
+- Sessions record intended work duration (e.g., 25 min)
+- Actual work time tracked via StartTime → EndTime
+- If stopped during wrap up: marked as completed with note
+- If stopped during work: marked as partial with note
+
+**Settings**
+- Wrap Up Period Duration (minutes) - default 3 min
+- Wrap Up Notification Volume (0-100) - default 50
+
+### Timer Window (Advanced Features)
+
+**Design** (Updated 2025-01-24)
+- Ultra-compact always-on-top window (150x50 pixels)
+- Truly borderless design using `DwmExtendFrameIntoClientArea` and `WM_NCCALCSIZE`
+- Horizontal layout: narrow vertically, wide horizontally
+- Minimal margins for maximum compactness
+- Draggable via entire window surface
+- Resizable from all edges and corners
+
+**Layout**
+- Timer text centered (Consolas, 24pt)
+- Objective shown only on hover via tooltip
+- Rectangular progress bar (red #E74C3C, 30% opacity)
+- Progress fills left-to-right as time counts down
+
+**Features**
+- **Rectangular Progress Bar**: Fills from left to right, full window height
+- **Tooltip Objective**: Hover over timer to see session objective
+- **Right-Click Context Menu**:
+  - Pause/Resume timer
+  - Stop with submenu (Save/Discard/Resume)
+  - Add Time (+1, +2, +5 minutes)
+- **Custom Win32 Integration**: Borderless window implementation
+
+**Technical Implementation**
+- `DwmExtendFrameIntoClientArea` with margins set to -1 for full frame extension
+- `WM_NCCALCSIZE` handler returns 0 to remove non-client area
+- `SetWindowPos` with `SWP_FRAMECHANGED` to fix initial display issues
+- No white bars or borders visible
+- Position: Top-right corner (TODO: Move to top-left, close to edges)
+
+### Pomodoro Settings
+
+**Timer Durations**
+- Work duration: 1-120 minutes (default: 25)
+- Short break: manual or auto-calculated (default: 5)
+- Long break: manual or auto-calculated (default: 15)
+- Long break interval: pomodoros before long break (default: 4)
+- Wrap up period: extra time after work ends (default: 3)
+
+**Audio Settings**
+- Wrap up notification volume: 0-100% (default: 50)
+- Main alarm volume: 0-100% (default: 50)
+- Use alarm: enable/disable main alarm (default: true)
+- Play sound: enable/disable all sounds (default: true)
+
+**Notification Settings**
+- Show notification: Windows toast notifications (default: true)
+- Flash window: flash on completion (default: false)
+
+**Auto-Calculate Feature**
+- Button to auto-calculate break durations from work duration
+- Short break = work duration ÷ 5
+- Long break = (work duration ÷ 5) × 3
+- Example: 25 min work → 5 min short, 15 min long
+
+### Client & Project Management
+
+**Features**
+- Full CRUD operations for Clients and Projects
+- Client list with search/filter
+- Project list filtered by client
+- Detail pages for editing
+- Navigation between related entities
+- One-to-many relationship (Client → Projects)
+- Optional client association for projects
+- Database relationships maintained through EF Core
+
+**Navigation Structure**
+- ClientListPage → ClientDetailPage (create/edit)
+- ProjectListPage → ProjectDetailPage (create/edit)
+- Cascade behavior: deleting client sets project's ClientId to NULL
+
+## Implementation Details
+
+### PomodoroViewModel.cs
+
+**Responsibilities**
+- Complete timer logic (~700+ lines)
+- State management with explicit boolean properties
 - Timer using `DispatcherQueueTimer` (WinUI 3 recommended)
-- Break cycle tracking with `_pomodoroCount` (0-3)
-- Wrap up period after work completes
-- Async dialog callback pattern for UI separation
+- Break cycle tracking
+- Session CRUD via service layer
+- Async dialog callback pattern
 
-**Key Properties:**
+**Key Properties**
 ```csharp
+public PomodoroState State { get; set; }  // Triggers dependent property notifications
 public bool IsSetupState => State == PomodoroState.Setup;
 public bool IsRunningState => State == PomodoroState.Running;
 public bool IsPausedState => State == PomodoroState.Paused;
@@ -134,14 +369,16 @@ public bool IsClientSelected => SelectedClient != null;
 public string PauseResumeText => IsPausedState ? "Resume" : "Pause";
 ```
 
-**PomodoroPage.xaml:**
-- Two main views: Setup screen and Running timer
-- Visibility controlled by state properties
-- Progress ring for visual timer feedback
-- Objective display during work sessions
-- Control buttons (Pause/Resume, Stop) hidden during breaks
+**Timer Implementation**
+```csharp
+_timer = _dispatcherQueue.CreateTimer();
+_timer.Interval = TimeSpan.FromSeconds(1);
+_timer.Tick += Timer_Tick;
 
-**Dialog Pattern:**
+// Runs on UI thread automatically, no dispatcher invoke needed
+```
+
+**Dialog Callback Pattern**
 ```csharp
 // In ViewModel
 public Func<Task<StopDialogResult>>? ShowStopDialog { get; set; }
@@ -157,173 +394,79 @@ private async Task<StopDialogResult> ShowStopConfirmationDialogAsync()
 }
 ```
 
-### Settings Configuration
+### PomodoroPage.xaml
 
-**PomodoroSettings Entity:**
-- Work duration (default: 25 min)
-- Short break duration (default: 5 min)
-- Long break duration (default: 15 min)
-- Long break interval (default: every 4 pomodoros)
-- Wrap up period duration (default: 3 min) - Time allowed to finish up after work period ends
-- Wrap up notification volume (0-100) - Plays when work period ends
-- Main alarm volume (0-100) - Plays when wrap up period expires
-- Notification preferences (show, sound, flash)
+**Structure**
+- Two main views: Setup screen and Running timer
+- Visibility controlled by state properties (no converters)
+- Progress ring for visual timer feedback
+- Objective text display during work sessions
+- Control buttons (Pause/Resume, Stop) hidden during breaks
+- InfoBar for wrap up period message
 
-**Auto-calculate Feature:**
-- Short break = Work duration / 5
-- Long break = (Work duration / 5) * 3
-- Button to apply these calculations automatically
+**Data Binding**
+- Uses x:Bind for performance and compile-time checking
+- Binds directly to ViewModel boolean properties
+- No need for value converters
 
-### Database Schema Updates
+### UI Pages
 
-**Migrations Applied:**
-1. `AddSoftStopDurationMinutes` - Added configurable soft stop timing
-2. `RemoveUseSoftStopAlarm` - Removed enable/disable toggle
-3. `AddObjectiveToPomodoroSession` - Added objective field to sessions
+**Implemented**
+- **PomodoroPage**: Main timer with setup form and running display
+- **TimerWindow**: Compact floating timer with context menu
+- **PomodoroSettingsPage**: Settings configuration UI
+- **ClientListPage**: Client management list
+- **ClientDetailPage**: Client create/edit form
+- **ProjectListPage**: Project management list
+- **ProjectDetailPage**: Project create/edit form
+- **MainWindow**: Application shell with NavigationView
 
-**PomodoroSession Entity Changes:**
-```csharp
-public string? Objective { get; set; }  // NEW: Session objective/goal
-```
-
-**PomodoroSettings Entity Changes:**
-```csharp
-public int SoftStopDurationMinutes { get; set; } = 3;  // NEW
-// REMOVED: public bool UseSoftStopAlarm { get; set; }
-```
-
-### Design Decision: No Value Converters
-
-**Decision:** Use explicit ViewModel properties instead of XAML value converters
-
-**Rationale:**
-- More straightforward and readable
-- Easier to debug (can inspect values)
-- No extra converter classes to maintain
-- Clear intent through property names
-- Better IDE support (IntelliSense, refactoring)
-- WinUI 3's x:Bind handles bool�Visibility automatically
-
-**Documented in:** DESIGN_GUIDELINES.md
-
-### Dependency Injection Setup
-
-**Registered Services:**
-```csharp
-// Application Services (Scoped)
-services.AddScoped<IPomodoroSessionService, PomodoroSessionService>();
-services.AddScoped<IPomodoroSettingsService, PomodoroSettingsService>();
-services.AddScoped<IClientService, ClientService>();
-services.AddScoped<IProjectService, ProjectService>();
-
-// ViewModels (Transient)
-services.AddTransient<PomodoroViewModel>();
-services.AddTransient<PomodoroSettingsViewModel>();
-
-// Helper Method
-public static T GetService<T>() where T : class
-{
-    return Services.GetRequiredService<T>();
-}
-```
-
-## Architecture Patterns
-
-### MVVM Implementation
-
-**ViewModel Base:**
-```csharp
-public abstract class ViewModelBase : ObservableObject { }
-```
-
-Using `CommunityToolkit.Mvvm` for:
-- `ObservableObject` base class
-- `RelayCommand` and `AsyncRelayCommand`
-- Property change notifications
-
-**State Management:**
-- State properties trigger multiple property notifications
-- Command `CanExecute` updates on state changes
-- UI binds to computed boolean properties
-
-### Clean Architecture Layers
-
-**Domain � Application � Infrastructure � Presentation**
-
-**Key Principles:**
-- Domain has no dependencies
-- Application references Domain only
-- Infrastructure implements interfaces from Domain
-- Presentation references Application (not Infrastructure directly)
-- DI container wires everything together
-
-### Data Flow
-
-```
-User Action � ViewModel Command � Application Service �
-Repository � Database � back through layers � UI Update
-```
-
-**Example: Starting Pomodoro**
-```
-1. User clicks Start
-2. StartPomodoroCommand executes
-3. Creates CreatePomodoroSessionDto
-4. PomodoroSessionService.CreateSessionAsync()
-5. Maps to PomodoroSession entity
-6. PomodoroSessionRepository.AddAsync()
-7. SaveChanges commits to database
-8. Returns PomodoroSessionDto
-9. ViewModel updates state
-10. UI reflects new state via bindings
-```
+**Planned** (structure exists but not implemented)
+- Dashboard view
+- Time Entry view
+- Statistics view
 
 ## Technical Challenges & Solutions
 
 ### Challenge 1: Timer Precision on UI Thread
 
-**Problem:** Need accurate 1-second timer that updates UI
+**Problem**: Need accurate 1-second timer that updates UI without blocking
 
-**Solution:** `DispatcherQueueTimer` from WinUI 3
+**Solution**: `DispatcherQueueTimer` from WinUI 3
 - Runs on UI thread automatically
-- No need for dispatcher invoke
+- No need for manual dispatcher invoke
 - Clean start/stop API
-
-```csharp
-_timer = _dispatcherQueue.CreateTimer();
-_timer.Interval = TimeSpan.FromSeconds(1);
-_timer.Tick += Timer_Tick;
-```
+- Acceptable for 1-second intervals
 
 ### Challenge 2: Dialog from ViewModel
 
-**Problem:** ViewModel shouldn't directly create dialogs (violates MVVM)
+**Problem**: ViewModel shouldn't directly create dialogs (violates MVVM and testability)
 
-**Solution:** Callback pattern
+**Solution**: Callback pattern
 - ViewModel exposes `Func<Task<TResult>>` property
 - Page sets the callback in code-behind
 - ViewModel calls callback when needed
-- Keeps ViewModel testable
+- Keeps ViewModel testable and UI-agnostic
 
 ### Challenge 3: Break Cycle Management
 
-**Problem:** Track position in 4-pomodoro cycle
+**Problem**: Track position in 4-pomodoro cycle and determine break type
 
-**Solution:** Simple counter (0-3)
+**Solution**: Simple counter variable
 ```csharp
-private int _pomodoroCount = 0;  // Current position in cycle
+private int _pomodoroCount = 0;  // Current position in cycle (0-3)
 
 // After completing pomodoro
 _pomodoroCount++;
 bool isLongBreak = _pomodoroCount >= 4;
-if (isLongBreak) _pomodoroCount = 0;  // Reset
+if (isLongBreak) _pomodoroCount = 0;  // Reset cycle
 ```
 
-### Challenge 4: Multiple State Properties
+### Challenge 4: Multiple State-Dependent Properties
 
-**Problem:** Many UI elements depend on state
+**Problem**: Many UI elements depend on timer state
 
-**Solution:** Computed properties with notifications
+**Solution**: Computed properties with cascading notifications
 ```csharp
 public PomodoroState State
 {
@@ -336,126 +479,249 @@ public PomodoroState State
             OnPropertyChanged(nameof(IsSetupState));
             OnPropertyChanged(nameof(IsRunningState));
             OnPropertyChanged(nameof(IsPausedState));
-            // ... etc
+            OnPropertyChanged(nameof(IsWrapUpState));
+            OnPropertyChanged(nameof(IsBreakState));
+            OnPropertyChanged(nameof(IsNotBreakState));
+
+            // Update command states
+            StartPomodoroCommand.NotifyCanExecuteChanged();
+            PauseResumeCommand.NotifyCanExecuteChanged();
+            StopPomodoroCommand.NotifyCanExecuteChanged();
         }
     }
 }
 ```
 
-## File Structure
+### Challenge 5: Borderless Window Transparency
 
-### New Files Created
+**Problem**: WinUI 3 shows white bar at top of borderless windows
 
-**ViewModels:**
-- `PomodoroViewModel.cs` - Complete timer logic (450+ lines)
-- `PomodoroSettingsViewModel.cs` - Settings management
+**Solution**: WinUIEx library workaround
+- Provides `WindowEx` base class
+- Better control over window styling
+- TODO: Check if Microsoft has fixed this in newer versions
 
-**Views:**
-- `PomodoroPage.xaml` - Timer UI with setup and running views
-- `PomodoroPage.xaml.cs` - Dialog callback implementation
-- `PomodoroSettingsPage.xaml` - Settings configuration UI
+## Current Status
 
-**Migrations:**
-- `20251119092236_AddSoftStopDurationMinutes.cs`
-- `20251119093443_RemoveUseSoftStopAlarm.cs`
-- `20251119094143_AddObjectiveToPomodoroSession.cs`
+### Fully Implemented ✅
 
-**Documentation:**
-- `DESIGN_GUIDELINES.md` - Design patterns and decisions
+**Core Functionality**
+- Complete Pomodoro workflow with 4-cycle breaks
+- All 5 timer states (Setup/Running/Paused/WrapUp/Break)
+- Session tracking with objectives (90 char max)
+- Client/Project association with memory
+- Pause/Resume functionality
+- Stop with save/discard/resume options
+- Wrap up period implementation
+- Timer window with advanced features
+- Settings configuration with auto-calculate
 
-### Modified Files
+**Data Layer**
+- Complete database schema
+- EF Core configurations
+- Migrations system working
+- Repository pattern implemented
+- Unit of Work pattern
+- Automatic migration on startup
 
-**Domain:**
-- `PomodoroSession.cs` - Added Objective field
-- `PomodoroSettings.cs` - Added SoftStopDurationMinutes, removed UseSoftStopAlarm
+**UI Layer**
+- MVVM pattern throughout
+- All ViewModels implemented
+- Client/Project CRUD pages
+- Pomodoro timer and settings pages
+- Compact timer window
+- Navigation system
+- Dialog service
 
-**Application:**
-- `PomodoroSessionDto.cs` - Added Objective to all DTOs
-- `PomodoroSessionService.cs` - Updated mapping for Objective
-- `PomodoroSettingsService.cs` - Updated for soft stop changes
+### Incomplete / TODO ⚠️
 
-**Infrastructure:**
-- `PomodoroSettingsConfiguration.cs` - Updated EF configuration
+**Sound/Alarm Implementation** (HIGH PRIORITY)
+- Wrap up notification sound (TODO line 685-686 in PomodoroViewModel)
+- Main alarm sound (TODO line 693-694 in PomodoroViewModel)
+- Currently just Debug.WriteLine statements
+- Volume settings exist but not used
+- Need to implement audio playback
 
-**Presentation:**
-- `App.xaml` - Removed converter registrations
-- `App.xaml.cs` - Added PomodoroViewModel registration, GetService helper
+**Windows Notifications** (MEDIUM PRIORITY)
+- Toast notification integration
+- FlashWindow implementation
+- Settings exist but not implemented
 
-## Testing Notes
+**Testing** (HIGH PRIORITY)
+- No unit tests for PomodoroViewModel
+- No integration tests for service layer
+- Need comprehensive test coverage
 
-### Manual Test Checklist
+**Error Handling** (MEDIUM PRIORITY)
+- Some basic try-catch but needs user-friendly messages
+- TODO comments in PomodoroSettingsViewModel
+- Need consistent error handling strategy
 
-**Pomodoro Start:**
-- [ ] Client dropdown populated
-- [ ] Last client pre-selected
-- [ ] Project dropdown filtered by client
-- [ ] Last project pre-selected
-- [ ] Objective field required
+**UI Pages Not Implemented** (LOW PRIORITY)
+- Dashboard view (structure exists)
+- Time Entry view (structure exists)
+- Statistics view (structure exists)
+
+**Known Issues**
+- WinUI 3 borderless window white bar (framework limitation, using WinUIEx workaround)
+
+## Recent Development History
+
+### TimerWindow Redesign to Horizontal Layout (2025-01-24)
+- Complete redesign from circular (200x200) to compact horizontal (150x50) layout
+- Changed progress indicator from circular arc to rectangular bar filling left-to-right
+- Moved objective from always-visible to tooltip (shows on hover only)
+- Removed square aspect ratio enforcement, allowing free window resizing
+- Implemented truly borderless window:
+  - `DwmExtendFrameIntoClientArea` with -1 margins for full frame extension
+  - `WM_NCCALCSIZE` handler to remove non-client area
+  - `SetWindowPos` with `SWP_FRAMECHANGED` to fix initial white bar issue
+- Reduced window dimensions for minimal desktop footprint
+- Reduced margins (6px horizontal, 2px vertical) and font size (24pt)
+- Commit: 3dc11b0
+
+### UI Spacing and Alternative Button Styles (2025-01-24)
+- Doubled button spacing in PomodoroPage from 16px to 32px
+- Added alternative button styles to App.xaml:
+  - `PomodoroButtonStyle`: Warm gray (#5A5A5A) base style
+  - `PomodoroAccentButtonStyle`: Red accent (#E74C3C) matching progress bar
+- Styles available for future use but currently using default blue
+- Commit: 3d6972b
+
+### UI Layout Improvements (Previous commits)
+- Container-based layout for timer alignment (f9f0277)
+- Removed stray characters from XAML (9d63cb4)
+- Spacing adjustments between timer and buttons (ddc8ffc, 39de27e)
+
+### WinUIEx Integration
+- Added WinUIEx package for borderless window support (a0b602d)
+- Improved window transparency handling
+
+### Objective Field Refinements
+- Reduced max length from 120 to 90 characters (709a7fc)
+- Increased field height for better UX (8c6ed6f)
+- Improved character counter display (98413b0)
+- Extracted OBJECTIVE_MAX_LENGTH constant (11eb1d0)
+
+### Timer Window Enhancements
+- Added circular progress meter with Time Timer style (27c62cf)
+- Simplified objective display (5da40a7)
+- Show objective in timer window during work sessions (a503ce9)
+
+### App Close Confirmation
+- Added confirmation dialog when closing with active session (56aed49)
+- Cleanup of unused files
+
+### Compact Timer Window
+- Implemented always-on-top timer window (d0f6541)
+- Added right-click context menu functionality
+- Draggable and resizable with square aspect ratio
+
+## Testing Checklist
+
+### Pomodoro Start
+- [ ] Client dropdown populated from database
+- [ ] Last selected client pre-selected
+- [ ] Project dropdown filtered by selected client
+- [ ] Last selected project pre-selected
+- [ ] Objective field required (90 chars max)
 - [ ] Start button disabled without objective
-- [ ] Duration editable
+- [ ] Duration editable before start
 
-**Pomodoro Running:**
-- [ ] Timer counts down correctly
-- [ ] Progress ring updates
-- [ ] Pause button works
-- [ ] Resume restores timer
-- [ ] Stop shows dialog
-- [ ] Resume from dialog continues
-- [ ] Save from dialog creates partial session
-- [ ] Discard from dialog deletes session
+### Pomodoro Running
+- [ ] Timer counts down correctly (1 second intervals)
+- [ ] Progress ring updates smoothly
+- [ ] Pause button works immediately
+- [ ] Resume restores timer exactly
+- [ ] Stop shows confirmation dialog
+- [ ] Resume from dialog continues timer
+- [ ] Save from dialog creates partial session with note
+- [ ] Discard from dialog deletes session from database
 
-**Break Cycle:**
+### Wrap Up Period
+- [ ] Wrap up notification plays when work period ends
+- [ ] Timer transitions to WrapUp state
+- [ ] InfoBar message displays correctly
+- [ ] Progress ring resets and counts down wrap up period
+- [ ] Pause/Resume/Stop buttons remain active
+- [ ] Main alarm plays when wrap up period expires
+- [ ] Break starts automatically after wrap up
+
+### Break Cycle
 - [ ] Short break after pomodoros 1-3
 - [ ] Long break after pomodoro 4
-- [ ] Cycle resets after long break
-- [ ] No pause/stop during breaks
-- [ ] Session type label correct
+- [ ] Cycle resets to 0 after long break
+- [ ] No pause/stop buttons during breaks
+- [ ] Session type label shows correct break type
+- [ ] Break duration matches settings
 
-**Settings:**
-- [ ] All settings save
-- [ ] Auto-calculate works
-- [ ] Defaults restore correctly
-- [ ] Settings persist between sessions
+### Timer Window
+- [ ] Window stays on top of other windows
+- [ ] Draggable via entire surface
+- [ ] Resizable from corners only
+- [ ] Maintains square aspect ratio
+- [ ] Progress meter decreases correctly
+- [ ] Right-click menu appears
+- [ ] Context menu commands work
+- [ ] Add time feature works (+1, +2, +5 min)
 
-## Future Improvements
+### Settings
+- [ ] All settings save to database
+- [ ] Auto-calculate feature works correctly
+- [ ] Defaults restore properly
+- [ ] Settings persist between app sessions
+- [ ] Changes immediately affect new sessions
 
-### Planned Features
-1. Sound/alarm implementation (currently just Debug.WriteLine)
-2. Notification integration (Windows toast notifications)
-3. Session history view
-4. Statistics dashboard
-5. Export session data
-6. Keyboard shortcuts (Space = pause/resume, Esc = stop)
-
-### Technical Debt
-1. TODO: Implement actual alarm sounds
-2. TODO: Add unit tests for PomodoroViewModel
-3. TODO: Add integration tests for service layer
-4. TODO: Error handling improvements (user-friendly messages)
-5. TODO: Navigation to Pomodoro page (currently not wired in MainWindow)
-6. TODO: Check if Microsoft has fixed WinUI 3 transparent borderless window issue (https://github.com/microsoft/microsoft-ui-xaml/issues/1247) - Currently there's a visible white bar at the top of the timer window that cannot be removed due to framework limitations. Using WinUIEx library as workaround.
-
-### Performance Considerations
-- Timer runs on UI thread (acceptable for 1-second intervals)
-- Consider background service for long-running tracking
-- Database queries are async (good)
-- Could add caching for clients/projects lists
+### Client & Project Management
+- [ ] CRUD operations work for clients
+- [ ] CRUD operations work for projects
+- [ ] Client filter works in project list
+- [ ] Deleting client sets project ClientId to NULL
+- [ ] Navigation between pages works
+- [ ] Data persists correctly
 
 ## Development Environment
 
+### Requirements
 - Visual Studio 2022 (or VS Code with C# Dev Kit)
 - .NET 9.0 SDK
 - Windows App SDK 1.8
+- Windows 11 (recommended, ARM64 supported)
+
+### Useful Tools
 - SQLite browser for database inspection
+- WinUI 3 Gallery app for reference
+- Git for version control
 
-**Useful Commands:**
+### MCP Commands (Preferred)
+
+**Git Operations**
+```csharp
+mcp__git__status()
+mcp__git__add({ files: ["path"] })
+mcp__git__commit({ message: "..." })
+mcp__git__push({ branch: "master" })
+mcp__git__bulk_action({ actions: [...] })
+```
+
+**.NET Operations**
+```csharp
+mcp__dotnet__dotnet_build({ configuration: "Debug" })
+mcp__dotnet__dotnet_run({ project: "PomodoroTimeTracker.WinUI3" })
+mcp__dotnet__dotnet_test()
+mcp__dotnet__dotnet_clean()
+```
+
+### Fallback Bash Commands
+
+**Build & Run**
 ```bash
-# Build
 dotnet build
-
-# Run
 dotnet run --project PomodoroTimeTracker.WinUI3
+```
 
+**Entity Framework Migrations**
+```bash
 # Create migration
 dotnet ef migrations add MigrationName --project PomodoroTimeTracker.Infrastructure --startup-project PomodoroTimeTracker.WinUI3
 
@@ -464,12 +730,47 @@ dotnet ef database update --project PomodoroTimeTracker.Infrastructure --startup
 
 # Remove last migration
 dotnet ef migrations remove --project PomodoroTimeTracker.Infrastructure --startup-project PomodoroTimeTracker.WinUI3
+
+# List migrations
+dotnet ef migrations list --project PomodoroTimeTracker.Infrastructure --startup-project PomodoroTimeTracker.WinUI3
 ```
 
-**Database Location:**
-```
-%LocalAppData%\PomodoroTimeTracker\pomodoro.db
-```
+## Future Roadmap
+
+### Immediate TODOs (Active)
+1. **Move TimerWindow to top-left corner** - Reposition with minimal margins from screen borders
+2. **Implement sound alarms** - Wrap up notification and main alarm (currently TODO in code)
+3. **Implement Dashboard view** - Home page with overview/summary
+4. **Implement Time Entry view** - Manual time tracking page
+5. **Implement Statistics view** - Reporting and analytics page
+
+### Short Term (Next Sprint)
+1. **Add unit tests** - Start with PomodoroViewModel
+2. **Improve error handling** - User-friendly messages throughout
+3. **Windows toast notifications** - Complete notification system
+4. **FlashWindow implementation** - Visual alert on completion
+
+### Medium Term
+1. Session history view with filtering and search
+2. Export session data (CSV, JSON)
+3. Keyboard shortcuts (Space = pause/resume, Esc = stop)
+4. Session notes editing after completion
+5. Button color scheme refinement (warm gray/red alternative styles available)
+
+### Long Term
+1. Cloud sync (OneDrive integration?)
+2. Multiple timer presets
+3. Task integration (Microsoft To Do?)
+4. Productivity reports and insights
+5. Calendar integration
+6. Team/collaboration features
+
+### Performance Optimizations (If Needed)
+- Timer runs on UI thread (currently acceptable)
+- Consider background service for long-running tracking
+- Database queries are async (good)
+- Could add caching for clients/projects lists
+- Consider virtual scrolling for large lists
 
 ## References
 
@@ -478,4 +779,33 @@ dotnet ef migrations remove --project PomodoroTimeTracker.Infrastructure --start
 - [MVVM Pattern](https://docs.microsoft.com/en-us/dotnet/architecture/maui/mvvm)
 - [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
 - [Pomodoro Technique](https://francescocirillo.com/pages/pomodoro-technique)
-- to memorize Always use dotnet MCP tools instead of bash
+- [Windows App SDK](https://docs.microsoft.com/en-us/windows/apps/windows-app-sdk/)
+- [CommunityToolkit.Mvvm](https://learn.microsoft.com/en-us/dotnet/communitytoolkit/mvvm/)
+- [WinUIEx Library](https://github.com/dotMorten/WinUIEx)
+
+## Contributing Guidelines
+
+### Code Style
+- Follow C# coding conventions
+- Use meaningful variable and method names
+- Add XML documentation comments for public APIs
+- Keep methods focused and single-purpose
+- Avoid magic numbers (use constants)
+
+### Commit Messages
+- Use imperative mood ("Add feature" not "Added feature")
+- Keep first line under 72 characters
+- Reference issue numbers when applicable
+- Group related changes in single commit
+
+### Pull Request Process
+1. Ensure all tests pass (when tests exist)
+2. Update documentation if needed
+3. Add entry to this file under "Recent Development History"
+4. Request review from maintainer
+
+---
+
+**Last Updated**: 2025-01-24
+**Current Version**: 1.0.0-beta
+**Status**: Active Development
