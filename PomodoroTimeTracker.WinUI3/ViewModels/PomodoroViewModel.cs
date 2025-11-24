@@ -257,9 +257,15 @@ public partial class PomodoroViewModel : ViewModelBase
             if (SetProperty(ref _objective, value))
             {
                 ((AsyncRelayCommand)StartPomodoroCommand).NotifyCanExecuteChanged();
+                OnPropertyChanged(nameof(ObjectiveCharacterCount));
             }
         }
     }
+
+    /// <summary>
+    /// Gets the character count display for the objective field (e.g., "25/120").
+    /// </summary>
+    public string ObjectiveCharacterCount => $"{Objective.Length}/120";
 
     /// <summary>
     /// Gets or sets the session duration in minutes.

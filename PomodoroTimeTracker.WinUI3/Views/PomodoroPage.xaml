@@ -76,7 +76,7 @@
                                 Height="16"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="{x:Bind ViewModel.Objective.Length, Mode=OneWay}"
+                                Text="{x:Bind ViewModel.ObjectiveCharacterCount, Mode=OneWay}"
                                 TextAlignment="Right" />
                         </StackPanel>
 
