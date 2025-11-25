@@ -1,0 +1,76 @@
+# ============================================
+# CI Build Pipeline
+# ============================================
+# Detta workflow bygger projektet vid varje push och PR
+# för att säkerställa att koden kompilerar korrekt
+
+name: CI Build
+
+# ============================================
+# När ska detta köra?
+# ============================================
+on:
+  push:
+    branches: [ main, master ]     # Kör när du pushar till main/master
+  pull_request:                    # Kör på alla pull requests
+    branches: [ main, master ]
+  workflow_dispatch:               # Tillåt manuell körning från GitHub UI
+
+# ============================================
+# Globala miljövariabler
+# ============================================
+env:
+  DOTNET_VERSION: '9.0.x'                    # Vilken .NET-version vi använder
+  BUILD_CONFIGURATION: Release                # Release build (optimerad)
+  SOLUTION_PATH: ./PomodoroTimeTracker.sln   # Sökväg till solution-fil
+
+# ============================================
+# Jobs - Vad ska göras?
+# ============================================
+jobs:
+  # ------------------------------------------
+  # JOB: Build and Test
+  # ------------------------------------------
+  build:
+    name: Build and Test                     # Visningsnamn i GitHub UI
+    runs-on: windows-latest                  # Kör på Windows (WinUI 3 kräver Windows)
+
+    steps:
+      # STEG 1: Hämta kod från repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0                     # Hämta all git-historik
+
+      # STEG 2: Installera .NET SDK
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # STEG 3: Visa installerad .NET-version (för debugging)
+      - name: Display .NET info
+        run: dotnet --info
+
+      # STEG 4: Restore NuGet packages
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+      # STEG 5: Build solution
+      - name: Build solution
+        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+      # STEG 6: Run tests (fortsätt även om tester failar eftersom vi inte har tester än)
+      - name: Run tests
+        run: dotnet test ${{ env.SOLUTION_PATH }} --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --verbosity normal
+        continue-on-error: true              # Fortsätt även om tester failar
+
+      # STEG 7: Upload build output som artifact (kan laddas ner från GitHub)
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pomodoro-build-${{ github.run_number }}
+          path: |
+            **/bin/${{ env.BUILD_CONFIGURATION }}/**
+            !**/*.pdb
+          retention-days: 30                 # Behåll i 30 dagar
