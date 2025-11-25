@@ -579,6 +579,242 @@ public async Task GetAllAsync_ReturnsAllSessions(int sessionCount)
 
 ---
 
+## Test Writing Guidelines
+
+When generating tests for a method or class, follow these principles:
+
+### 1. Generate 5-8 Focused Test Cases
+- **Quality over quantity** - Focus on the most important scenarios
+- **Coverage priority:**
+  1. Happy path (1-2 tests)
+  2. Most common error cases (2-3 tests)
+  3. Critical edge cases (2-3 tests)
+- **Don't test everything** - Focus on behavior that matters
+- **Avoid redundant tests** - Each test should validate something unique
+
+**Example: Good Coverage**
+```csharp
+public class CompleteSessionAsyncTests
+{
+    // 1. Happy path
+    [Fact]
+    public async Task WithValidId_CompletesSessionSuccessfully() { }
+
+    // 2. Common errors
+    [Fact]
+    public async Task WithNonExistentId_ThrowsNotFoundException() { }
+
+    [Fact]
+    public async Task WithAlreadyCompletedSession_ThrowsInvalidOperationException() { }
+
+    // 3. Edge cases
+    [Fact]
+    public async Task WithActiveSession_SetsEndTimeAndIsCompleted() { }
+
+    [Fact]
+    public async Task WithLongRunningSession_CalculatesDurationCorrectly() { }
+}
+// Total: 5 tests - Comprehensive yet focused
+```
+
+### 2. Use Realistic Test Data
+- **Real-world values** - Not just "Test", "Foo", "Bar"
+- **Domain-appropriate** - Use actual use case examples
+- **Varied data** - Different lengths, formats, edge values
+- **Meaningful dates** - Use realistic timestamps
+
+**Example: Poor Test Data**
+```csharp
+❌ var session = new PomodoroSession
+{
+    Objective = "Test",           // Generic
+    DurationMinutes = 1,          // Unrealistic
+    StartTime = DateTime.MinValue // Not realistic
+};
+```
+
+**Example: Good Test Data**
+```csharp
+✅ var session = new PomodoroSession
+{
+    Objective = "Implement user authentication feature",  // Realistic
+    DurationMinutes = 25,                                // Standard Pomodoro
+    StartTime = DateTime.UtcNow.AddMinutes(-20),        // Currently running
+    SessionType = SessionType.Work
+};
+
+✅ var client = new ClientDto
+{
+    Name = "Acme Corporation",        // Real company name format
+    Description = "Enterprise client specializing in cloud solutions"
+};
+
+✅ var settings = new PomodoroSettingsDto
+{
+    WorkDurationMinutes = 25,          // Standard Pomodoro
+    ShortBreakDurationMinutes = 5,    // Typical break
+    LongBreakDurationMinutes = 15,    // Standard long break
+    LongBreakInterval = 4             // Classic 4-pomodoro cycle
+};
+```
+
+### 3. Add Comments for Complex Setup or Assertions
+- **Complex setup** - Explain WHY you're setting up test data this way
+- **Non-obvious assertions** - Clarify what you're validating
+- **Business rules** - Document domain logic being tested
+- **Keep it concise** - Don't over-comment obvious code
+
+**Example: Good Comments**
+```csharp
+[Fact]
+public async Task CalculateStatistics_ForMultipleSessions_ReturnsCorrectTotals()
+{
+    // Arrange - Create 3 completed work sessions spanning 2 hours
+    // This tests the aggregation logic for daily statistics
+    var sessions = new[]
+    {
+        CreateSession(objective: "Morning planning", duration: 25, startTime: Today.AddHours(9)),
+        CreateSession(objective: "Code review", duration: 25, startTime: Today.AddHours(10)),
+        CreateSession(objective: "Feature implementation", duration: 50, startTime: Today.AddHours(11))
+    };
+    await _context.Sessions.AddRangeAsync(sessions);
+    await _context.SaveChangesAsync();
+
+    // Act
+    var stats = await _service.GetDailyStatisticsAsync(Today);
+
+    // Assert
+    stats.TotalWorkMinutes.Should().Be(100); // 25 + 25 + 50
+    stats.CompletedPomodoros.Should().Be(3);
+
+    // Verify time range calculation - Should span from 9 AM to 12 PM
+    stats.FirstSessionStart.Should().Be(Today.AddHours(9));
+    stats.LastSessionEnd.Should().BeCloseTo(Today.AddHours(12).AddMinutes(50), TimeSpan.FromSeconds(1));
+}
+```
+
+### 4. Ensure Test Independence
+- **No shared state** - Each test creates its own data
+- **Unique database** - Use `Guid.NewGuid()` for InMemory database names
+- **Clear between tests** - Use `ChangeTracker.Clear()` or `IDisposable`
+- **No test order dependency** - Tests should pass in any order
+- **Isolated mocks** - Create fresh mocks in constructor
+
+**Example: Test Independence**
+```csharp
+public class PomodoroSessionServiceTests : IDisposable
+{
+    private readonly ApplicationDbContext _context;
+    private readonly PomodoroSessionService _service;
+
+    public PomodoroSessionServiceTests()
+    {
+        // Each test gets its own unique database - ensures independence
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // ✅ Unique per test
+            .Options;
+
+        _context = new ApplicationDbContext(options);
+        _service = new PomodoroSessionService(_context);
+    }
+
+    [Fact]
+    public async Task Test1_CreatesSession()
+    {
+        // This test's data won't affect Test2
+        await _service.CreateSessionAsync(new CreateDto { /* ... */ });
+    }
+
+    [Fact]
+    public async Task Test2_GetsAllSessions()
+    {
+        // Starts with clean database, independent of Test1
+        var result = await _service.GetAllAsync();
+        result.Should().BeEmpty(); // ✅ Will pass regardless of Test1
+    }
+
+    public void Dispose()
+    {
+        // Cleanup after each test
+        _context.Database.EnsureDeleted();
+        _context.Dispose();
+    }
+}
+```
+
+### 5. Test Behavior, Not Implementation
+- **What, not How** - Test what the method does, not how it does it
+- **Avoid brittle tests** - Don't test private methods or internal details
+- **Mock interfaces** - Not concrete implementations
+- **Verify outcomes** - Not internal state changes
+- **Public API only** - Test through public methods
+
+**Example: Testing Implementation (Avoid)**
+```csharp
+❌ [Fact]
+public async Task CreateSession_CallsRepositoryAddAsyncWithCorrectParameters()
+{
+    // Testing HOW it works (implementation detail)
+    await _service.CreateSessionAsync(dto);
+
+    _repositoryMock.Verify(r => r.AddAsync(
+        It.Is<Session>(s => s.Objective == dto.Objective)), Times.Once);
+    _repositoryMock.Verify(r => r.AddAsync(
+        It.Is<Session>(s => s.StartTime != default)), Times.Once);
+    // Too coupled to implementation!
+}
+```
+
+**Example: Testing Behavior (Correct)**
+```csharp
+✅ [Fact]
+public async Task CreateSession_WithValidData_ReturnsSessionWithCorrectProperties()
+{
+    // Arrange
+    var dto = new CreateSessionDto
+    {
+        Objective = "Implement feature X",
+        DurationMinutes = 25
+    };
+
+    // Act
+    var result = await _service.CreateSessionAsync(dto);
+
+    // Assert - Testing WHAT it returns (behavior)
+    result.Should().NotBeNull();
+    result.Id.Should().BeGreaterThan(0);
+    result.Objective.Should().Be("Implement feature X");
+    result.DurationMinutes.Should().Be(25);
+    result.StartTime.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+    result.IsCompleted.Should().BeFalse();
+}
+
+✅ [Fact]
+public async Task CreateSession_PersistsToDatabase()
+{
+    // Arrange
+    var dto = new CreateSessionDto { Objective = "Test", DurationMinutes = 25 };
+
+    // Act
+    var created = await _service.CreateSessionAsync(dto);
+
+    // Assert - Testing behavior through public API
+    var retrieved = await _service.GetByIdAsync(created.Id);
+    retrieved.Should().NotBeNull();
+    retrieved.Objective.Should().Be("Test");
+    // Verifying outcome, not implementation
+}
+```
+
+**When to Verify Method Calls:**
+- ✅ External dependencies (email service, payment gateway)
+- ✅ Side effects that can't be observed otherwise
+- ✅ Performance-critical paths (caching)
+- ❌ Internal repository calls (test outcome instead)
+- ❌ Private method calls (test public behavior)
+
+---
+
 ## Test Organization
 
 ### Using Regions for Clarity
