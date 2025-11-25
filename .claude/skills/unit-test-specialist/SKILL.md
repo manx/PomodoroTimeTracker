@@ -403,34 +403,318 @@ _mockService.Verify(s => s.MethodAsync(It.Is<int>(x => x > 0)), Times.Exactly(2)
 
 ---
 
+## Test Generation Strategy
+
+When creating tests for any function/method, use this systematic approach:
+
+### 1. Core Functionality Tests
+- **Test the main purpose** - What is the method supposed to do?
+- **Verify return values** with typical inputs
+- **Test realistic scenarios** - Common use cases
+- **Happy path first** - Ensure basic functionality works
+
+**Example:**
+```csharp
+[Fact]
+public async Task CreateSessionAsync_WithValidData_ReturnsSessionDto()
+{
+    // Arrange
+    var createDto = new CreatePomodoroSessionDto
+    {
+        Objective = "Complete feature",
+        DurationMinutes = 25
+    };
+
+    // Act
+    var result = await _service.CreateSessionAsync(createDto);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Objective.Should().Be("Complete feature");
+    result.DurationMinutes.Should().Be(25);
+}
+```
+
+### 2. Input Validation Tests
+- **Invalid input types** - Wrong data types if applicable
+- **Null/empty values** - Test null strings, empty collections, etc.
+- **Boundary values** - Min/max, zero, negative numbers
+- **Invalid combinations** - Conflicting parameters
+
+**Example:**
+```csharp
+[Theory]
+[InlineData(null)]         // Null objective
+[InlineData("")]           // Empty string
+[InlineData("   ")]        // Whitespace only
+public async Task CreateSessionAsync_WithInvalidObjective_ThrowsArgumentException(string objective)
+{
+    // Arrange
+    var createDto = new CreatePomodoroSessionDto { Objective = objective };
+
+    // Act & Assert
+    await FluentActions.Invoking(() => _service.CreateSessionAsync(createDto))
+        .Should().ThrowAsync<ArgumentException>()
+        .WithMessage("*objective*");
+}
+
+[Theory]
+[InlineData(0)]            // Zero
+[InlineData(-1)]           // Negative
+[InlineData(121)]          // Above max (assuming 120 is max)
+public async Task CreateSessionAsync_WithInvalidDuration_ThrowsArgumentException(int duration)
+{
+    // Arrange
+    var createDto = new CreatePomodoroSessionDto
+    {
+        Objective = "Valid",
+        DurationMinutes = duration
+    };
+
+    // Act & Assert
+    await FluentActions.Invoking(() => _service.CreateSessionAsync(createDto))
+        .Should().ThrowAsync<ArgumentException>()
+        .WithMessage("*duration*");
+}
+```
+
+### 3. Error Handling Tests
+- **Expected exceptions** are thrown
+- **Error messages** are meaningful and specific
+- **Graceful degradation** - System doesn't crash
+- **Resource cleanup** - Disposables are disposed
+
+**Example:**
+```csharp
+[Fact]
+public async Task CompleteSessionAsync_WithNonExistentId_ThrowsNotFoundException()
+{
+    // Arrange
+    var nonExistentId = 999;
+
+    // Act & Assert
+    await FluentActions.Invoking(() => _service.CompleteSessionAsync(nonExistentId))
+        .Should().ThrowAsync<NotFoundException>()
+        .WithMessage($"Session with ID {nonExistentId} not found");
+}
+
+[Fact]
+public async Task CreateSessionAsync_WhenDatabaseFailsAsync_ThrowsAndDoesNotPartiallyCommit()
+{
+    // Arrange
+    _unitOfWork.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+        .ThrowsAsync(new DbUpdateException("Database error"));
+
+    // Act & Assert
+    await FluentActions.Invoking(() => _service.CreateSessionAsync(validDto))
+        .Should().ThrowAsync<DbUpdateException>();
+
+    // Verify no partial state
+    var sessions = await _repository.GetAllAsync();
+    sessions.Should().BeEmpty();
+}
+```
+
+### 4. Side Effects Tests
+- **External calls** are made correctly
+- **State changes** occur as expected
+- **Dependency interactions** are verified
+- **Event raising** if applicable
+
+**Example:**
+```csharp
+[Fact]
+public async Task CompleteSessionAsync_UpdatesSessionAndSavesChanges()
+{
+    // Arrange
+    var session = await CreateTestSession();
+
+    // Act
+    await _service.CompleteSessionAsync(session.Id);
+
+    // Assert - Verify state change
+    var updated = await _service.GetByIdAsync(session.Id);
+    updated.IsCompleted.Should().BeTrue();
+    updated.EndTime.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+
+    // Assert - Verify save was called
+    _unitOfWork.Verify(u => u.SaveChangesAsync(default), Times.Once);
+}
+```
+
+### 5. Boundary and Edge Cases
+- **Empty collections** - How does method handle empty lists?
+- **Single item** vs **multiple items**
+- **Maximum limits** - What happens at capacity?
+- **Concurrent access** - Thread safety if relevant
+
+**Example:**
+```csharp
+[Fact]
+public async Task GetSessionsByDateRange_WithNoSessions_ReturnsEmptyList()
+{
+    // Act
+    var result = await _service.GetSessionsByDateRangeAsync(DateTime.UtcNow, DateTime.UtcNow);
+
+    // Assert
+    result.Should().BeEmpty();
+}
+
+[Theory]
+[InlineData(1)]     // Single session
+[InlineData(10)]    // Multiple sessions
+[InlineData(100)]   // Many sessions
+public async Task GetAllAsync_ReturnsAllSessions(int sessionCount)
+{
+    // Arrange
+    await CreateTestSessions(sessionCount);
+
+    // Act
+    var result = await _service.GetAllAsync();
+
+    // Assert
+    result.Should().HaveCount(sessionCount);
+}
+```
+
+---
+
+## Test Organization
+
+### Using Regions for Clarity
+
+Group related tests using `#region`:
+
+```csharp
+public class PomodoroSessionServiceTests
+{
+    #region Constructor and Setup
+
+    private readonly Mock<IUnitOfWork> _unitOfWork;
+    private readonly PomodoroSessionService _service;
+
+    // Constructor...
+
+    #endregion
+
+    #region CreateSessionAsync Tests
+
+    [Fact]
+    public async Task CreateSessionAsync_WithValidData_ReturnsSessionDto() { }
+
+    [Fact]
+    public async Task CreateSessionAsync_WithNullObjective_ThrowsArgumentException() { }
+
+    #endregion
+
+    #region GetActiveSessionAsync Tests
+
+    [Fact]
+    public async Task GetActiveSessionAsync_WhenNoActiveSession_ReturnsNull() { }
+
+    [Fact]
+    public async Task GetActiveSessionAsync_WithActiveSession_ReturnsSession() { }
+
+    #endregion
+
+    #region CompleteSessionAsync Tests
+
+    // ...
+
+    #endregion
+}
+```
+
+### Alternative: Nested Classes
+
+For complex classes, use nested test classes:
+
+```csharp
+public class PomodoroSessionServiceTests
+{
+    public class CreateSessionAsyncTests : PomodoroSessionServiceTests
+    {
+        [Fact]
+        public async Task WithValidData_ReturnsSessionDto() { }
+
+        [Fact]
+        public async Task WithNullObjective_ThrowsException() { }
+    }
+
+    public class CompleteSessionAsyncTests : PomodoroSessionServiceTests
+    {
+        [Fact]
+        public async Task WithValidId_CompletesSession() { }
+
+        [Fact]
+        public async Task WithInvalidId_ThrowsNotFoundException() { }
+    }
+}
+```
+
+---
+
 ## Testing Checklist
 
 When adding tests for new code:
 
 ### ViewModels
-- [ ] Property change notifications
-- [ ] Command CanExecute logic
-- [ ] Command execution behavior
-- [ ] State transitions
-- [ ] Service method calls
-- [ ] Error handling
-- [ ] Collection updates (ObservableCollection)
+- [ ] **Core Functionality**
+  - [ ] Property change notifications
+  - [ ] Command CanExecute logic
+  - [ ] Command execution behavior
+  - [ ] State transitions
+- [ ] **Input Validation**
+  - [ ] Empty/null string properties
+  - [ ] Numeric boundaries (duration, counts)
+  - [ ] Invalid state transitions
+- [ ] **Error Handling**
+  - [ ] Service call failures
+  - [ ] Validation errors
+  - [ ] Graceful degradation
+- [ ] **Side Effects**
+  - [ ] Service method calls
+  - [ ] Collection updates (ObservableCollection)
+  - [ ] Event raising
 
 ### Services
-- [ ] CRUD operations
-- [ ] Business logic validation
-- [ ] Repository method calls
-- [ ] Error handling
-- [ ] Null handling
-- [ ] Edge cases
+- [ ] **Core Functionality**
+  - [ ] CRUD operations (Create, Read, Update, Delete)
+  - [ ] Business logic execution
+  - [ ] DTO mapping
+- [ ] **Input Validation**
+  - [ ] Null/empty parameters
+  - [ ] Invalid IDs (negative, zero, non-existent)
+  - [ ] Boundary values (min/max durations, etc.)
+  - [ ] Invalid data combinations
+- [ ] **Error Handling**
+  - [ ] Repository exceptions
+  - [ ] Validation failures
+  - [ ] Database errors
+  - [ ] Meaningful error messages
+- [ ] **Side Effects**
+  - [ ] Repository method calls (Verify)
+  - [ ] Unit of work SaveChanges calls
+  - [ ] Transaction handling
 
 ### Repositories
-- [ ] Query correctness
-- [ ] Filtering logic
-- [ ] Sorting logic
-- [ ] Include (eager loading) behavior
-- [ ] Unique constraint violations
-- [ ] Cascade delete behavior
+- [ ] **Core Functionality**
+  - [ ] Query correctness (LINQ)
+  - [ ] Filtering logic
+  - [ ] Sorting logic
+  - [ ] Include (eager loading) behavior
+- [ ] **Input Validation**
+  - [ ] Null parameters
+  - [ ] Invalid IDs
+  - [ ] Empty filter criteria
+- [ ] **Edge Cases**
+  - [ ] Empty result sets
+  - [ ] Single vs multiple results
+  - [ ] Large datasets
+- [ ] **Data Integrity**
+  - [ ] Unique constraint violations
+  - [ ] Cascade delete behavior
+  - [ ] Foreign key constraints
 
 ---
 
