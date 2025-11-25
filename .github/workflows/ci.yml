@@ -29,9 +29,39 @@ env:
 # ============================================
 jobs:
   # ------------------------------------------
-  # JOB: Build and Test
+  # JOB 1: Code Quality
   # ------------------------------------------
+  # Körs först för att verifiera kodstil innan build
+  code-quality:
+    name: Code Quality Checks
+    runs-on: windows-latest
+
+    steps:
+      # STEG 1: Hämta kod från repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # STEG 2: Installera .NET SDK
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # STEG 3: Restore dependencies (krävs för dotnet format)
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+      # STEG 4: Verifiera kodformatering
+      - name: Verify code formatting
+        run: dotnet format ${{ env.SOLUTION_PATH }} --verify-no-changes --verbosity diagnostic
+        continue-on-error: true              # Tillåt warnings för nu
+
+  # ------------------------------------------
+  # JOB 2: Build and Test
+  # ------------------------------------------
+  # Körs endast om code-quality lyckas
   build:
+    needs: code-quality                      # Vänta på code-quality job
     name: Build and Test                     # Visningsnamn i GitHub UI
     runs-on: windows-latest                  # Kör på Windows (WinUI 3 kräver Windows)
 

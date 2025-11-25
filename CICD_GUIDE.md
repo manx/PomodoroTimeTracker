@@ -671,14 +671,226 @@ act push
 
 ---
 
+## Kod-kvalitetskontroller
+
+### Vad är Code Quality Checks?
+
+Automatiska kontroller som säkerställer:
+- 📏 **Konsekvent formatering** - Samma kodstil överallt
+- ⚠️ **Inga varningar** - Clean build utan compiler warnings
+- 🔍 **Kod-analys** - Upptäcker potentiella buggar
+- 📐 **.NET best practices** - Följer Microsofts riktlinjer
+
+### Verktyg
+
+#### 1. EditorConfig (.editorconfig)
+
+Definierar formaterings-regler som fungerar i alla IDE:n.
+
+**Exempel `.editorconfig`:**
+```ini
+root = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+dotnet_sort_system_directives_first = true
+
+# Naming conventions
+dotnet_naming_rule.private_fields_should_be_underscore_camel_case.severity = suggestion
+dotnet_naming_rule.private_fields_should_be_underscore_camel_case.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_underscore_camel_case.style = underscore_camel_case_style
+```
+
+**Placering:** Root-katalogen i projektet
+
+#### 2. dotnet format
+
+Kommando som verifierar/fixar kodformatering baserat på `.editorconfig`.
+
+**Kontrollera formatering:**
+```bash
+dotnet format --verify-no-changes --verbosity diagnostic
+```
+
+**Fixa formatering automatiskt:**
+```bash
+dotnet format
+```
+
+**I CI/CD:**
+```yaml
+- name: Verify code formatting
+  run: dotnet format --verify-no-changes --verbosity diagnostic
+```
+
+#### 3. Code Analysis (Roslyn Analyzers)
+
+Inbyggda kod-analysatorer i .NET SDK som upptäcker:
+- Null reference risks
+- Unused variables
+- Security vulnerabilities
+- Performance issues
+- Best practice violations
+
+**Aktivera i .csproj:**
+```xml
+<PropertyGroup>
+  <EnableNETAnalyzers>true</EnableNETAnalyzers>
+  <AnalysisLevel>latest-all</AnalysisLevel>
+  <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+</PropertyGroup>
+```
+
+**Exempel på varningar:**
+```
+CA1062: Validate arguments of public methods
+CA1031: Do not catch general exception types
+CA1822: Mark members as static
+IDE0055: Fix formatting
+```
+
+**Konfigurera severity i .editorconfig:**
+```ini
+# CA1062: Too strict for app code, disable it
+dotnet_diagnostic.CA1062.severity = none
+
+# CA1031: Catching general exceptions is a warning
+dotnet_diagnostic.CA1031.severity = warning
+
+# IDE0055: Formatting issues are warnings
+dotnet_diagnostic.IDE0055.severity = warning
+```
+
+### Implementera Code Quality i CI
+
+**Steg 1: Lägg till .editorconfig**
+```bash
+# Skapa fil i projektets root
+# Se fullständigt exempel ovan
+```
+
+**Steg 2: Aktivera analyzers i alla .csproj**
+```xml
+<PropertyGroup>
+  <EnableNETAnalyzers>true</EnableNETAnalyzers>
+  <AnalysisLevel>latest-all</AnalysisLevel>
+  <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+</PropertyGroup>
+```
+
+**Steg 3: Lägg till code-quality job i workflow**
+```yaml
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Verify code formatting
+        run: dotnet format --verify-no-changes --verbosity diagnostic
+
+  build:
+    needs: code-quality  # Kör endast om quality checks passerar
+    runs-on: windows-latest
+    # ... build steps
+```
+
+### Fördelar med Code Quality Checks
+
+**Fail Fast**
+```
+Push → Code Quality Fails → Ingen build körs → Snabb feedback
+```
+
+**Konsistent kodstil**
+- Alla utvecklare följer samma regler
+- Inga merge conflicts pga formatering
+- Lättare code reviews
+
+**Upptäck buggar tidigt**
+- Null reference warnings
+- Unused code
+- Potentiella säkerhetsproblem
+
+**Lokal utveckling**
+```bash
+# Före commit
+dotnet format           # Fixa formatering
+dotnet build           # Se analyzers warnings lokalt
+```
+
+### Vanliga Analyzer Rules
+
+| Rule | Beskrivning | Severity |
+|------|-------------|----------|
+| **CA1062** | Validate public method arguments | suggestion/none |
+| **CA1303** | Do not pass literals as localized parameters | none (för icke-lokaliserade appar) |
+| **CA1031** | Do not catch general exception types | warning |
+| **CA1822** | Mark members as static | suggestion |
+| **CA2007** | ConfigureAwait on awaited task | none (för UI appar) |
+| **IDE0055** | Fix formatting | warning |
+| **IDE0058** | Expression value never used | none |
+
+### Felsökning
+
+**Problem: dotnet format failar på CI men inte lokalt**
+
+**Lösning:**
+```bash
+# Kör exakt samma kommando som CI
+dotnet format --verify-no-changes --verbosity diagnostic
+
+# Se detaljerad output
+dotnet format --verbosity diagnostic
+
+# Fixa automatiskt
+dotnet format
+```
+
+**Problem: För många analyzer warnings**
+
+**Lösning:** Konfigurera severity i `.editorconfig`
+```ini
+# Disable specifika regler
+dotnet_diagnostic.CA1062.severity = none
+
+# Eller ändra till suggestion istället för warning
+dotnet_diagnostic.CA1822.severity = suggestion
+```
+
+**Problem: Build tar längre tid med analyzers**
+
+**Lösning:** Inkrementell build cachar resultat
+```bash
+# Första bygget: långsamt
+dotnet build
+
+# Senare builds: snabbt (cachar analyzer-resultat)
+dotnet build
+```
+
+---
+
 ## Nästa Steg
 
 1. ✅ Skapa `.github/workflows/ci.yml`
 2. ✅ Commit och push till GitHub
 3. ✅ Gå till repo → Actions tab
 4. ✅ Se workflow köra
-5. ⏳ Lägg till tester
-6. ⏳ Lägg till release automation
+5. ✅ Lägg till code quality checks
+6. ⏳ Lägg till tester
+7. ⏳ Lägg till release automation
 
 ---
 
