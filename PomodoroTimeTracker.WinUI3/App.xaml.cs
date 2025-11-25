@@ -1,22 +1,22 @@
+using System;
+using System.IO;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.UI.Xaml;
 using PomodoroTimeTracker.Application.Interfaces;
 using PomodoroTimeTracker.Application.Services;
 using PomodoroTimeTracker.Domain.Interfaces;
 using PomodoroTimeTracker.Infrastructure.Data;
 using PomodoroTimeTracker.Infrastructure.Repositories;
-using System;
-using System.IO;
 
 namespace PomodoroTimeTracker.WinUI3
 {
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
-    public partial class App : Microsoft.UI.Xaml.Application
+    internal partial class App : Microsoft.UI.Xaml.Application
     {
         private readonly IHost _host;
         internal Window? _window;

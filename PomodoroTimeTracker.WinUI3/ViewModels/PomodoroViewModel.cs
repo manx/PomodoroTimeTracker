@@ -11,7 +11,7 @@ namespace PomodoroTimeTracker.WinUI3.ViewModels;
 /// <summary>
 /// Represents the current state of the Pomodoro timer.
 /// </summary>
-public enum PomodoroState
+internal enum PomodoroState
 {
     /// <summary>
     /// Configuring the session before starting (initial state).
@@ -42,7 +42,7 @@ public enum PomodoroState
 /// <summary>
 /// Represents the user's choice when stopping a session early.
 /// </summary>
-public enum StopDialogResult
+internal enum StopDialogResult
 {
     /// <summary>
     /// Resume the session as if it was only paused.
@@ -65,7 +65,7 @@ public enum StopDialogResult
 /// Manages timer state, break cycles, and session tracking.
 /// Implements the complete Pomodoro workflow: Work → Short Break → ... → Long Break → repeat.
 /// </summary>
-public partial class PomodoroViewModel : ViewModelBase
+internal partial class PomodoroViewModel : ViewModelBase
 {
     /// <summary>
     /// Maximum length for the objective text field.
@@ -714,7 +714,8 @@ public partial class PomodoroViewModel : ViewModelBase
 
     private async Task StartBreakAsync()
     {
-        if (_settings == null) return;
+        if (_settings == null)
+            return;
 
         bool isLongBreak = _pomodoroCount >= 4;
         int breakDuration = isLongBreak

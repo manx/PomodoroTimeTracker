@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -5,12 +6,11 @@ using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
 using PomodoroTimeTracker.WinUI3.Services;
 using PomodoroTimeTracker.WinUI3.ViewModels;
-using System;
 using Windows.Foundation;
 
 namespace PomodoroTimeTracker.WinUI3.Views;
 
-public sealed partial class PomodoroPage : Page
+internal sealed partial class PomodoroPage : Page
 {
     public PomodoroViewModel ViewModel { get; }
     private readonly ILogger<PomodoroPage> _logger;

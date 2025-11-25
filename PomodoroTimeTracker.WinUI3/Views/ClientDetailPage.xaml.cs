@@ -6,7 +6,7 @@ using PomodoroTimeTracker.WinUI3.ViewModels;
 
 namespace PomodoroTimeTracker.WinUI3.Views;
 
-public sealed partial class ClientDetailPage : Page
+internal sealed partial class ClientDetailPage : Page
 {
     public ClientDetailViewModel ViewModel { get; }
     private readonly ILogger<ClientDetailPage> _logger;

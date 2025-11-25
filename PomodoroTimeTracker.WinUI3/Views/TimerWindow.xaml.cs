@@ -1,9 +1,9 @@
+using System;
+using System.Runtime.InteropServices;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using PomodoroTimeTracker.WinUI3.ViewModels;
-using System;
-using System.Runtime.InteropServices;
 using Windows.Graphics;
 using WinRT.Interop;
 using WinUIEx;
@@ -13,24 +13,15 @@ namespace PomodoroTimeTracker.WinUI3.Views;
 /// <summary>
 /// Compact always-on-top timer window with time-timer style progress meter.
 /// </summary>
-public sealed partial class TimerWindow : WindowEx
+internal sealed partial class TimerWindow : WindowEx
 {
     // Win32 API constants for window messages
     private const int WM_NCHITTEST = 0x0084;
-    private const int WM_SIZING = 0x0214;
     private const int WM_NCCALCSIZE = 0x0083;
     private const int WM_RBUTTONDOWN = 0x0204;
     private const int WM_NCRBUTTONDOWN = 0x00A4;
     private const int WM_NCRBUTTONUP = 0x00A5;
     private const int WM_PARENTNOTIFY = 0x0210;
-    private const int WM_POINTERDOWN = 0x0246;
-    private const int HTLEFT = 10;
-    private const int HTRIGHT = 11;
-    private const int HTTOP = 12;
-    private const int HTTOPLEFT = 13;
-    private const int HTTOPRIGHT = 14;
-    private const int HTBOTTOM = 15;
-    private const int HTBOTTOMLEFT = 16;
     private const int HTBOTTOMRIGHT = 17;
 
     // RECT structure for WM_SIZING
@@ -88,18 +79,7 @@ public sealed partial class TimerWindow : WindowEx
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOZORDER = 0x0004;
     private const uint SWP_FRAMECHANGED = 0x0020;
-
-    // DWM window attributes
-    private const int DWMWA_NCRENDERING_ENABLED = 1;
-    private const int DWMWA_NCRENDERING_POLICY = 2;
-    private const int DWMWA_CAPTION_BUTTON_BOUNDS = 5;
-    private const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
-    private const int DWMWA_BORDER_COLOR = 34;
     private const int DWMWA_CAPTION_COLOR = 35;
-
-    // DWM non-client rendering policy values
-    private const int DWMNCRP_USEWINDOWSTYLE = 0;
-    private const int DWMNCRP_DISABLED = 1;
     private const int DWMNCRP_ENABLED = 2;
 
     [StructLayout(LayoutKind.Sequential)]
@@ -112,21 +92,8 @@ public sealed partial class TimerWindow : WindowEx
     }
 
     private const int GWL_WNDPROC = -4;
-    private const int GWL_STYLE = -16;
     private const int GWL_EXSTYLE = -20;
-
-    // Window styles
-    private const int WS_CAPTION = 0x00C00000;
-    private const int WS_THICKFRAME = 0x00040000;
-    private const int WS_SYSMENU = 0x00080000;
-    private const int WS_BORDER = 0x00800000;
     private const int WS_DLGFRAME = 0x00400000;
-
-    // Extended window styles
-    private const int WS_EX_DLGMODALFRAME = 0x00000001;
-    private const int WS_EX_WINDOWEDGE = 0x00000100;
-    private const int WS_EX_CLIENTEDGE = 0x00000200;
-    private const int WS_EX_STATICEDGE = 0x00020000;
     private const int WS_EX_COMPOSITED = 0x02000000;
 
     private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);

@@ -11,7 +11,7 @@ namespace PomodoroTimeTracker.WinUI3.ViewModels;
 /// <summary>
 /// ViewModel for the client list view.
 /// </summary>
-public partial class ClientListViewModel : ViewModelBase
+internal partial class ClientListViewModel : ViewModelBase
 {
     private readonly IClientService _clientService;
     private readonly IDialogService _dialogService;
@@ -129,7 +129,8 @@ public partial class ClientListViewModel : ViewModelBase
 
     private async Task DeleteClientAsync()
     {
-        if (SelectedClient == null) return;
+        if (SelectedClient == null)
+            return;
 
         var confirmed = await _dialogService.ShowConfirmationAsync(
             $"Are you sure you want to delete client '{SelectedClient.Name}'?\n\nThis will also remove all associated projects.",

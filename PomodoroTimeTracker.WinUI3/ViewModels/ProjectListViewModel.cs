@@ -10,7 +10,7 @@ namespace PomodoroTimeTracker.WinUI3.ViewModels;
 /// <summary>
 /// ViewModel for the project list view.
 /// </summary>
-public partial class ProjectListViewModel : ViewModelBase
+internal partial class ProjectListViewModel : ViewModelBase
 {
     private readonly IProjectService _projectService;
     private readonly IDialogService _dialogService;
@@ -113,7 +113,8 @@ public partial class ProjectListViewModel : ViewModelBase
 
     private async Task DeleteProjectAsync()
     {
-        if (SelectedProject == null) return;
+        if (SelectedProject == null)
+            return;
 
         var confirmed = await _dialogService.ShowConfirmationAsync(
             $"Are you sure you want to delete project '{SelectedProject.Name}'?\n\nThis will also remove all associated time entries and Pomodoro sessions.",

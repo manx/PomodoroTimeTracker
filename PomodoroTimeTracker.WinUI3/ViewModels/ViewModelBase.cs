@@ -5,6 +5,6 @@ namespace PomodoroTimeTracker.WinUI3.ViewModels;
 /// <summary>
 /// Base class for all ViewModels providing INotifyPropertyChanged implementation
 /// </summary>
-public abstract class ViewModelBase : ObservableObject
+internal abstract class ViewModelBase : ObservableObject
 {
 }

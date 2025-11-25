@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "git": {
+      "command": "node",
+      "args": ["C:\\Users\\Lenovo\\Development\\mcp-git-operations\\index.js"],
+      "env": {
+        "GIT_DEFAULT_PATH": "C:\\Users\\Lenovo\\Development\\claude\\PomodoroTimeTracker"
+      }
+    },
+    "dotnet": {
+      "command": "node",
+      "args": ["C:\\Users\\Lenovo\\Development\\mcp-dotnet-operations\\index.js"]
+    }
+  }
+}

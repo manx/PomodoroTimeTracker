@@ -5,7 +5,7 @@ namespace PomodoroTimeTracker.WinUI3.Services;
 /// <summary>
 /// Implementation of navigation service for WinUI 3
 /// </summary>
-public class NavigationService : INavigationService
+internal class NavigationService : INavigationService
 {
     public Frame? NavigationFrame { get; set; }
     public int? ClientIdToSelect { get; set; }

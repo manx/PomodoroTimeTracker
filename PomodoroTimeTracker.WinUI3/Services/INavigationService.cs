@@ -5,7 +5,7 @@ namespace PomodoroTimeTracker.WinUI3.Services;
 /// <summary>
 /// Service for handling navigation between views
 /// </summary>
-public interface INavigationService
+internal interface INavigationService
 {
     /// <summary>
     /// Gets or sets the current navigation frame

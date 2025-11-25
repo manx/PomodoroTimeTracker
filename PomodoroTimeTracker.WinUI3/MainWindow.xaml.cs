@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
@@ -5,12 +6,11 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using PomodoroTimeTracker.WinUI3.Services;
 using PomodoroTimeTracker.WinUI3.ViewModels;
-using System.Threading.Tasks;
 using WinRT.Interop;
 
 namespace PomodoroTimeTracker.WinUI3
 {
-    public sealed partial class MainWindow : Window
+    internal sealed partial class MainWindow : Window
     {
         private readonly INavigationService _navigationService;
         private readonly IDialogService _dialogService;

@@ -3,7 +3,7 @@ using PomodoroTimeTracker.WinUI3.ViewModels;
 
 namespace PomodoroTimeTracker.WinUI3.Views;
 
-public sealed partial class ProjectListPage : Page
+internal sealed partial class ProjectListPage : Page
 {
     public ProjectListViewModel ViewModel { get; }
 

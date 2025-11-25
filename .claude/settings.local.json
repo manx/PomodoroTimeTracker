@@ -14,7 +14,8 @@
       "Bash(git push:*)",
       "mcp__git__status",
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(dotnet format:*)"
     ],
     "deny": [],
     "ask": []
