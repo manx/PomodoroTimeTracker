@@ -16,7 +16,7 @@ namespace PomodoroTimeTracker.WinUI3
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
-    internal partial class App : Microsoft.UI.Xaml.Application
+    public partial class App : Microsoft.UI.Xaml.Application
     {
         private readonly IHost _host;
         internal Window? _window;
