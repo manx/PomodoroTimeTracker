@@ -218,5 +218,16 @@ dotnet_diagnostic.IDE0055.severity = warning
 # IDE0058: Expression value is never used
 dotnet_diagnostic.IDE0058.severity = none
 
+# ============================================
+# WinUI3/XAML Specific Rules
+# ============================================
 # CA1515: Make types internal (conflicts with XAML partial classes)
+# Only suppress for code-behind files that have XAML counterparts
+[**/Views/*.xaml.cs]
+dotnet_diagnostic.CA1515.severity = none
+
+[App.xaml.cs]
+dotnet_diagnostic.CA1515.severity = none
+
+[MainWindow.xaml.cs]
 dotnet_diagnostic.CA1515.severity = none
