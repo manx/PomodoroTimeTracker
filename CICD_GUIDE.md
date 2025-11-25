@@ -882,6 +882,203 @@ dotnet build
 
 ---
 
+## Git Hooks med Husky.Net
+
+### Vad är Git Hooks?
+
+Git hooks är scripts som körs automatiskt vid Git-händelser:
+- **pre-commit**: Före varje commit
+- **pre-push**: Före push till remote
+- **commit-msg**: Validera commit-meddelanden
+
+### Varför Husky.Net?
+
+**Problem utan hooks:**
+```
+Dev skriver kod → Glömmer formatera → Pushar → CI failar → Fix → Push igen
+```
+
+**Med hooks:**
+```
+Dev skriver kod → Commit → Hook formaterar automatiskt → Push → CI lyckas ✅
+```
+
+**Fördelar:**
+- ✅ Automatisk kod-formatering vid commit
+- ✅ Förhindra CI-failures lokalt
+- ✅ Konsekvent kodstil i teamet
+- ✅ Hooks committade i repo (alla får samma)
+
+### Installation
+
+**Steg 1: Installera Husky.Net som dotnet tool**
+
+```bash
+# Skapa tool manifest (om det inte finns)
+dotnet new tool-manifest
+
+# Installera Husky
+dotnet tool install Husky
+```
+
+**Steg 2: Initialisera Husky i projektet**
+
+```bash
+dotnet husky install
+```
+
+Detta skapar `.husky/` mapp med:
+- `_/husky.sh` - Hook runner script
+- `task-runner.json` - Task configuration
+
+**Steg 3: Lägg till pre-commit hook**
+
+```bash
+dotnet husky add pre-commit
+```
+
+**Steg 4: Konfigurera tasks i `.husky/task-runner.json`**
+
+```json
+{
+   "$schema": "https://alirezanet.github.io/Husky.Net/schema.json",
+   "tasks": [
+      {
+         "name": "format-code",
+         "command": "dotnet",
+         "args": [ "format", "--no-restore" ],
+         "output": "always",
+         "group": "pre-commit"
+      },
+      {
+         "name": "stage-all-changes",
+         "command": "git",
+         "args": [ "add", "-u" ],
+         "group": "pre-commit"
+      }
+   ]
+}
+```
+
+**Steg 5: Uppdatera `.husky/pre-commit` för att köra gruppen**
+
+```bash
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+dotnet husky run --group pre-commit
+```
+
+### Hur det fungerar
+
+**När du kör `git commit`:**
+
+1. Git detecterar `.git/hooks/pre-commit`
+2. Husky läser `.husky/task-runner.json`
+3. Kör alla tasks i "pre-commit" gruppen:
+   - `dotnet format` - Formaterar koden
+   - `git add -u` - Staged formaterade ändringar
+4. Commit fortsätter med formaterad kod
+
+**Output:**
+```
+[Husky] 🚀 Loading tasks ...
+[Husky] ⚡ Preparing task 'format-code'
+[Husky] ⌛ Executing task 'format-code' ...
+[Husky] ✔ Successfully executed in 8 310ms
+[Husky] ⚡ Preparing task 'stage-all-changes'
+[Husky] ✔ Successfully executed in 41ms
+[master abc1234] Your commit message
+```
+
+### Andra Användbara Hooks
+
+#### Pre-push Hook (kör tester före push)
+
+```bash
+dotnet husky add pre-push
+```
+
+**.husky/task-runner.json:**
+```json
+{
+   "name": "run-tests",
+   "command": "dotnet",
+   "args": [ "test", "--no-build" ],
+   "group": "pre-push"
+}
+```
+
+#### Commit-msg Hook (validera commit-meddelanden)
+
+```bash
+dotnet husky add commit-msg
+```
+
+**.husky/task-runner.json:**
+```json
+{
+   "name": "validate-commit-msg",
+   "command": "bash",
+   "args": [ "-c", "grep -E '^(feat|fix|docs|style|refactor|test|chore):' $1" ],
+   "group": "commit-msg"
+}
+```
+
+### Felsökning
+
+**Problem: Hook körs inte**
+
+**Lösning:**
+```bash
+# Verifiera att hooks är installerade
+ls .git/hooks/
+
+# Återinstallera hooks
+dotnet husky install
+```
+
+**Problem: "dotnet: command not found" i hook**
+
+**Lösning:** Lägg till dotnet i PATH, eller använd full path:
+```json
+{
+   "command": "C:\\Program Files\\dotnet\\dotnet.exe",
+   "args": [ "format" ]
+}
+```
+
+**Problem: Hook tar för lång tid**
+
+**Lösning:** Använd `--no-restore` och cache:
+```json
+{
+   "command": "dotnet",
+   "args": [ "format", "--no-restore", "--verbosity", "quiet" ]
+}
+```
+
+### Skip Hooks (vid behov)
+
+**Skippa hooks för en enda commit:**
+```bash
+git commit --no-verify -m "Emergency fix"
+```
+
+**OBS:** Använd bara vid nödsituationer!
+
+### Kända Begränsningar
+
+**`dotnet format` på Windows:**
+- Kan ha problem med line endings (CRLF vs LF)
+- Ibland rapporterar det formaterar men filen ändras inte
+- CI-verifikation är fortfarande viktig backup
+
+**Workaround:**
+Hooks kör `dotnet format` som "best effort" - CI är den slutgiltiga kontrollen.
+
+---
+
 ## Nästa Steg
 
 1. ✅ Skapa `.github/workflows/ci.yml`
@@ -889,8 +1086,9 @@ dotnet build
 3. ✅ Gå till repo → Actions tab
 4. ✅ Se workflow köra
 5. ✅ Lägg till code quality checks
-6. ⏳ Lägg till tester
-7. ⏳ Lägg till release automation
+6. ✅ Konfigurera Git hooks med Husky.Net
+7. ⏳ Lägg till tester
+8. ⏳ Lägg till release automation
 
 ---
 
