@@ -4,7 +4,7 @@
       {
          "name": "format-code",
          "command": "dotnet",
-         "args": [ "format", "--no-restore" ],
+         "args": [ "format", "PomodoroTimeTracker.sln", "--no-restore", "--verbosity", "minimal" ],
          "output": "always",
          "group": "pre-commit"
       },
