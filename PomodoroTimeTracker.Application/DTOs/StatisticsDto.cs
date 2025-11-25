@@ -28,7 +28,7 @@ public class PomodoroStatsDto
     public int Completed { get; set; }
     public int WorkSessions { get; set; }
     public int TotalMinutes { get; set; }
-    public List<ProjectStatsDto> ByProject { get; set; } = new();
+    public List<ProjectStatsDto> ByProject { get; set; } = [];
     public List<DayStatsDto>? ByDay { get; set; }
     public DateTime? LastSession { get; set; }
 }
@@ -37,7 +37,7 @@ public class TimeEntryStatsDto
 {
     public int Total { get; set; }
     public int TotalMinutes { get; set; }
-    public List<ProjectStatsDto> ByProject { get; set; } = new();
+    public List<ProjectStatsDto> ByProject { get; set; } = [];
     public List<DayStatsDto>? ByDay { get; set; }
     public DateTime? LastEntry { get; set; }
 }

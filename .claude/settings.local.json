@@ -15,7 +15,8 @@
       "mcp__git__status",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "Bash(dotnet format:*)"
+      "Bash(dotnet format:*)",
+      "Bash(dotnet husky:*)"
     ],
     "deny": [],
     "ask": []

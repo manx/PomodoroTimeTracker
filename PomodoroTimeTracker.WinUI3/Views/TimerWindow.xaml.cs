@@ -22,7 +22,6 @@ internal sealed partial class TimerWindow : WindowEx
     private const int WM_NCRBUTTONDOWN = 0x00A4;
     private const int WM_NCRBUTTONUP = 0x00A5;
     private const int WM_PARENTNOTIFY = 0x0210;
-    private const int HTBOTTOMRIGHT = 17;
 
     // RECT structure for WM_SIZING
     [StructLayout(LayoutKind.Sequential)]
@@ -79,7 +78,6 @@ internal sealed partial class TimerWindow : WindowEx
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOZORDER = 0x0004;
     private const uint SWP_FRAMECHANGED = 0x0020;
-    private const int DWMWA_CAPTION_COLOR = 35;
     private const int DWMNCRP_ENABLED = 2;
 
     [StructLayout(LayoutKind.Sequential)]
@@ -92,8 +90,6 @@ internal sealed partial class TimerWindow : WindowEx
     }
 
     private const int GWL_WNDPROC = -4;
-    private const int GWL_EXSTYLE = -20;
-    private const int WS_DLGFRAME = 0x00400000;
     private const int WS_EX_COMPOSITED = 0x02000000;
 
     private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
