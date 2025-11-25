@@ -78,7 +78,6 @@ internal sealed partial class TimerWindow : WindowEx
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOZORDER = 0x0004;
     private const uint SWP_FRAMECHANGED = 0x0020;
-    private const int DWMNCRP_ENABLED = 2;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct MARGINS
@@ -90,7 +89,6 @@ internal sealed partial class TimerWindow : WindowEx
     }
 
     private const int GWL_WNDPROC = -4;
-    private const int WS_EX_COMPOSITED = 0x02000000;
 
     private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
     private WndProcDelegate? _wndProcDelegate;
