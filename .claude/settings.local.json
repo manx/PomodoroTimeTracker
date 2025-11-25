@@ -16,7 +16,8 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "Bash(dotnet format:*)",
-      "Bash(dotnet husky:*)"
+      "Bash(dotnet husky:*)",
+      "Bash(dotnet test:*)"
     ],
     "deny": [],
     "ask": []

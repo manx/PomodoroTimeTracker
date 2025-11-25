@@ -1,6 +1,7 @@
 {
   "mcpServers": {
     "git": {
+      "type": "stdio",
       "command": "node",
       "args": ["C:\\Users\\Lenovo\\Development\\mcp-git-operations\\index.js"],
       "env": {
@@ -8,8 +9,10 @@
       }
     },
     "dotnet": {
+      "type": "stdio",
       "command": "node",
-      "args": ["C:\\Users\\Lenovo\\Development\\mcp-dotnet-operations\\index.js"]
+      "args": ["C:\\Users\\Lenovo\\Development\\mcp-dotnet-operations\\index.js"],
+      "env": {}
     }
   }
 }
