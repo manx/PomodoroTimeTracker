@@ -23,7 +23,7 @@ public class PomodoroSessionServiceTests
         _sessionRepositoryMock = new Mock<IPomodoroSessionRepository>();
 
         _unitOfWorkMock.Setup(u => u.PomodoroSessions).Returns(_sessionRepositoryMock.Object);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync(default)).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         _service = new PomodoroSessionService(_unitOfWorkMock.Object);
     }
@@ -34,7 +34,7 @@ public class PomodoroSessionServiceTests
     public async Task GetAllSessionsAsync_WithNoSessions_ReturnsEmptyCollection()
     {
         // Arrange
-        _sessionRepositoryMock.Setup(r => r.GetAllWithProjectAsync())
+        _sessionRepositoryMock.Setup(r => r.GetAllWithProjectAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PomodoroSession>());
 
         // Act
@@ -43,7 +43,7 @@ public class PomodoroSessionServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Should().BeEmpty();
-        _sessionRepositoryMock.Verify(r => r.GetAllWithProjectAsync(), Times.Once);
+        _sessionRepositoryMock.Verify(r => r.GetAllWithProjectAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class PomodoroSessionServiceTests
             }
         };
 
-        _sessionRepositoryMock.Setup(r => r.GetAllWithProjectAsync())
+        _sessionRepositoryMock.Setup(r => r.GetAllWithProjectAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(sessions);
 
         // Act
@@ -101,7 +101,7 @@ public class PomodoroSessionServiceTests
             ProjectId = 1
         };
 
-        _sessionRepositoryMock.Setup(r => r.GetAllWithProjectAsync())
+        _sessionRepositoryMock.Setup(r => r.GetAllWithProjectAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PomodoroSession> { session });
 
         // Act
@@ -130,7 +130,7 @@ public class PomodoroSessionServiceTests
             SessionType = SessionType.Work
         };
 
-        _sessionRepositoryMock.Setup(r => r.GetByIdWithProjectAsync(1))
+        _sessionRepositoryMock.Setup(r => r.GetByIdWithProjectAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(session);
 
         // Act
@@ -146,7 +146,7 @@ public class PomodoroSessionServiceTests
     public async Task GetSessionByIdAsync_WithNonExistingId_ReturnsNull()
     {
         // Arrange
-        _sessionRepositoryMock.Setup(r => r.GetByIdWithProjectAsync(999))
+        _sessionRepositoryMock.Setup(r => r.GetByIdWithProjectAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((PomodoroSession?)null);
 
         // Act
@@ -186,7 +186,7 @@ public class PomodoroSessionServiceTests
             }
         };
 
-        _sessionRepositoryMock.Setup(r => r.GetByProjectIdAsync(5))
+        _sessionRepositoryMock.Setup(r => r.GetByProjectIdAsync(5, It.IsAny<CancellationToken>()))
             .ReturnsAsync(sessions);
 
         // Act
@@ -201,7 +201,7 @@ public class PomodoroSessionServiceTests
     public async Task GetSessionsByProjectIdAsync_WithNoMatches_ReturnsEmptyCollection()
     {
         // Arrange
-        _sessionRepositoryMock.Setup(r => r.GetByProjectIdAsync(999))
+        _sessionRepositoryMock.Setup(r => r.GetByProjectIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<PomodoroSession>());
 
         // Act
@@ -230,7 +230,7 @@ public class PomodoroSessionServiceTests
             IsCompleted = false
         };
 
-        _sessionRepositoryMock.Setup(r => r.GetActiveSessionAsync())
+        _sessionRepositoryMock.Setup(r => r.GetActiveSessionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(activeSession);
 
         // Act
@@ -247,7 +247,7 @@ public class PomodoroSessionServiceTests
     public async Task GetActiveSessionAsync_WithNoActiveSession_ReturnsNull()
     {
         // Arrange
-        _sessionRepositoryMock.Setup(r => r.GetActiveSessionAsync())
+        _sessionRepositoryMock.Setup(r => r.GetActiveSessionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync((PomodoroSession?)null);
 
         // Act
@@ -300,7 +300,7 @@ public class PomodoroSessionServiceTests
         capturedSession!.ProjectId.Should().Be(1);
 
         _sessionRepositoryMock.Verify(r => r.AddAsync(It.IsAny<PomodoroSession>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -381,7 +381,7 @@ public class PomodoroSessionServiceTests
             Notes = "Completed successfully"
         };
 
-        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(1))
+        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingSession);
 
         // Act
@@ -395,7 +395,7 @@ public class PomodoroSessionServiceTests
         existingSession.EndTime.Should().NotBeNull();
 
         _sessionRepositoryMock.Verify(r => r.Update(existingSession), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -411,7 +411,7 @@ public class PomodoroSessionServiceTests
             SessionType = SessionType.Work
         };
 
-        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(999))
+        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((PomodoroSession?)null);
 
         // Act & Assert
@@ -420,7 +420,7 @@ public class PomodoroSessionServiceTests
             .WithMessage("Session with ID 999 not found");
 
         _sessionRepositoryMock.Verify(r => r.Update(It.IsAny<PomodoroSession>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -442,7 +442,7 @@ public class PomodoroSessionServiceTests
             EndTime = null
         };
 
-        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(1))
+        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(session);
 
         // Act
@@ -454,14 +454,14 @@ public class PomodoroSessionServiceTests
         session.EndTime.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
 
         _sessionRepositoryMock.Verify(r => r.Update(session), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task CompleteSessionAsync_WithNonExistingSession_ThrowsKeyNotFoundException()
     {
         // Arrange
-        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(999))
+        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((PomodoroSession?)null);
 
         // Act & Assert
@@ -489,7 +489,7 @@ public class PomodoroSessionServiceTests
             SessionType = SessionType.Work
         };
 
-        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(1))
+        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(session);
 
         // Act
@@ -497,14 +497,14 @@ public class PomodoroSessionServiceTests
 
         // Assert
         _sessionRepositoryMock.Verify(r => r.Delete(session), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task DeleteSessionAsync_WithNonExistingSession_ThrowsKeyNotFoundException()
     {
         // Arrange
-        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(999))
+        _sessionRepositoryMock.Setup(r => r.GetByIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((PomodoroSession?)null);
 
         // Act & Assert

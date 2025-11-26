@@ -23,7 +23,7 @@ public class PomodoroSettingsServiceTests
         _settingsRepositoryMock = new Mock<IPomodoroSettingsRepository>();
 
         _unitOfWorkMock.Setup(u => u.PomodoroSettings).Returns(_settingsRepositoryMock.Object);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync(default)).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         _service = new PomodoroSettingsService(_unitOfWorkMock.Object);
     }
@@ -51,7 +51,7 @@ public class PomodoroSettingsServiceTests
             LastModified = DateTime.UtcNow
         };
 
-        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(default))
+        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(settings);
 
         // Act
@@ -72,7 +72,7 @@ public class PomodoroSettingsServiceTests
         result.UseAlarm.Should().BeTrue();
         result.AlarmVolume.Should().Be(50);
 
-        _settingsRepositoryMock.Verify(r => r.GetSettingsAsync(default), Times.Once);
+        _settingsRepositoryMock.Verify(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class PomodoroSettingsServiceTests
             LastModified = DateTime.UtcNow
         };
 
-        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(default))
+        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(settings);
 
         // Act
@@ -156,7 +156,7 @@ public class PomodoroSettingsServiceTests
             AlarmVolume = 25
         };
 
-        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(default))
+        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingSettings);
 
         var beforeUpdate = DateTime.UtcNow;
@@ -184,7 +184,7 @@ public class PomodoroSettingsServiceTests
         result.LastModified.Should().BeOnOrBefore(afterUpdate);
 
         _settingsRepositoryMock.Verify(r => r.Update(existingSettings), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -224,7 +224,7 @@ public class PomodoroSettingsServiceTests
             AlarmVolume = 50
         };
 
-        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(default))
+        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingSettings);
 
         // Act
@@ -271,7 +271,7 @@ public class PomodoroSettingsServiceTests
             AlarmVolume = 0
         };
 
-        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(default))
+        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingSettings);
 
         // Act
@@ -323,7 +323,7 @@ public class PomodoroSettingsServiceTests
             AlarmVolume = 100
         };
 
-        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(default))
+        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingSettings);
 
         // Act
@@ -441,7 +441,7 @@ public class PomodoroSettingsServiceTests
             AlarmVolume = 50
         };
 
-        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(default))
+        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingSettings);
 
         // Act
@@ -451,7 +451,7 @@ public class PomodoroSettingsServiceTests
         existingSettings.Id.Should().Be(1); // Same entity, not new
         existingSettings.WorkDurationMinutes.Should().Be(30);
 
-        _settingsRepositoryMock.Verify(r => r.GetSettingsAsync(default), Times.Once);
+        _settingsRepositoryMock.Verify(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()), Times.Once);
         _settingsRepositoryMock.Verify(r => r.Update(existingSettings), Times.Once);
     }
 

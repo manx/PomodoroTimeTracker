@@ -1,5 +1,11 @@
 # Pomodoro Time Tracker
 
+ [![CI Build](https://github.com/manx/PomodoroTimeTracker/actions/workflows/ci.yml/badge.svg)](https://gith
+  ub.com/manx/PomodoroTimeTracker/actions/workflows/ci.yml)
+  [![License:
+  MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+  
 A modern desktop Pomodoro timer and time tracking application built with **WinUI 3** and **Clean Architecture** principles, optimized for **Windows 11 ARM64**.
 
 ## 🎯 Overview
