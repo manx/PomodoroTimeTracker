@@ -17,11 +17,20 @@ A WinUI 3 desktop application implementing the Pomodoro Technique with comprehen
 
 ## Development Guidelines
 
+### Language Policy
+**CRITICAL:** All git-related content MUST be in English:
+- ✅ Commit messages (subject, body, footer)
+- ✅ PR titles and descriptions
+- ✅ Branch names
+- ✅ Code comments
+- ℹ️ Internal documentation (CLAUDE.md, GIT_STRATEGY.md) can be in Swedish
+- ℹ️ Conversations and discussions can be in Swedish
+
 ### Git Operations
-**IMPORTANT:** Always use git MCP tools instead of bash commands for git operations:
-- Use `mcp__git__status`, `mcp__git__add`, `mcp__git__commit` instead of `git status`, `git add`, `git commit`
-- Use `mcp__git__bulk_action` for multiple sequential operations (stage + commit + push)
-- The MCP tools provide better integration and error handling
+**IMPORTANT:** Bash commands are preferred over MCP tools for git operations (more token-efficient):
+- Use bash: `git status`, `git add`, `git commit`, `git push`
+- Chain commands: `git checkout master && git pull origin master`
+- MCP tools have more overhead and use more tokens
 
 ### .NET Operations
 **IMPORTANT:** Always use dotnet MCP tools instead of bash commands:
