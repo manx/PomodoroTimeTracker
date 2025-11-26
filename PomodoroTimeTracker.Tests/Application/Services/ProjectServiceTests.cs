@@ -26,7 +26,7 @@ public class ProjectServiceTests
 
         _unitOfWorkMock.Setup(u => u.Projects).Returns(_projectRepositoryMock.Object);
         _unitOfWorkMock.Setup(u => u.Clients).Returns(_clientRepositoryMock.Object);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync(default)).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         _service = new ProjectService(_unitOfWorkMock.Object);
     }
@@ -37,7 +37,7 @@ public class ProjectServiceTests
     public async Task GetAllProjectsAsync_WithNoProjects_ReturnsEmptyCollection()
     {
         // Arrange
-        _projectRepositoryMock.Setup(r => r.GetAllWithClientAsync(default))
+        _projectRepositoryMock.Setup(r => r.GetAllWithClientAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Project>());
 
         // Act
@@ -72,7 +72,7 @@ public class ProjectServiceTests
             }
         };
 
-        _projectRepositoryMock.Setup(r => r.GetAllWithClientAsync(default))
+        _projectRepositoryMock.Setup(r => r.GetAllWithClientAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(projects);
 
         // Act
@@ -99,7 +99,7 @@ public class ProjectServiceTests
             CreatedAt = DateTime.UtcNow
         };
 
-        _projectRepositoryMock.Setup(r => r.GetAllWithClientAsync(default))
+        _projectRepositoryMock.Setup(r => r.GetAllWithClientAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Project> { project });
 
         // Act
@@ -128,7 +128,7 @@ public class ProjectServiceTests
             CreatedAt = DateTime.UtcNow
         };
 
-        _projectRepositoryMock.Setup(r => r.GetByIdWithDetailsAsync(1, default))
+        _projectRepositoryMock.Setup(r => r.GetByIdWithDetailsAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(project);
 
         // Act
@@ -145,7 +145,7 @@ public class ProjectServiceTests
     public async Task GetProjectByIdAsync_WithNonExistingId_ReturnsNull()
     {
         // Arrange
-        _projectRepositoryMock.Setup(r => r.GetByIdWithDetailsAsync(999, default))
+        _projectRepositoryMock.Setup(r => r.GetByIdWithDetailsAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Project?)null);
 
         // Act
@@ -181,7 +181,7 @@ public class ProjectServiceTests
             }
         };
 
-        _projectRepositoryMock.Setup(r => r.GetByClientIdAsync(5, default))
+        _projectRepositoryMock.Setup(r => r.GetByClientIdAsync(5, It.IsAny<CancellationToken>()))
             .ReturnsAsync(projects);
 
         // Act
@@ -196,7 +196,7 @@ public class ProjectServiceTests
     public async Task GetProjectsByClientIdAsync_WithNoMatches_ReturnsEmptyCollection()
     {
         // Arrange
-        _projectRepositoryMock.Setup(r => r.GetByClientIdAsync(999, default))
+        _projectRepositoryMock.Setup(r => r.GetByClientIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Project>());
 
         // Act
@@ -221,7 +221,7 @@ public class ProjectServiceTests
             ClientId = 1
         };
 
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync(createDto.Name, 1, null, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync(createDto.Name, 1, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         Project? capturedProject = null;
@@ -248,7 +248,7 @@ public class ProjectServiceTests
         capturedProject!.ClientId.Should().Be(1);
 
         _projectRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -262,7 +262,7 @@ public class ProjectServiceTests
             ClientId = null
         };
 
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync(createDto.Name, null, null, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync(createDto.Name, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         _projectRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
@@ -290,10 +290,10 @@ public class ProjectServiceTests
 
         var client = new Client { Id = 1, Name = "Test Client", CreatedAt = DateTime.UtcNow };
 
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Duplicate Project", 1, null, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Duplicate Project", 1, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(client);
 
         // Act & Assert
@@ -315,7 +315,7 @@ public class ProjectServiceTests
             ClientId = null
         };
 
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Duplicate Project", null, null, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Duplicate Project", null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act & Assert
@@ -333,10 +333,10 @@ public class ProjectServiceTests
         var createDto1 = new CreateProjectDto { Name = "Website", ClientId = 1 };
         var createDto2 = new CreateProjectDto { Name = "Website", ClientId = 2 };
 
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Website", 1, null, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Website", 1, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Website", 2, null, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Website", 2, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         _projectRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
@@ -378,10 +378,10 @@ public class ProjectServiceTests
             ClientId = 2
         };
 
-        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingProject);
 
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Updated Name", 2, 1, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Updated Name", 2, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act
@@ -393,7 +393,7 @@ public class ProjectServiceTests
         existingProject.ClientId.Should().Be(2);
 
         _projectRepositoryMock.Verify(r => r.Update(existingProject), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -408,7 +408,7 @@ public class ProjectServiceTests
             ClientId = 1
         };
 
-        _projectRepositoryMock.Setup(r => r.GetByIdAsync(999, default))
+        _projectRepositoryMock.Setup(r => r.GetByIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Project?)null);
 
         // Act & Assert
@@ -440,13 +440,13 @@ public class ProjectServiceTests
 
         var client = new Client { Id = 1, Name = "Test Client", CreatedAt = DateTime.UtcNow };
 
-        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingProject);
 
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Project B", 1, 1, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Project B", 1, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(client);
 
         // Act & Assert
@@ -478,10 +478,10 @@ public class ProjectServiceTests
             ClientId = 1
         };
 
-        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingProject);
 
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Same Name", 1, 1, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Same Name", 1, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act
@@ -511,11 +511,11 @@ public class ProjectServiceTests
             ClientId = 2 // Moving to different client
         };
 
-        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingProject);
 
         // Check should be for client 2, not client 1
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Website", 2, 1, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Website", 2, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act
@@ -523,7 +523,7 @@ public class ProjectServiceTests
 
         // Assert
         existingProject.ClientId.Should().Be(2);
-        _projectRepositoryMock.Verify(r => r.ExistsWithNameForClientAsync("Website", 2, 1, default), Times.Once);
+        _projectRepositoryMock.Verify(r => r.ExistsWithNameForClientAsync("Website", 2, 1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -543,7 +543,7 @@ public class ProjectServiceTests
             CreatedAt = DateTime.UtcNow
         };
 
-        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(project);
 
         // Act
@@ -551,14 +551,14 @@ public class ProjectServiceTests
 
         // Assert
         _projectRepositoryMock.Verify(r => r.Delete(project), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task DeleteProjectAsync_WithNonExistingProject_ThrowsKeyNotFoundException()
     {
         // Arrange
-        _projectRepositoryMock.Setup(r => r.GetByIdAsync(999, default))
+        _projectRepositoryMock.Setup(r => r.GetByIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Project?)null);
 
         // Act & Assert
@@ -583,17 +583,17 @@ public class ProjectServiceTests
             ClientId = 1
         };
 
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Duplicate", 1, null, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Duplicate", 1, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Client { Id = 1, Name = "Client", CreatedAt = DateTime.UtcNow });
 
         // Act & Assert
         await FluentActions.Invoking(() => _service.CreateProjectAsync(createDto))
             .Should().ThrowAsync<InvalidOperationException>();
 
-        _projectRepositoryMock.Verify(r => r.ExistsWithNameForClientAsync("Duplicate", 1, null, default), Times.Once);
+        _projectRepositoryMock.Verify(r => r.ExistsWithNameForClientAsync("Duplicate", 1, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -603,13 +603,13 @@ public class ProjectServiceTests
         var existingProject = new Project { Id = 1, Name = "Project A", ClientId = 1, CreatedAt = DateTime.UtcNow };
         var updateDto = new UpdateProjectDto { Id = 1, Name = "Project B", ClientId = 1 };
 
-        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _projectRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingProject);
 
-        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Project B", 1, 1, default))
+        _projectRepositoryMock.Setup(r => r.ExistsWithNameForClientAsync("Project B", 1, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Client { Id = 1, Name = "Client", CreatedAt = DateTime.UtcNow });
 
         // Act & Assert
@@ -617,7 +617,7 @@ public class ProjectServiceTests
             .Should().ThrowAsync<InvalidOperationException>();
 
         // Verify check excluded current project (ID 1)
-        _projectRepositoryMock.Verify(r => r.ExistsWithNameForClientAsync("Project B", 1, 1, default), Times.Once);
+        _projectRepositoryMock.Verify(r => r.ExistsWithNameForClientAsync("Project B", 1, 1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

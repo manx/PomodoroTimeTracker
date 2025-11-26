@@ -26,7 +26,7 @@ public class ClientServiceTests
         _loggerMock = new Mock<ILogger<ClientService>>();
 
         _unitOfWorkMock.Setup(u => u.Clients).Returns(_clientRepositoryMock.Object);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync(default)).ReturnsAsync(1);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         _service = new ClientService(_unitOfWorkMock.Object, _loggerMock.Object);
     }
@@ -37,7 +37,7 @@ public class ClientServiceTests
     public async Task GetAllClientsAsync_WithNoClients_ReturnsEmptyCollection()
     {
         // Arrange
-        _clientRepositoryMock.Setup(r => r.GetAllWithProjectsAsync(default))
+        _clientRepositoryMock.Setup(r => r.GetAllWithProjectsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Client>());
 
         // Act
@@ -70,7 +70,7 @@ public class ClientServiceTests
             }
         };
 
-        _clientRepositoryMock.Setup(r => r.GetAllWithProjectsAsync(default))
+        _clientRepositoryMock.Setup(r => r.GetAllWithProjectsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(clients);
 
         // Act
@@ -99,7 +99,7 @@ public class ClientServiceTests
             }
         };
 
-        _clientRepositoryMock.Setup(r => r.GetAllWithProjectsAsync(default))
+        _clientRepositoryMock.Setup(r => r.GetAllWithProjectsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Client> { client });
 
         // Act
@@ -128,7 +128,7 @@ public class ClientServiceTests
             CreatedAt = DateTime.UtcNow
         };
 
-        _clientRepositoryMock.Setup(r => r.GetByIdWithProjectsAsync(1, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdWithProjectsAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(client);
 
         // Act
@@ -145,7 +145,7 @@ public class ClientServiceTests
     public async Task GetClientByIdAsync_WithNonExistingId_ReturnsNull()
     {
         // Arrange
-        _clientRepositoryMock.Setup(r => r.GetByIdWithProjectsAsync(999, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdWithProjectsAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Client?)null);
 
         // Act
@@ -169,7 +169,7 @@ public class ClientServiceTests
             Description = "Client Description"
         };
 
-        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync(createDto.Name, null, default))
+        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync(createDto.Name, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         Client? capturedClient = null;
@@ -194,9 +194,9 @@ public class ClientServiceTests
         capturedClient.Should().NotBeNull();
         capturedClient!.Name.Should().Be("New Client");
 
-        _clientRepositoryMock.Verify(r => r.ExistsWithNameAsync(createDto.Name, null, default), Times.Once);
+        _clientRepositoryMock.Verify(r => r.ExistsWithNameAsync(createDto.Name, null, It.IsAny<CancellationToken>()), Times.Once);
         _clientRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Client>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -209,7 +209,7 @@ public class ClientServiceTests
             Description = "Description"
         };
 
-        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync(createDto.Name, null, default))
+        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync(createDto.Name, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act & Assert
@@ -218,7 +218,7 @@ public class ClientServiceTests
             .WithMessage("A client with the name 'Existing Client' already exists");
 
         _clientRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Client>(), It.IsAny<CancellationToken>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -231,7 +231,7 @@ public class ClientServiceTests
             Description = null
         };
 
-        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync(createDto.Name, null, default))
+        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync(createDto.Name, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         _clientRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Client>(), It.IsAny<CancellationToken>()))
@@ -257,7 +257,7 @@ public class ClientServiceTests
 
         var beforeCreation = DateTime.UtcNow;
 
-        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync(createDto.Name, null, default))
+        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync(createDto.Name, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         _clientRepositoryMock.Setup(r => r.AddAsync(It.IsAny<Client>(), It.IsAny<CancellationToken>()))
@@ -296,10 +296,10 @@ public class ClientServiceTests
             Description = "Updated Description"
         };
 
-        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingClient);
 
-        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync(updateDto.Name, 1, default))
+        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync(updateDto.Name, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         // Act
@@ -310,7 +310,7 @@ public class ClientServiceTests
         existingClient.Description.Should().Be("Updated Description");
 
         _clientRepositoryMock.Verify(r => r.Update(existingClient), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -324,7 +324,7 @@ public class ClientServiceTests
             Description = "Description"
         };
 
-        _clientRepositoryMock.Setup(r => r.GetByIdAsync(999, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Client?)null);
 
         // Act & Assert
@@ -333,7 +333,7 @@ public class ClientServiceTests
             .WithMessage("Client with ID 999 not found");
 
         _clientRepositoryMock.Verify(r => r.Update(It.IsAny<Client>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -355,10 +355,10 @@ public class ClientServiceTests
             Description = "Updated Description"
         };
 
-        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingClient);
 
-        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync("Client B", 1, default))
+        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync("Client B", 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act & Assert
@@ -367,7 +367,7 @@ public class ClientServiceTests
             .WithMessage("A client with the name 'Client B' already exists");
 
         _clientRepositoryMock.Verify(r => r.Update(It.IsAny<Client>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -389,10 +389,10 @@ public class ClientServiceTests
             Description = "New Description"
         };
 
-        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingClient);
 
-        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync("Same Name", 1, default))
+        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync("Same Name", 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false); // Not duplicate because it's the same client
 
         // Act
@@ -419,7 +419,7 @@ public class ClientServiceTests
             CreatedAt = DateTime.UtcNow
         };
 
-        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(client);
 
         // Act
@@ -427,14 +427,14 @@ public class ClientServiceTests
 
         // Assert
         _clientRepositoryMock.Verify(r => r.Delete(client), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task DeleteClientAsync_WithNonExistingClient_ThrowsKeyNotFoundException()
     {
         // Arrange
-        _clientRepositoryMock.Setup(r => r.GetByIdAsync(999, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Client?)null);
 
         // Act & Assert
@@ -443,7 +443,7 @@ public class ClientServiceTests
             .WithMessage("Client with ID 999 not found");
 
         _clientRepositoryMock.Verify(r => r.Delete(It.IsAny<Client>()), Times.Never);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(default), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -460,14 +460,14 @@ public class ClientServiceTests
             Description = "Test"
         };
 
-        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync("Duplicate Name", null, default))
+        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync("Duplicate Name", null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act & Assert
         await FluentActions.Invoking(() => _service.CreateClientAsync(createDto))
             .Should().ThrowAsync<InvalidOperationException>();
 
-        _clientRepositoryMock.Verify(r => r.ExistsWithNameAsync("Duplicate Name", null, default), Times.Once);
+        _clientRepositoryMock.Verify(r => r.ExistsWithNameAsync("Duplicate Name", null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -477,10 +477,10 @@ public class ClientServiceTests
         var existingClient = new Client { Id = 1, Name = "Client A", CreatedAt = DateTime.UtcNow };
         var updateDto = new UpdateClientDto { Id = 1, Name = "Client B" };
 
-        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, default))
+        _clientRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingClient);
 
-        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync("Client B", 1, default))
+        _clientRepositoryMock.Setup(r => r.ExistsWithNameAsync("Client B", 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act & Assert
@@ -488,7 +488,7 @@ public class ClientServiceTests
             .Should().ThrowAsync<InvalidOperationException>();
 
         // Verify that the check excluded the current client (ID 1)
-        _clientRepositoryMock.Verify(r => r.ExistsWithNameAsync("Client B", 1, default), Times.Once);
+        _clientRepositoryMock.Verify(r => r.ExistsWithNameAsync("Client B", 1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
