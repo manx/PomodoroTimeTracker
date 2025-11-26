@@ -35,6 +35,7 @@ master (protected, always production-ready)
 3. **Squash and merge** - Håller master-historiken ren
 4. **Feature branches** - Använd beskrivande namn (`feature/`, `fix/`, `refactor/`, etc.)
 5. **Delete branch efter merge** - Håller repository rent
+6. **English only** - Alla commits, PR-titlar och PR-beskrivningar ska vara på engelska
 
 ---
 
@@ -204,6 +205,24 @@ git fetch --prune
 ---
 
 ## 📝 Commit Conventions
+
+**IMPORTANT: All commits, PR titles, and PR descriptions MUST be in English.**
+
+### Language Policy
+
+- ✅ **Commit messages:** English only
+- ✅ **PR titles:** English only
+- ✅ **PR descriptions:** English only
+- ✅ **Branch names:** English only
+- ✅ **Code comments:** English only
+- ℹ️ **Documentation (CLAUDE.md, GIT_STRATEGY.md):** Swedish is OK (internal team docs)
+- ℹ️ **Conversation/discussion:** Swedish is OK
+
+**Rationale:**
+- Industry standard (global collaboration)
+- Better tooling support (CI/CD, GitHub Actions)
+- Future-proof (if project goes open source or team grows)
+- Consistency with code (which is in English)
 
 ### Conventional Commits Format
 
