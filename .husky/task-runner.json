@@ -9,6 +9,13 @@
          "group": "pre-commit"
       },
       {
+         "name": "run-tests",
+         "command": "dotnet",
+         "args": [ "test", "PomodoroTimeTracker.sln", "--no-build", "--verbosity", "quiet", "--nologo" ],
+         "output": "always",
+         "group": "pre-commit"
+      },
+      {
          "name": "stage-all-changes",
          "command": "git",
          "args": [ "add", "-u" ],
