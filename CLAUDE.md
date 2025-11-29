@@ -39,6 +39,164 @@ A WinUI 3 desktop application implementing the Pomodoro Technique with comprehen
 - Use `mcp__dotnet__dotnet_run` instead of `dotnet run`
 - MCP tools provide better integration and error handling
 
+## Code Quality Standards
+
+**CRITICAL:** Before delivering ANY code, Claude MUST ensure it meets these quality standards:
+
+### 1. Security Requirements
+
+- ✅ **No SQL Injection vulnerabilities** - Always use parameterized queries (EF Core handles this)
+- ✅ **Input validation** - Validate all user inputs at service layer
+- ✅ **Proper error handling** - Never expose stack traces or sensitive info to UI
+- ✅ **Secure defaults** - No hardcoded credentials, use user secrets for sensitive data
+
+### 2. Architecture & Design
+
+- ✅ **Clean Architecture layers** - Strictly maintain Domain → Application → Infrastructure → UI separation
+- ✅ **Dependency inversion** - Depend on abstractions (interfaces), not concrete implementations
+- ✅ **Single Responsibility** - Each class/method has ONE clear purpose
+- ✅ **DRY principle (with pragmatism)** - Extract common logic when it genuinely reduces complexity. Don't create helper functions for simple operations where inlined code is clearer. Cognitive load matters: jumping to another file to understand a simple operation is worse than repeating a few lines
+- ✅ **MVVM pattern** - ViewModels never reference UI controls, Views never contain business logic
+- ✅ **Keep it simple** - Don't add features, error handling, fallbacks, or abstractions beyond what's needed for the current task
+
+### 3. .NET & C# Best Practices
+
+- ✅ **Async/await properly** - All I/O operations async, propagate CancellationToken where applicable
+- ✅ **IDisposable pattern** - Implement correctly for resources (DbContext, etc.)
+- ✅ **Null handling** - Use nullable reference types, check nulls appropriately
+- ✅ **LINQ usage** - Prefer LINQ over manual loops where readable
+- ✅ **Exception handling** - Catch specific exceptions, don't swallow exceptions silently
+
+### 4. WinUI 3 / XAML Specific
+
+- ✅ **No value converters** - Use explicit ViewModel boolean properties instead (project convention)
+- ✅ **Dispatcher thread** - All UI updates on correct thread (DispatcherQueue for timers)
+- ✅ **ViewModel lifecycle** - Properly dispose subscriptions, timers, event handlers
+- ✅ **Data binding** - Prefer x:Bind over Binding for performance and compile-time checking
+- ✅ **Resource management** - Properly handle XAML resources, avoid memory leaks
+
+### 5. Testing Requirements
+
+- ✅ **Unit tests for all business logic** - Service layer must have comprehensive tests
+- ✅ **AAA pattern** - All tests follow Arrange-Act-Assert structure
+- ✅ **Edge cases covered** - Test null, empty, boundary values, error conditions
+- ✅ **Meaningful test names** - Test names describe what is being tested and expected outcome
+- ✅ **No logic in tests** - Tests should be simple and obvious
+- ✅ **Mock external dependencies** - Use Moq for interfaces, InMemory for repositories
+
+### 6. Documentation
+
+- ✅ **XML documentation** - All public APIs have XML doc comments
+- ✅ **Complex logic comments** - Explain WHY, not WHAT (code shows what)
+- ✅ **Update CLAUDE.md** - Document significant architectural decisions
+- ✅ **README updates** - Keep user-facing documentation current
+
+### 7. Self-Review Checklist
+
+Before presenting ANY code, Claude must verify:
+
+- [ ] **Can this throw unhandled exceptions?** - All exception paths considered
+- [ ] **Are there race conditions?** - Async code properly coordinated
+- [ ] **Is null handling correct?** - All nullable paths handled
+- [ ] **Does this follow project patterns?** - Consistent with existing codebase
+- [ ] **Are tests comprehensive?** - All paths and edge cases tested
+- [ ] **Is documentation updated?** - CLAUDE.md, README, XML docs current
+- [ ] **Performance acceptable?** - No obvious performance issues (N+1 queries, etc.)
+- [ ] **Memory leaks prevented?** - Disposable resources properly managed
+
+## Implementation Workflow
+
+### For Simple Features (< 200 lines, straightforward logic)
+
+**Direct Implementation:**
+1. Write implementation following all quality standards
+2. Run self-review checklist
+3. Write comprehensive unit tests
+4. Present with: "✅ Implemented, self-reviewed, and tested"
+
+### For Complex Features (> 200 lines OR complex UI OR architectural decisions)
+
+**Plan Mode First:**
+1. **Enter Plan Mode** - Use EnterPlanMode tool to design structure
+2. **Explore codebase** - Understand existing patterns and architecture
+3. **Design approach** - Create detailed implementation plan
+4. **Present plan** - Show user the design BEFORE coding
+5. **Get approval** - Wait for user feedback and approval
+6. **Implement** - Follow approved plan with quality standards
+7. **Test thoroughly** - Comprehensive tests for complex logic
+8. **Present** - "✅ Implemented according to approved plan"
+
+**Triggers for Plan Mode:**
+- Complex UI (multiple views, custom controls, complex layouts)
+- New architectural patterns (first of its kind in project)
+- Significant refactoring (touching 5+ files)
+- Performance-critical features
+- Database schema changes
+- Integration with external services
+
+### When User Provides Insufficient Detail for Complex UI
+
+If the user requests complex UI without specifying structure:
+
+**Do NOT:**
+- ❌ Guess at the structure
+- ❌ Implement and hope it's right
+- ❌ Create overly complex solution
+
+**Instead:**
+- ✅ Enter Plan Mode
+- ✅ Propose 2-3 design alternatives
+- ✅ Explain trade-offs
+- ✅ Ask for user preference
+- ✅ Implement chosen design
+
+## Quality Assurance
+
+### Code Delivery Format
+
+When delivering code, always include:
+
+```markdown
+## Implementation Summary
+
+**Feature:** [Brief description]
+
+**Files Changed:**
+- Path/To/File.cs (Added/Modified)
+- Path/To/Test.cs (Added)
+
+**Quality Checklist:**
+- ✅ Self-reviewed against quality standards
+- ✅ Unit tests written (X tests, 100% coverage of new code)
+- ✅ Edge cases handled (null, empty, boundaries)
+- ✅ No security vulnerabilities
+- ✅ Follows Clean Architecture
+- ✅ Documentation updated
+
+**Testing:**
+All X tests passing locally.
+
+**Notes:**
+[Any important considerations, decisions, or follow-ups]
+```
+
+### If Code Doesn't Meet Standards
+
+If user identifies quality issues:
+
+1. **Acknowledge** - "You're right, this doesn't meet the standards"
+2. **Identify gap** - Which standard was violated
+3. **Fix immediately** - Don't argue, improve the code
+4. **Learn** - Update approach to prevent similar issues
+
+## Continuous Improvement
+
+This section should be updated when:
+- New patterns emerge in the codebase
+- Quality issues are discovered and fixed
+- New best practices are adopted
+- User provides feedback on code quality
+
 ## Architecture
 
 ### Project Structure
