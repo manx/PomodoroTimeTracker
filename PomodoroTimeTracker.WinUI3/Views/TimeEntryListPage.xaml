@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="PomodoroTimeTracker.WinUI3.Views.TimeEntryListPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodels="using:PomodoroTimeTracker.WinUI3.ViewModels"
+    d:DataContext="{d:DesignInstance Type=viewmodels:TimeEntryListViewModel}"
+    mc:Ignorable="d">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0"
+                   Text="Time Entries"
+                   Style="{StaticResource TitleTextBlockStyle}"
+                   Margin="0,0,0,8"/>
+
+        <!-- Active Entry Card -->
+        <Border Grid.Row="1"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                BorderThickness="2"
+                CornerRadius="8"
+                Padding="16"
+                Margin="0,0,0,16"
+                Visibility="{x:Bind ViewModel.HasActiveEntry, Mode=OneWay}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Active Time Entry"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                    <TextBlock Text="{x:Bind ViewModel.ActiveEntryDescription, Mode=OneWay}"
+                               Style="{StaticResource BodyStrongTextBlockStyle}"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{x:Bind ViewModel.ActiveEntryProjectName, Mode=OneWay}"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Visibility="{x:Bind ViewModel.HasActiveEntryProject, Mode=OneWay}"/>
+                    <TextBlock Text="{x:Bind ViewModel.ActiveTimerDisplay, Mode=OneWay}"
+                               Style="{StaticResource SubtitleTextBlockStyle}"
+                               Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                               FontFamily="Consolas"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Content="Stop"
+                        Command="{x:Bind ViewModel.StopActiveEntryCommand}"
+                        Style="{StaticResource AccentButtonStyle}"
+                        VerticalAlignment="Center"
+                        MinWidth="80"/>
+            </Grid>
+        </Border>
+
+        <!-- Command Bar -->
+        <CommandBar Grid.Row="2"
+                    DefaultLabelPosition="Right"
+                    Margin="0,0,0,16">
+            <AppBarButton Icon="Play"
+                          Label="Start Timer"
+                          Command="{x:Bind ViewModel.StartNewEntryCommand}"/>
+            <AppBarButton Icon="Add"
+                          Label="Add Manual"
+                          Command="{x:Bind ViewModel.AddManualEntryCommand}"/>
+            <AppBarSeparator/>
+            <AppBarButton Icon="Edit"
+                          Label="Edit"
+                          Command="{x:Bind ViewModel.EditEntryCommand}"/>
+            <AppBarButton Icon="Delete"
+                          Label="Delete"
+                          Command="{x:Bind ViewModel.DeleteEntryCommand}"/>
+            <AppBarSeparator/>
+            <AppBarButton Icon="Refresh"
+                          Label="Refresh"
+                          Command="{x:Bind ViewModel.RefreshCommand}"/>
+        </CommandBar>
+
+        <!-- Entry List with Groups -->
+        <Grid Grid.Row="3">
+            <!-- Loading Indicator -->
+            <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+                          Width="50"
+                          Height="50"/>
+
+            <!-- Grouped List -->
+            <ListView ItemsSource="{x:Bind ViewModel.GroupedEntries, Mode=OneWay}"
+                      SelectionMode="None">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Padding" Value="0"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="viewmodels:TimeEntryGroupDto">
+                        <StackPanel Margin="0,0,0,8">
+                            <!-- Date Header -->
+                            <TextBlock Text="{x:Bind DateHeader}"
+                                       Style="{StaticResource SubtitleTextBlockStyle}"
+                                       Margin="0,8,0,8"/>
+
+                            <!-- Entries for this date -->
+                            <ItemsControl ItemsSource="{x:Bind Entries}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                CornerRadius="4"
+                                                Padding="12"
+                                                Margin="0,0,0,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="{Binding Description}"
+                                                               Style="{StaticResource BodyTextBlockStyle}"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding ProjectDisplay}"
+                                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                        <TextBlock Text=" • "
+                                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                        <TextBlock Text="{Binding TimeRangeDisplay}"
+                                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DurationDisplay}"
+                                                           Style="{StaticResource BodyStrongTextBlockStyle}"
+                                                           VerticalAlignment="Center"
+                                                           Margin="16,0,0,0"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <!-- Empty State -->
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
+                <FontIcon Glyph="&#xE823;"
+                          FontSize="48"
+                          Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                <TextBlock Text="No time entries yet"
+                           Style="{StaticResource SubtitleTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           Margin="0,16,0,0"/>
+                <TextBlock Text="Click 'Start Timer' to begin tracking"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

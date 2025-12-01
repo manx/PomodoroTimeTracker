@@ -10,6 +10,7 @@ internal class NavigationService : INavigationService
     public Frame? NavigationFrame { get; set; }
     public int? ClientIdToSelect { get; set; }
     public int? ProjectIdToSelect { get; set; }
+    public int? TimeEntryIdToSelect { get; set; }
 
     public void NavigateTo(Type pageType)
     {

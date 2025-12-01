@@ -77,6 +77,8 @@ namespace PomodoroTimeTracker.WinUI3
                     services.AddTransient<ViewModels.ClientDetailViewModel>();
                     services.AddTransient<ViewModels.ProjectListViewModel>();
                     services.AddTransient<ViewModels.ProjectDetailViewModel>();
+                    services.AddTransient<ViewModels.TimeEntryListViewModel>();
+                    services.AddTransient<ViewModels.TimeEntryDetailViewModel>();
                     services.AddTransient<ViewModels.PomodoroSettingsViewModel>();
                     services.AddTransient<ViewModels.PomodoroViewModel>();
 
@@ -84,6 +86,7 @@ namespace PomodoroTimeTracker.WinUI3
                     services.AddSingleton<Services.INavigationService, Services.NavigationService>();
                     services.AddSingleton<Services.IDialogService, Services.DialogService>();
                     services.AddSingleton<IAudioService, Services.AudioService>();
+                    services.AddTransient<IDispatcherTimer, Services.DispatcherTimerWrapper>();
                 })
                 .Build();
         }

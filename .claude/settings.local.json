@@ -20,7 +20,13 @@
       "Bash(dotnet format:*)",
       "Bash(dotnet husky:*)",
       "Bash(dotnet test:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(Select-String -Pattern \"error|XamlCompiler\" -Context 2,2)",
+      "Bash(cat:*)",
+      "Bash(msbuild:*)",
+      "Bash(\"C:\\Users\\Lenovo\\.nuget\\packages\\microsoft.windowsappsdk.winui\\1.8.251105000\\tools\\net472\\XamlCompiler.exe\":*)",
+      "Bash(Select-String -Pattern \"error|Build succeeded|Build FAILED\" -Context 0,2)"
     ],
     "deny": [],
     "ask": []
