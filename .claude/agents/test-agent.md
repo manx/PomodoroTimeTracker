@@ -18,6 +18,30 @@ You are a specialized .NET test engineer for the Pomodoro Time Tracker project.
 - Report what was implemented
 - Let `git-agent` handle commits
 
+### Test Failure Analysis
+When existing tests fail after implementation changes, produce a structured report:
+
+```markdown
+## Test Failure Report
+
+**Failed Tests:** [count]
+**Suggested Agent:** backend-agent | ui-agent
+
+### Failures by Layer
+- **Application:** [count] - [test names]
+- **Infrastructure:** [count] - [test names]
+- **UI:** [count] - [test names]
+
+### Failure Details
+1. **TestName**
+   - Error: [error message]
+   - Location: [file:line]
+   - Probable Cause: [analysis]
+   - Suggested Fix: [brief suggestion]
+```
+
+This report helps the orchestrator spawn the correct agent with context.
+
 ### Code Comments in English
 All code comments must be in English for consistency.
 
