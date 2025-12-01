@@ -33,12 +33,27 @@ internal class TimeEntryGroupDto
 /// <summary>
 /// ViewModel for the time entry list view.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This ViewModel uses IDispatcherTimer (injected via constructor) instead of directly
+/// creating a DispatcherQueueTimer. This design choice enables unit testing.
+/// </para>
+/// <para>
+/// <b>Why timer injection matters:</b>
+/// WinUI 3's DispatcherQueueTimer requires a UI thread context. In unit tests,
+/// there is no UI thread, so DispatcherQueue.GetForCurrentThread() returns null.
+/// By injecting IDispatcherTimer, tests can provide a mock timer that doesn't
+/// require a UI thread, allowing full testing of timer-dependent logic.
+/// </para>
+/// </remarks>
 internal partial class TimeEntryListViewModel : ViewModelBase
 {
     private readonly ITimeEntryService _timeEntryService;
     private readonly IProjectService _projectService;
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
+
+    // Timer is injected to enable unit testing. See class remarks for details.
     private readonly IDispatcherTimer _timer;
 
     private ObservableCollection<TimeEntryGroupDto> _groupedEntries = new();

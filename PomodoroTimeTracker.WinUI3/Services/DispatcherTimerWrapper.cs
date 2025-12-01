@@ -4,9 +4,24 @@ using PomodoroTimeTracker.Application.Interfaces;
 namespace PomodoroTimeTracker.WinUI3.Services;
 
 /// <summary>
-/// Wrapper around DispatcherQueueTimer for production use.
-/// Implements IDispatcherTimer to enable unit testing of ViewModels.
+/// Production implementation of IDispatcherTimer using WinUI 3's DispatcherQueueTimer.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>Why this wrapper exists:</b>
+/// </para>
+/// <para>
+/// This class wraps WinUI 3's DispatcherQueueTimer behind the IDispatcherTimer interface.
+/// The wrapper enables ViewModels to be unit tested by allowing mock timers to be injected
+/// during tests instead of this production implementation.
+/// </para>
+/// <para>
+/// <b>Important:</b> This class must be instantiated on the UI thread because
+/// DispatcherQueue.GetForCurrentThread() requires a UI thread context.
+/// In tests, this would fail with a NullReferenceException.
+/// </para>
+/// </remarks>
+/// <seealso cref="IDispatcherTimer"/>
 internal sealed class DispatcherTimerWrapper : IDispatcherTimer
 {
     private readonly DispatcherQueueTimer _timer;

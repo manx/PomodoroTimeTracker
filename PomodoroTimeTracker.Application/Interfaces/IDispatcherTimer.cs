@@ -2,8 +2,28 @@ namespace PomodoroTimeTracker.Application.Interfaces;
 
 /// <summary>
 /// Abstraction for dispatcher timer to enable unit testing of ViewModels.
-/// Implementations should dispatch timer ticks on the UI thread.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>Why this abstraction exists:</b>
+/// </para>
+/// <para>
+/// WinUI 3's DispatcherQueueTimer requires a UI thread context to function.
+/// When running unit tests, there is no UI thread, so DispatcherQueue.GetForCurrentThread()
+/// returns null, making it impossible to create timers directly in ViewModels during tests.
+/// </para>
+/// <para>
+/// By injecting IDispatcherTimer through dependency injection, we can:
+/// <list type="bullet">
+///   <item>Use DispatcherTimerWrapper in production (real timer on UI thread)</item>
+///   <item>Use a mock implementation in tests (controllable, no UI thread needed)</item>
+/// </list>
+/// </para>
+/// <para>
+/// This follows the Dependency Inversion Principle: ViewModels depend on this abstraction
+/// (in the Application layer), not on the concrete WinUI 3 implementation.
+/// </para>
+/// </remarks>
 public interface IDispatcherTimer
 {
     /// <summary>
