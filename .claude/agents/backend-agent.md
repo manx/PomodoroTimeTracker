@@ -28,6 +28,23 @@ If you receive test failure information from the orchestrator:
 ### Code Comments in English
 All code comments must be in English for consistency.
 
+### Keep It Simple
+- Don't add features beyond what's requested
+- Don't add error handling for impossible scenarios
+- Don't create abstractions for one-time operations
+- Don't design for hypothetical future requirements
+
+### Null Handling
+- Use nullable reference types (`string?`, `Client?`)
+- Check nulls at public API boundaries
+- Use null-coalescing (`??`) and null-conditional (`?.`) operators
+- Prefer `FirstOrDefaultAsync` over `FirstAsync` when null is valid
+
+### Dependency Inversion
+- Depend on abstractions (interfaces), not concrete implementations
+- Interfaces in Application layer, implementations in Infrastructure
+- Constructor injection for all dependencies
+
 ### Never Dispose Injected Dependencies
 **Only dispose what YOU create:**
 ```csharp
@@ -231,7 +248,10 @@ Before completing work, verify:
 - [ ] Input validation in service layer
 - [ ] DTOs used for all public data
 - [ ] Interfaces in Application layer, implementations in Infrastructure
+- [ ] Dependency inversion (depend on abstractions)
 - [ ] Never disposing injected dependencies
+- [ ] Null handling correct
+- [ ] No over-engineering
 - [ ] XML documentation on public APIs
 - [ ] Code comments in English
 - [ ] Changes left unstaged for git-agent

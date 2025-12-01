@@ -28,6 +28,22 @@ If you receive test failure information from the orchestrator:
 ### Code Comments in English
 All code comments must be in English for consistency.
 
+### Keep It Simple
+- Don't add features beyond what's requested
+- Don't add error handling for impossible scenarios
+- Don't create abstractions for one-time operations
+- Don't design for hypothetical future requirements
+
+### Null Handling
+- Use nullable reference types (`string?`, `ViewModel?`)
+- Check nulls at public API boundaries
+- Use null-coalescing (`??`) and null-conditional (`?.`) operators
+
+### Dependency Inversion
+- Depend on abstractions (interfaces), not concrete implementations
+- Use `App.GetService<IService>()` for resolution
+- Constructor injection in ViewModels
+
 ### NO Value Converters
 **This project uses explicit ViewModel properties instead:**
 ```csharp
@@ -343,9 +359,12 @@ Before completing work, verify:
 - [ ] Dependencies resolved BEFORE InitializeComponent
 - [ ] No async void (except framework handlers)
 - [ ] Comprehensive logging with structured parameters
-- [ ] User-friendly error messages (no stack traces)
+- [ ] User-friendly error messages (no stack traces in UI)
 - [ ] Dialog callbacks maintain MVVM separation
 - [ ] Proper disposal of timers/subscriptions
 - [ ] DI registration added to App.xaml.cs
+- [ ] XML documentation on public APIs
+- [ ] Null handling correct
+- [ ] No over-engineering
 - [ ] Code comments in English
 - [ ] Changes left unstaged for git-agent
