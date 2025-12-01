@@ -86,19 +86,32 @@ A WinUI 3 desktop application implementing the Pomodoro Technique with comprehen
 | test-agent | Unit tests + failure analysis | sonnet |
 | git-agent | Commits and PRs | haiku |
 
-**Test Failure Feedback Loop:**
+**Implementation Workflow:**
 1. Spawn implementation agent(s) for feature/fix
-2. Run `dotnet test` after implementation
-3. If tests fail → spawn test-agent for analysis
-4. test-agent produces structured failure report with layer analysis
-5. Spawn appropriate agent (backend/ui) with error context
-6. Repeat until all tests pass
-7. Spawn git-agent to commit
+2. Run `dotnet build` to catch compilation errors
+3. Run `dotnet test` after successful build
+4. If tests fail → spawn test-agent for analysis
+5. test-agent produces structured failure report with layer analysis
+6. Spawn appropriate agent (backend/ui) with error context
+7. Repeat steps 2-6 until build and tests pass
+8. Spawn git-agent to commit
 
 **Parallel Execution:**
 - backend-agent and ui-agent can run in parallel for cross-layer features
 - test-agent runs after implementation is complete
 - git-agent runs last to coordinate commits
+
+**Parallel Agent Boundaries:**
+| Agent | Owns | Avoid |
+|-------|------|-------|
+| backend-agent | `Domain/`, `Application/`, `Infrastructure/` | `WinUI3/` |
+| ui-agent | `WinUI3/Views/`, `WinUI3/ViewModels/`, `WinUI3/Services/` | Other layers |
+| test-agent | `Tests/` | Production code |
+
+**Conflict Prevention:**
+- Never have two agents edit the same file simultaneously
+- If cross-layer coordination needed, run agents sequentially
+- Shared files (e.g., `App.xaml.cs` for DI) → ui-agent owns, backend-agent requests changes
 
 ## Code Quality Standards
 
