@@ -32,12 +32,73 @@ A WinUI 3 desktop application implementing the Pomodoro Technique with comprehen
 - Chain commands: `git checkout master && git pull origin master`
 - MCP tools have more overhead and use more tokens
 
+### Git Commit Standards
+
+**Commit Message Format:**
+```
+<type>(<scope>): <brief description>
+
+<detailed explanation>
+
+<footer>
+```
+
+**Types:** `feat`, `fix`, `refactor`, `test`, `docs`, `style`, `chore`, `perf`
+
+**Brief Description Rules:**
+- Imperative mood: "add", not "added" or "adds"
+- Lowercase start, no period at end
+- Maximum 50 characters
+
+**Project Scopes:**
+- `domain` - Domain entities, enums
+- `app` - Application layer (services, DTOs)
+- `infra` - Infrastructure (repositories, EF)
+- `ui` - WinUI3 (ViewModels, Views)
+- `test` - Test project
+- `config` - Configuration files
+- `ci` - CI/CD workflows
+
+**Single vs Multiple Commits:**
+- **ONE commit:** Tightly coupled changes (service + ViewModel + tests for same feature)
+- **MULTIPLE commits:** Logically separate changes (feature + unrelated docs)
+
+**Footer:**
+- Always include: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
+- Always include: `Co-Authored-By: Claude <noreply@anthropic.com>`
+- Issue links when applicable: `Fixes #123`
+
 ### .NET Operations
 **IMPORTANT:** Always use dotnet MCP tools instead of bash commands:
 - Use `mcp__dotnet__dotnet_build` instead of `dotnet build`
 - Use `mcp__dotnet__dotnet_test` instead of `dotnet test`
 - Use `mcp__dotnet__dotnet_run` instead of `dotnet run`
 - MCP tools provide better integration and error handling
+
+### Agent Orchestration Workflow
+
+**Available Agents** (in `.claude/agents/`):
+
+| Agent | Purpose | Model |
+|-------|---------|-------|
+| backend-agent | Application/Infrastructure layer | sonnet |
+| ui-agent | WinUI 3 presentation layer | sonnet |
+| test-agent | Unit tests + failure analysis | sonnet |
+| git-agent | Commits and PRs | haiku |
+
+**Test Failure Feedback Loop:**
+1. Spawn implementation agent(s) for feature/fix
+2. Run `dotnet test` after implementation
+3. If tests fail → spawn test-agent for analysis
+4. test-agent produces structured failure report with layer analysis
+5. Spawn appropriate agent (backend/ui) with error context
+6. Repeat until all tests pass
+7. Spawn git-agent to commit
+
+**Parallel Execution:**
+- backend-agent and ui-agent can run in parallel for cross-layer features
+- test-agent runs after implementation is complete
+- git-agent runs last to coordinate commits
 
 ## Code Quality Standards
 
