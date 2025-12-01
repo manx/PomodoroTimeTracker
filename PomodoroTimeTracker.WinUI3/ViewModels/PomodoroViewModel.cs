@@ -77,7 +77,6 @@ internal partial class PomodoroViewModel : ViewModelBase
     private readonly IPomodoroSettingsService _settingsService;
     private readonly IClientService _clientService;
     private readonly IProjectService _projectService;
-    private readonly IAudioService _audioService;
     private readonly DispatcherQueue _dispatcherQueue;
     private readonly DispatcherQueueTimer _timer;
 
@@ -108,19 +107,16 @@ internal partial class PomodoroViewModel : ViewModelBase
     /// <param name="settingsService">Service for managing Pomodoro settings.</param>
     /// <param name="clientService">Service for managing clients.</param>
     /// <param name="projectService">Service for managing projects.</param>
-    /// <param name="audioService">Service for playing audio notifications.</param>
     public PomodoroViewModel(
         IPomodoroSessionService sessionService,
         IPomodoroSettingsService settingsService,
         IClientService clientService,
-        IProjectService projectService,
-        IAudioService audioService)
+        IProjectService projectService)
     {
         _sessionService = sessionService;
         _settingsService = settingsService;
         _clientService = clientService;
         _projectService = projectService;
-        _audioService = audioService;
 
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         _timer = _dispatcherQueue.CreateTimer();
@@ -684,26 +680,18 @@ internal partial class PomodoroViewModel : ViewModelBase
         }
     }
 
-    private async void TriggerWrapUpNotification()
+    private void TriggerWrapUpNotification()
     {
+        // TODO: Play wrap up notification sound at WrapUpNotificationVolume
         System.Diagnostics.Debug.WriteLine("Wrap up notification triggered - work period complete, wrap up period starting!");
-
-        if (_settings?.PlaySound == true)
-        {
-            await _audioService.PlayWrapUpNotificationAsync(_settings.WrapUpNotificationVolume);
-        }
     }
 
     private async void OnTimerComplete()
     {
         _timer.Stop();
 
+        // TODO: Play main alarm at AlarmVolume
         System.Diagnostics.Debug.WriteLine("Main alarm - Timer complete!");
-
-        if (_settings?.PlaySound == true && _settings.UseAlarm)
-        {
-            await _audioService.PlayAlarmAsync(_settings.AlarmVolume);
-        }
 
         // Complete current session if it's a work session (including wrap up)
         if (_currentSession != null && (State == PomodoroState.WrapUp || State == PomodoroState.Running))
