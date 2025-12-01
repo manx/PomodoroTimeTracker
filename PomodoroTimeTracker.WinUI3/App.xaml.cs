@@ -83,6 +83,7 @@ namespace PomodoroTimeTracker.WinUI3
                     // Register UI services
                     services.AddSingleton<Services.INavigationService, Services.NavigationService>();
                     services.AddSingleton<Services.IDialogService, Services.DialogService>();
+                    services.AddSingleton<IAudioService, Services.AudioService>();
                 })
                 .Build();
         }
