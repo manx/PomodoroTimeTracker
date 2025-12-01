@@ -12,6 +12,7 @@ namespace PomodoroTimeTracker.WinUI3.ViewModels;
 internal partial class PomodoroSettingsViewModel : ViewModelBase
 {
     private readonly IPomodoroSettingsService _settingsService;
+    private readonly IAudioService _audioService;
     private PomodoroSettingsDto? _settings;
 
     private int _workDurationMinutes;
@@ -23,16 +24,25 @@ internal partial class PomodoroSettingsViewModel : ViewModelBase
     private bool _flashWindow;
     private int _wrapUpPeriodMinutes;
     private int _wrapUpNotificationVolume;
+    private string _wrapUpNotificationSound = "Windows Notify.wav";
     private bool _useAlarm;
     private int _alarmVolume;
+    private string _alarmSound = "Alarm01.wav";
     private bool _isSaving;
 
-    public PomodoroSettingsViewModel(IPomodoroSettingsService settingsService)
+    public PomodoroSettingsViewModel(IPomodoroSettingsService settingsService, IAudioService audioService)
     {
         _settingsService = settingsService;
+        _audioService = audioService;
+
+        AvailableWrapUpSounds = _audioService.GetAvailableWrapUpSounds();
+        AvailableAlarmSounds = _audioService.GetAvailableAlarmSounds();
+
         SaveCommand = new AsyncRelayCommand(SaveAsync, () => !IsSaving);
         ResetToDefaultsCommand = new RelayCommand(ResetToDefaults);
         CalculateDefaultBreaksCommand = new AsyncRelayCommand(CalculateDefaultBreaksAsync);
+        TestWrapUpSoundCommand = new AsyncRelayCommand(TestWrapUpSoundAsync);
+        TestAlarmSoundCommand = new AsyncRelayCommand(TestAlarmSoundAsync);
     }
 
     public int WorkDurationMinutes
@@ -101,6 +111,22 @@ internal partial class PomodoroSettingsViewModel : ViewModelBase
         set => SetProperty(ref _alarmVolume, value);
     }
 
+    public IReadOnlyList<string> AvailableWrapUpSounds { get; }
+
+    public string WrapUpNotificationSound
+    {
+        get => _wrapUpNotificationSound;
+        set => SetProperty(ref _wrapUpNotificationSound, value);
+    }
+
+    public IReadOnlyList<string> AvailableAlarmSounds { get; }
+
+    public string AlarmSound
+    {
+        get => _alarmSound;
+        set => SetProperty(ref _alarmSound, value);
+    }
+
     public bool IsSaving
     {
         get => _isSaving;
@@ -117,6 +143,8 @@ internal partial class PomodoroSettingsViewModel : ViewModelBase
     public ICommand SaveCommand { get; }
     public ICommand ResetToDefaultsCommand { get; }
     public ICommand CalculateDefaultBreaksCommand { get; }
+    public IAsyncRelayCommand TestWrapUpSoundCommand { get; }
+    public IAsyncRelayCommand TestAlarmSoundCommand { get; }
 
     public async Task LoadAsync()
     {
@@ -132,8 +160,10 @@ internal partial class PomodoroSettingsViewModel : ViewModelBase
             FlashWindow = _settings.FlashWindow;
             WrapUpPeriodMinutes = _settings.WrapUpPeriodMinutes;
             WrapUpNotificationVolume = _settings.WrapUpNotificationVolume;
+            WrapUpNotificationSound = _settings.WrapUpNotificationSound;
             UseAlarm = _settings.UseAlarm;
             AlarmVolume = _settings.AlarmVolume;
+            AlarmSound = _settings.AlarmSound;
         }
         catch (Exception ex)
         {
@@ -158,8 +188,10 @@ internal partial class PomodoroSettingsViewModel : ViewModelBase
                 FlashWindow = FlashWindow,
                 WrapUpPeriodMinutes = WrapUpPeriodMinutes,
                 WrapUpNotificationVolume = WrapUpNotificationVolume,
+                WrapUpNotificationSound = WrapUpNotificationSound,
                 UseAlarm = UseAlarm,
-                AlarmVolume = AlarmVolume
+                AlarmVolume = AlarmVolume,
+                AlarmSound = AlarmSound
             };
 
             _settings = await _settingsService.UpdateSettingsAsync(dto);
@@ -188,8 +220,10 @@ internal partial class PomodoroSettingsViewModel : ViewModelBase
         FlashWindow = false;
         WrapUpPeriodMinutes = 3;
         WrapUpNotificationVolume = 50;
+        WrapUpNotificationSound = "Windows Notify.wav";
         UseAlarm = true;
         AlarmVolume = 50;
+        AlarmSound = "Alarm01.wav";
     }
 
     private async Task CalculateDefaultBreaksAsync()
@@ -202,6 +236,36 @@ internal partial class PomodoroSettingsViewModel : ViewModelBase
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error calculating default breaks: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Plays the selected wrap-up notification sound at current volume for preview.
+    /// </summary>
+    public async Task TestWrapUpSoundAsync()
+    {
+        try
+        {
+            await _audioService.PlayWrapUpNotificationAsync(WrapUpNotificationVolume, WrapUpNotificationSound);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error playing wrap-up sound: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Plays the selected alarm sound at current volume for preview.
+    /// </summary>
+    public async Task TestAlarmSoundAsync()
+    {
+        try
+        {
+            await _audioService.PlayAlarmAsync(AlarmVolume, AlarmSound);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error playing alarm sound: {ex.Message}");
         }
     }
 }

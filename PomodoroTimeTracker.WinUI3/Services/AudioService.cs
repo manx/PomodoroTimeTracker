@@ -19,8 +19,26 @@ internal class AudioService : IAudioService, IDisposable
 
     // Windows system sound paths
     private const string WINDOWS_MEDIA_PATH = @"C:\Windows\Media";
-    private const string WRAP_UP_SOUND = "Windows Notify.wav";
-    private const string ALARM_SOUND = "Alarm01.wav";
+
+    // Curated sound lists
+    private static readonly IReadOnlyList<string> WrapUpSounds = new[]
+    {
+        "Windows Notify.wav",
+        "chimes.wav",
+        "notify.wav",
+        "tada.wav",
+        "Windows Notify System Generic.wav"
+    };
+
+    private static readonly IReadOnlyList<string> AlarmSounds = new[]
+    {
+        "Alarm01.wav",
+        "Alarm02.wav",
+        "Alarm03.wav",
+        "Ring01.wav",
+        "Ring02.wav",
+        "Windows Critical Stop.wav"
+    };
 
     public AudioService(ILogger<AudioService> logger)
     {
@@ -30,18 +48,28 @@ internal class AudioService : IAudioService, IDisposable
     /// <summary>
     /// Plays the wrap-up notification sound (gentle sound).
     /// </summary>
-    public async Task PlayWrapUpNotificationAsync(int volume)
+    public async Task PlayWrapUpNotificationAsync(int volume, string soundFileName)
     {
-        await PlaySoundAsync(WRAP_UP_SOUND, volume);
+        await PlaySoundAsync(soundFileName, volume);
     }
 
     /// <summary>
     /// Plays the main alarm sound (prominent sound).
     /// </summary>
-    public async Task PlayAlarmAsync(int volume)
+    public async Task PlayAlarmAsync(int volume, string soundFileName)
     {
-        await PlaySoundAsync(ALARM_SOUND, volume);
+        await PlaySoundAsync(soundFileName, volume);
     }
+
+    /// <summary>
+    /// Gets available wrap-up notification sounds.
+    /// </summary>
+    public IReadOnlyList<string> GetAvailableWrapUpSounds() => WrapUpSounds;
+
+    /// <summary>
+    /// Gets available alarm sounds.
+    /// </summary>
+    public IReadOnlyList<string> GetAvailableAlarmSounds() => AlarmSounds;
 
     /// <summary>
     /// Stops any currently playing audio.
@@ -89,8 +117,9 @@ internal class AudioService : IAudioService, IDisposable
             {
                 _logger.LogWarning("Sound file not found: {SoundPath}, trying fallback", soundPath);
 
-                // Try fallback sounds
-                var fallbackSound = soundFileName == WRAP_UP_SOUND
+                // Try fallback sounds based on sound type
+                var isWrapUpSound = WrapUpSounds.Contains(soundFileName);
+                var fallbackSound = isWrapUpSound
                     ? "Windows Notify System Generic.wav"
                     : "Windows Critical Stop.wav";
 

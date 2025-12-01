@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using PomodoroTimeTracker.WinUI3.Services;
 using PomodoroTimeTracker.WinUI3.ViewModels;
@@ -43,5 +44,15 @@ internal sealed partial class PomodoroSettingsPage : Page
             _logger.LogError(ex, "Error initializing PomodoroSettingsPage");
             await _dialogService.ShowErrorAsync("Unable to load settings. Please try again.");
         }
+    }
+
+    private void WrapUpVolumeSlider_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    {
+        _ = ViewModel.TestWrapUpSoundCommand.ExecuteAsync(null);
+    }
+
+    private void AlarmVolumeSlider_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    {
+        _ = ViewModel.TestAlarmSoundCommand.ExecuteAsync(null);
     }
 }
