@@ -27,7 +27,7 @@ First, analyze the feature request and create a plan:
    - Tests
 
 2. **Break down into tasks** for each agent
-3. **Identify dependencies** between tasks
+3. **Identify dependencies** between tasks (order matters!)
 4. **Present the plan** to the user for approval before proceeding
 
 ### Step 2: Backend Implementation

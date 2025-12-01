@@ -26,8 +26,10 @@ public class PomodoroSettingsService(IUnitOfWork unitOfWork) : IPomodoroSettings
         settings.FlashWindow = dto.FlashWindow;
         settings.WrapUpPeriodMinutes = dto.WrapUpPeriodMinutes;
         settings.WrapUpNotificationVolume = dto.WrapUpNotificationVolume;
+        settings.WrapUpNotificationSound = dto.WrapUpNotificationSound;
         settings.UseAlarm = dto.UseAlarm;
         settings.AlarmVolume = dto.AlarmVolume;
+        settings.AlarmSound = dto.AlarmSound;
         settings.LastModified = DateTime.UtcNow;
 
         unitOfWork.PomodoroSettings.Update(settings);
@@ -60,8 +62,10 @@ public class PomodoroSettingsService(IUnitOfWork unitOfWork) : IPomodoroSettings
             FlashWindow = settings.FlashWindow,
             WrapUpPeriodMinutes = settings.WrapUpPeriodMinutes,
             WrapUpNotificationVolume = settings.WrapUpNotificationVolume,
+            WrapUpNotificationSound = settings.WrapUpNotificationSound,
             UseAlarm = settings.UseAlarm,
             AlarmVolume = settings.AlarmVolume,
+            AlarmSound = settings.AlarmSound,
             LastModified = settings.LastModified
         };
     }
