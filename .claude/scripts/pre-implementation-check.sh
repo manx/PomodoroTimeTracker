@@ -48,9 +48,32 @@ else
 fi
 echo ""
 
-# 3. Check if behind origin
-echo "3. Checking sync with origin/master..."
+# 3. Check for existing feature/chore branches not merged to master
+echo "3. Checking for existing unmerged branches..."
 git fetch origin --quiet 2>/dev/null || true
+
+# Get branches that exist on remote but aren't merged to master
+UNMERGED_BRANCHES=$(git branch -r --no-merged origin/master 2>/dev/null | grep -v HEAD | grep -E "(feat|fix|chore|refactor)/" | sed 's/.*origin\///' | tr -d ' ' || true)
+
+if [[ -n "$UNMERGED_BRANCHES" ]]; then
+    echo -e "${YELLOW}⚠ Unmerged feature branches found:${NC}"
+    for branch in $UNMERGED_BRANCHES; do
+        # Get the latest commit info for context
+        LAST_COMMIT=$(git log -1 --format="%s (%ar)" "origin/$branch" 2>/dev/null || echo "")
+        echo "  - $branch"
+        [[ -n "$LAST_COMMIT" ]] && echo "      └─ $LAST_COMMIT"
+    done
+    echo ""
+    echo -e "${YELLOW}  Consider: Is your new work related to any of these branches?${NC}"
+    echo ""
+    ISSUES_FOUND=1
+else
+    echo -e "${GREEN}✓ No unmerged feature branches${NC}"
+fi
+echo ""
+
+# 4. Check if behind origin
+echo "4. Checking sync with origin/master..."
 BEHIND=$(git rev-list HEAD..origin/master --count 2>/dev/null || echo "0")
 
 if [[ "$BEHIND" -gt 0 ]]; then
