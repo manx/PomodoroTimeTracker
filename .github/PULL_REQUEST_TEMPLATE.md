@@ -1,68 +1,68 @@
 # Pull Request
 
-## 📋 Beskrivning
-<!-- Beskriv vad denna PR gör och varför ändringen behövs -->
+## 📋 Description
+<!-- Describe what this PR does and why the change is needed -->
 
 
 
 ## 🔧 Type of Change
-<!-- Markera relevant(a) typ(er) med [x] -->
+<!-- Check relevant type(s) with [x] -->
 
-- [ ] 🐛 **Bug fix** (non-breaking change som fixar ett issue)
-- [ ] ✨ **New feature** (non-breaking change som lägger till funktionalitet)
-- [ ] 💥 **Breaking change** (fix eller feature som gör att befintlig funktionalitet inte fungerar som förväntat)
-- [ ] 🔨 **Refactoring** (omstrukturering utan funktionell förändring)
-- [ ] 📝 **Documentation** (endast dokumentationsändringar)
-- [ ] 🧪 **Tests** (lägga till eller uppdatera tester)
+- [ ] 🐛 **Bug fix** (non-breaking change that fixes an issue)
+- [ ] ✨ **New feature** (non-breaking change that adds functionality)
+- [ ] 💥 **Breaking change** (fix or feature that causes existing functionality to not work as expected)
+- [ ] 🔨 **Refactoring** (restructuring without functional change)
+- [ ] 📝 **Documentation** (documentation changes only)
+- [ ] 🧪 **Tests** (adding or updating tests)
 - [ ] ⚙️ **Chore** (build, dependencies, CI/CD)
 
-## 🧪 Hur testar man detta?
-<!-- Beskriv steg-för-steg hur man verifierar att ändringarna fungerar -->
+## 🧪 How to Test This?
+<!-- Describe step-by-step how to verify the changes work -->
 
 1.
 2.
 3.
 
 ## 📸 Screenshots / Video
-<!-- Om ändringen påverkar UI, lägg till screenshots eller video här -->
-<!-- Du kan dra och släppa bilder direkt i denna ruta -->
+<!-- If the change affects UI, add screenshots or video here -->
+<!-- You can drag and drop images directly into this box -->
 
 
 
 ## 📝 Checklist
-<!-- Markera med [x] när klart -->
+<!-- Check with [x] when done -->
 
-- [ ] Min kod följer projektets code style (formatering körs automatiskt vid commit)
-- [ ] Jag har gjort en self-review av min egen kod
-- [ ] Jag har kommenterat min kod, särskilt i svåra/komplexa områden
-- [ ] Jag har gjort motsvarande ändringar i dokumentationen
-- [ ] Mina ändringar genererar inga nya varningar
-- [ ] Jag har lagt till tester som bevisar att min fix fungerar / att min feature fungerar
-- [ ] Nya och befintliga unit tests passerar lokalt med mina ändringar
-- [ ] Alla beroende ändringar har mergats och publicerats i downstream-moduler
-- [ ] Jag har uppdaterat CLAUDE.md eller andra relevanta dokument om nödvändigt
+- [ ] My code follows the project's code style (formatting runs automatically on commit)
+- [ ] I have performed a self-review of my own code
+- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have made corresponding changes to the documentation
+- [ ] My changes generate no new warnings
+- [ ] I have added tests that prove my fix works / that my feature works
+- [ ] New and existing unit tests pass locally with my changes
+- [ ] All dependent changes have been merged and published in downstream modules
+- [ ] I have updated CLAUDE.md or other relevant documents as needed
 
 ## 🔗 Related Issues
-<!-- Länka till relaterade issues -->
+<!-- Link to related issues -->
 
 Closes #
 Related to #
 
 ## 📚 Additional Context
-<!-- Lägg till annan relevant kontext här. Till exempel: -->
-<!-- - Varför valde du denna approach? -->
-<!-- - Vilka alternativ övervägde du? -->
-<!-- - Finns det något som behöver följas upp senare? -->
+<!-- Add other relevant context here. For example: -->
+<!-- - Why did you choose this approach? -->
+<!-- - What alternatives did you consider? -->
+<!-- - Is there anything that needs to be followed up later? -->
 
 
 
 ---
 
 <!--
-Tips för bra Pull Requests:
-- Håll PR:s små och fokuserade (< 400 rader om möjligt)
-- En PR = En feature/fix
-- Skriv beskrivande commit messages (Conventional Commits)
-- Lägg till tester för nya features
-- Uppdatera dokumentation när det behövs
+Tips for good Pull Requests:
+- Keep PRs small and focused (< 400 lines if possible)
+- One PR = One feature/fix
+- Write descriptive commit messages (Conventional Commits)
+- Add tests for new features
+- Update documentation when needed
 -->
