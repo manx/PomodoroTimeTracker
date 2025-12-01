@@ -218,13 +218,32 @@
                         <StackPanel Spacing="4">
                             <TextBlock
                                 FontWeight="SemiBold"
+                                Text="Wrap Up Notification Sound" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ComboBox
+                                    MinWidth="200"
+                                    ItemsSource="{x:Bind ViewModel.AvailableWrapUpSounds}"
+                                    SelectedItem="{x:Bind ViewModel.WrapUpNotificationSound, Mode=TwoWay}" />
+                                <Button
+                                    Command="{x:Bind ViewModel.TestWrapUpSoundCommand}"
+                                    Content="&#xE768;"
+                                    FontFamily="Segoe MDL2 Assets"
+                                    ToolTipService.ToolTip="Test sound" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                FontWeight="SemiBold"
                                 Text="Wrap Up Notification Volume" />
                             <Slider
+                                x:Name="WrapUpVolumeSlider"
                                 Maximum="100"
                                 Minimum="0"
                                 StepFrequency="1"
                                 TickFrequency="10"
                                 TickPlacement="Outside"
+                                PointerCaptureLost="WrapUpVolumeSlider_PointerCaptureLost"
                                 Value="{x:Bind ViewModel.WrapUpNotificationVolume, Mode=TwoWay}" />
                             <TextBlock
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -242,22 +261,43 @@
                             OnContent="Alarm enabled" />
 
                         <StackPanel
-                            Spacing="4"
+                            Spacing="8"
                             Visibility="{x:Bind ViewModel.UseAlarm, Mode=OneWay}">
-                            <TextBlock
-                                FontWeight="SemiBold"
-                                Text="Alarm Volume" />
-                            <Slider
-                                Maximum="100"
-                                Minimum="0"
-                                StepFrequency="1"
-                                TickFrequency="10"
-                                TickPlacement="Outside"
-                                Value="{x:Bind ViewModel.AlarmVolume, Mode=TwoWay}" />
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="{x:Bind ViewModel.AlarmVolume, Mode=OneWay}" />
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    FontWeight="SemiBold"
+                                    Text="Alarm Sound" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ComboBox
+                                        MinWidth="200"
+                                        ItemsSource="{x:Bind ViewModel.AvailableAlarmSounds}"
+                                        SelectedItem="{x:Bind ViewModel.AlarmSound, Mode=TwoWay}" />
+                                    <Button
+                                        Command="{x:Bind ViewModel.TestAlarmSoundCommand}"
+                                        Content="&#xE768;"
+                                        FontFamily="Segoe MDL2 Assets"
+                                        ToolTipService.ToolTip="Test sound" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    FontWeight="SemiBold"
+                                    Text="Alarm Volume" />
+                                <Slider
+                                    x:Name="AlarmVolumeSlider"
+                                    Maximum="100"
+                                    Minimum="0"
+                                    StepFrequency="1"
+                                    TickFrequency="10"
+                                    TickPlacement="Outside"
+                                    PointerCaptureLost="AlarmVolumeSlider_PointerCaptureLost"
+                                    Value="{x:Bind ViewModel.AlarmVolume, Mode=TwoWay}" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind ViewModel.AlarmVolume, Mode=OneWay}" />
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
 

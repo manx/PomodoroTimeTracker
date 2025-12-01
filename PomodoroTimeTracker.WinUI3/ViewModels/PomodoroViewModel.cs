@@ -690,7 +690,7 @@ internal partial class PomodoroViewModel : ViewModelBase
 
         if (_settings?.PlaySound == true)
         {
-            await _audioService.PlayWrapUpNotificationAsync(_settings.WrapUpNotificationVolume);
+            await _audioService.PlayWrapUpNotificationAsync(_settings.WrapUpNotificationVolume, _settings.WrapUpNotificationSound);
         }
     }
 
@@ -702,7 +702,7 @@ internal partial class PomodoroViewModel : ViewModelBase
 
         if (_settings?.PlaySound == true && _settings.UseAlarm)
         {
-            await _audioService.PlayAlarmAsync(_settings.AlarmVolume);
+            await _audioService.PlayAlarmAsync(_settings.AlarmVolume, _settings.AlarmSound);
         }
 
         // Complete current session if it's a work session (including wrap up)

@@ -795,6 +795,25 @@ public PomodoroState State
 
 ## Recent Development History
 
+### Sound Selection Feature (2025-12-01)
+- Added dropdown menus for selecting WrapUp and Alarm sounds in Settings
+- Test button (🔊) next to each dropdown to preview sounds
+- Sound plays automatically when volume slider is released
+- UI layout: Sound dropdown + test button placed above volume slider
+- Database migration: `AddSoundSelectionSettings`
+- Files changed across all layers:
+  - Domain: `PomodoroSettings.cs` (new properties)
+  - Application: DTOs, `IAudioService`, `PomodoroSettingsService`
+  - Infrastructure: EF migration
+  - UI: `PomodoroSettingsViewModel`, `PomodoroSettingsPage`
+  - Tests: `AudioServiceTests.cs` rewritten
+
+### Slash Commands for Agent Orchestration (2025-12-01)
+- Created `/implement-feature` command for structured feature implementation
+- Created `/fix-tests` command for analyzing and fixing test failures
+- Created `/code-review` command for code review with specialized agents
+- Commands use Task tool with appropriate subagent_type
+
 ### TimerWindow Redesign to Horizontal Layout (2025-01-24)
 - Complete redesign from circular (200x200) to compact horizontal (150x50) layout
 - Changed progress indicator from circular arc to rectangular bar filling left-to-right

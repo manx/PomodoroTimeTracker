@@ -64,6 +64,12 @@ public class PomodoroSettings
     public int WrapUpNotificationVolume { get; set; } = 50;
 
     /// <summary>
+    /// Gets or sets the sound file name for the wrap up notification.
+    /// Default is "Windows Notify.wav".
+    /// </summary>
+    public string WrapUpNotificationSound { get; set; } = "Windows Notify.wav";
+
+    /// <summary>
     /// Gets or sets whether to play the completion alarm when timer reaches zero.
     /// </summary>
     public bool UseAlarm { get; set; } = true;
@@ -73,6 +79,12 @@ public class PomodoroSettings
     /// Default is 50.
     /// </summary>
     public int AlarmVolume { get; set; } = 50;
+
+    /// <summary>
+    /// Gets or sets the sound file name for the completion alarm.
+    /// Default is "Alarm01.wav".
+    /// </summary>
+    public string AlarmSound { get; set; } = "Alarm01.wav";
 
     /// <summary>
     /// Gets or sets when the settings were last modified (UTC).

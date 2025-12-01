@@ -13,6 +13,8 @@ namespace PomodoroTimeTracker.Tests.WinUI3.Services;
 public class AudioServiceTests
 {
     private readonly Mock<IAudioService> _audioServiceMock;
+    private const string DefaultWrapUpSound = "Windows Notify.wav";
+    private const string DefaultAlarmSound = "Alarm01.wav";
 
     public AudioServiceTests()
     {
@@ -25,32 +27,32 @@ public class AudioServiceTests
     public void IAudioService_CanBeMocked_ForPlayWrapUpNotificationAsync()
     {
         // Arrange
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        var task = _audioServiceMock.Object.PlayWrapUpNotificationAsync(50);
+        var task = _audioServiceMock.Object.PlayWrapUpNotificationAsync(50, DefaultWrapUpSound);
 
         // Assert
         task.Should().NotBeNull();
         task.IsCompleted.Should().BeTrue();
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(50), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(50, DefaultWrapUpSound), Times.Once);
     }
 
     [Fact]
     public void IAudioService_CanBeMocked_ForPlayAlarmAsync()
     {
         // Arrange
-        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        var task = _audioServiceMock.Object.PlayAlarmAsync(75);
+        var task = _audioServiceMock.Object.PlayAlarmAsync(75, DefaultAlarmSound);
 
         // Assert
         task.Should().NotBeNull();
         task.IsCompleted.Should().BeTrue();
-        _audioServiceMock.Verify(s => s.PlayAlarmAsync(75), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayAlarmAsync(75, DefaultAlarmSound), Times.Once);
     }
 
     [Fact]
@@ -69,6 +71,36 @@ public class AudioServiceTests
         _audioServiceMock.Verify(s => s.StopAsync(), Times.Once);
     }
 
+    [Fact]
+    public void IAudioService_CanBeMocked_ForGetAvailableWrapUpSounds()
+    {
+        // Arrange
+        var expectedSounds = new[] { "Windows Notify.wav", "chimes.wav" };
+        _audioServiceMock.Setup(s => s.GetAvailableWrapUpSounds())
+            .Returns(expectedSounds);
+
+        // Act
+        var result = _audioServiceMock.Object.GetAvailableWrapUpSounds();
+
+        // Assert
+        result.Should().BeEquivalentTo(expectedSounds);
+    }
+
+    [Fact]
+    public void IAudioService_CanBeMocked_ForGetAvailableAlarmSounds()
+    {
+        // Arrange
+        var expectedSounds = new[] { "Alarm01.wav", "Alarm02.wav" };
+        _audioServiceMock.Setup(s => s.GetAvailableAlarmSounds())
+            .Returns(expectedSounds);
+
+        // Act
+        var result = _audioServiceMock.Object.GetAvailableAlarmSounds();
+
+        // Assert
+        result.Should().BeEquivalentTo(expectedSounds);
+    }
+
     #endregion
 
     #region Volume Boundary Value Tests
@@ -80,14 +112,14 @@ public class AudioServiceTests
     public async Task PlayWrapUpNotificationAsync_WithValidVolume_CompletesSuccessfully(int volume)
     {
         // Arrange
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(volume))
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(volume, It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(volume);
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(volume, DefaultWrapUpSound);
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(volume), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(volume, DefaultWrapUpSound), Times.Once);
     }
 
     [Theory]
@@ -97,14 +129,14 @@ public class AudioServiceTests
     public async Task PlayAlarmAsync_WithValidVolume_CompletesSuccessfully(int volume)
     {
         // Arrange
-        _audioServiceMock.Setup(s => s.PlayAlarmAsync(volume))
+        _audioServiceMock.Setup(s => s.PlayAlarmAsync(volume, It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _audioServiceMock.Object.PlayAlarmAsync(volume);
+        await _audioServiceMock.Object.PlayAlarmAsync(volume, DefaultAlarmSound);
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayAlarmAsync(volume), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayAlarmAsync(volume, DefaultAlarmSound), Times.Once);
     }
 
     [Theory]
@@ -115,14 +147,14 @@ public class AudioServiceTests
     public async Task PlayWrapUpNotificationAsync_WithInvalidVolume_CallsServiceWithVolume(int volume)
     {
         // Arrange - Mock accepts any volume since implementation will clamp it
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(volume);
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(volume, DefaultWrapUpSound);
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(volume), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(volume, DefaultWrapUpSound), Times.Once);
     }
 
     [Theory]
@@ -133,14 +165,52 @@ public class AudioServiceTests
     public async Task PlayAlarmAsync_WithInvalidVolume_CallsServiceWithVolume(int volume)
     {
         // Arrange - Mock accepts any volume since implementation will clamp it
-        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _audioServiceMock.Object.PlayAlarmAsync(volume);
+        await _audioServiceMock.Object.PlayAlarmAsync(volume, DefaultAlarmSound);
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayAlarmAsync(volume), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayAlarmAsync(volume, DefaultAlarmSound), Times.Once);
+    }
+
+    #endregion
+
+    #region Sound File Tests
+
+    [Theory]
+    [InlineData("Windows Notify.wav")]
+    [InlineData("chimes.wav")]
+    [InlineData("notify.wav")]
+    public async Task PlayWrapUpNotificationAsync_WithDifferentSounds_CallsServiceWithCorrectSound(string soundFile)
+    {
+        // Arrange
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), soundFile))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(50, soundFile);
+
+        // Assert
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(50, soundFile), Times.Once);
+    }
+
+    [Theory]
+    [InlineData("Alarm01.wav")]
+    [InlineData("Alarm02.wav")]
+    [InlineData("Ring01.wav")]
+    public async Task PlayAlarmAsync_WithDifferentSounds_CallsServiceWithCorrectSound(string soundFile)
+    {
+        // Arrange
+        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>(), soundFile))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _audioServiceMock.Object.PlayAlarmAsync(75, soundFile);
+
+        // Assert
+        _audioServiceMock.Verify(s => s.PlayAlarmAsync(75, soundFile), Times.Once);
     }
 
     #endregion
@@ -152,11 +222,11 @@ public class AudioServiceTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(tcs.Task.ContinueWith(_ => { }));
 
         // Act
-        var task = _audioServiceMock.Object.PlayWrapUpNotificationAsync(50);
+        var task = _audioServiceMock.Object.PlayWrapUpNotificationAsync(50, DefaultWrapUpSound);
         task.IsCompleted.Should().BeFalse("Task should not complete immediately");
 
         tcs.SetResult(true);
@@ -171,11 +241,11 @@ public class AudioServiceTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(tcs.Task.ContinueWith(_ => { }));
 
         // Act
-        var task = _audioServiceMock.Object.PlayAlarmAsync(75);
+        var task = _audioServiceMock.Object.PlayAlarmAsync(75, DefaultAlarmSound);
         task.IsCompleted.Should().BeFalse("Task should not complete immediately");
 
         tcs.SetResult(true);
@@ -212,36 +282,36 @@ public class AudioServiceTests
     public async Task AudioService_CanPlayMultipleSounds_Sequentially()
     {
         // Arrange
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
-        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(50);
-        await _audioServiceMock.Object.PlayAlarmAsync(75);
-        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(60);
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(50, DefaultWrapUpSound);
+        await _audioServiceMock.Object.PlayAlarmAsync(75, DefaultAlarmSound);
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(60, "chimes.wav");
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()), Times.Exactly(2));
-        _audioServiceMock.Verify(s => s.PlayAlarmAsync(It.IsAny<int>()), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Exactly(2));
+        _audioServiceMock.Verify(s => s.PlayAlarmAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
     public async Task AudioService_CanStopAfterPlaying_InSequence()
     {
         // Arrange
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
         _audioServiceMock.Setup(s => s.StopAsync())
             .Returns(Task.CompletedTask);
 
         // Act
-        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(50);
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(50, DefaultWrapUpSound);
         await _audioServiceMock.Object.StopAsync();
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(50), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(50, DefaultWrapUpSound), Times.Once);
         _audioServiceMock.Verify(s => s.StopAsync(), Times.Once);
     }
 
@@ -254,12 +324,12 @@ public class AudioServiceTests
     {
         // Arrange
         var capturedVolume = 0;
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()))
-            .Callback<int>(v => capturedVolume = v)
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()))
+            .Callback<int, string>((v, s) => capturedVolume = v)
             .Returns(Task.CompletedTask);
 
         // Act
-        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(42);
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(42, DefaultWrapUpSound);
 
         // Assert
         capturedVolume.Should().Be(42);
@@ -270,15 +340,31 @@ public class AudioServiceTests
     {
         // Arrange
         var capturedVolume = 0;
-        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>()))
-            .Callback<int>(v => capturedVolume = v)
+        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>(), It.IsAny<string>()))
+            .Callback<int, string>((v, s) => capturedVolume = v)
             .Returns(Task.CompletedTask);
 
         // Act
-        await _audioServiceMock.Object.PlayAlarmAsync(88);
+        await _audioServiceMock.Object.PlayAlarmAsync(88, DefaultAlarmSound);
 
         // Assert
         capturedVolume.Should().Be(88);
+    }
+
+    [Fact]
+    public async Task PlayWrapUpNotificationAsync_PassesExactSoundFile_ToImplementation()
+    {
+        // Arrange
+        var capturedSound = "";
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()))
+            .Callback<int, string>((v, s) => capturedSound = s)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(50, "chimes.wav");
+
+        // Assert
+        capturedSound.Should().Be("chimes.wav");
     }
 
     #endregion
@@ -289,11 +375,11 @@ public class AudioServiceTests
     public async Task PlayWrapUpNotificationAsync_WhenThrows_PropagatesException()
     {
         // Arrange
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()))
             .ThrowsAsync(new InvalidOperationException("Playback error"));
 
         // Act & Assert
-        await FluentActions.Invoking(() => _audioServiceMock.Object.PlayWrapUpNotificationAsync(50))
+        await FluentActions.Invoking(() => _audioServiceMock.Object.PlayWrapUpNotificationAsync(50, DefaultWrapUpSound))
             .Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("Playback error");
     }
@@ -302,11 +388,11 @@ public class AudioServiceTests
     public async Task PlayAlarmAsync_WhenThrows_PropagatesException()
     {
         // Arrange
-        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>(), It.IsAny<string>()))
             .ThrowsAsync(new InvalidOperationException("Playback error"));
 
         // Act & Assert
-        await FluentActions.Invoking(() => _audioServiceMock.Object.PlayAlarmAsync(75))
+        await FluentActions.Invoking(() => _audioServiceMock.Object.PlayAlarmAsync(75, DefaultAlarmSound))
             .Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("Playback error");
     }
@@ -336,8 +422,8 @@ public class AudioServiceTests
         // Act - Do nothing
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()), Times.Never);
-        _audioServiceMock.Verify(s => s.PlayAlarmAsync(It.IsAny<int>()), Times.Never);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        _audioServiceMock.Verify(s => s.PlayAlarmAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
         _audioServiceMock.Verify(s => s.StopAsync(), Times.Never);
     }
 
@@ -345,19 +431,19 @@ public class AudioServiceTests
     public async Task AudioService_VerifiesExactCallCount_ForMultipleCalls()
     {
         // Arrange
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(30);
-        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(40);
-        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(50);
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(30, DefaultWrapUpSound);
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(40, DefaultWrapUpSound);
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(50, DefaultWrapUpSound);
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()), Times.Exactly(3));
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(30), Times.Once);
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(40), Times.Once);
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(50), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Exactly(3));
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(30, DefaultWrapUpSound), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(40, DefaultWrapUpSound), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(50, DefaultWrapUpSound), Times.Once);
     }
 
     #endregion
@@ -371,17 +457,17 @@ public class AudioServiceTests
         var playSoundSetting = true;
         var volume = 60;
 
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
         if (playSoundSetting)
         {
-            await _audioServiceMock.Object.PlayWrapUpNotificationAsync(volume);
+            await _audioServiceMock.Object.PlayWrapUpNotificationAsync(volume, DefaultWrapUpSound);
         }
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(volume), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(volume, DefaultWrapUpSound), Times.Once);
     }
 
     [Fact]
@@ -391,37 +477,37 @@ public class AudioServiceTests
         var wrapUpVolumeSetting = 45;
         var alarmVolumeSetting = 85;
 
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
-        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act - Simulate work period ending flow
-        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(wrapUpVolumeSetting);
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(wrapUpVolumeSetting, DefaultWrapUpSound);
         // ... some delay ...
-        await _audioServiceMock.Object.PlayAlarmAsync(alarmVolumeSetting);
+        await _audioServiceMock.Object.PlayAlarmAsync(alarmVolumeSetting, DefaultAlarmSound);
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(45), Times.Once);
-        _audioServiceMock.Verify(s => s.PlayAlarmAsync(85), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(45, DefaultWrapUpSound), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayAlarmAsync(85, DefaultAlarmSound), Times.Once);
     }
 
     [Fact]
     public async Task AudioService_SupportsViewModelPattern_WithStopOnPause()
     {
         // Arrange - Simulating ViewModel stopping audio when timer is paused
-        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>()))
+        _audioServiceMock.Setup(s => s.PlayAlarmAsync(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
         _audioServiceMock.Setup(s => s.StopAsync())
             .Returns(Task.CompletedTask);
 
         // Act - Simulate alarm playing, then user pauses timer
-        await _audioServiceMock.Object.PlayAlarmAsync(70);
+        await _audioServiceMock.Object.PlayAlarmAsync(70, DefaultAlarmSound);
         // User pauses timer...
         await _audioServiceMock.Object.StopAsync();
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayAlarmAsync(70), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayAlarmAsync(70, DefaultAlarmSound), Times.Once);
         _audioServiceMock.Verify(s => s.StopAsync(), Times.Once);
     }
 
@@ -433,28 +519,28 @@ public class AudioServiceTests
     public async Task AudioService_HandlesZeroVolume_AsValidValue()
     {
         // Arrange - 0 volume is valid (silent)
-        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(0))
+        _audioServiceMock.Setup(s => s.PlayWrapUpNotificationAsync(0, It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(0);
+        await _audioServiceMock.Object.PlayWrapUpNotificationAsync(0, DefaultWrapUpSound);
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(0), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayWrapUpNotificationAsync(0, DefaultWrapUpSound), Times.Once);
     }
 
     [Fact]
     public async Task AudioService_HandlesMaxVolume_AsValidValue()
     {
         // Arrange - 100 volume is valid (maximum)
-        _audioServiceMock.Setup(s => s.PlayAlarmAsync(100))
+        _audioServiceMock.Setup(s => s.PlayAlarmAsync(100, It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _audioServiceMock.Object.PlayAlarmAsync(100);
+        await _audioServiceMock.Object.PlayAlarmAsync(100, DefaultAlarmSound);
 
         // Assert
-        _audioServiceMock.Verify(s => s.PlayAlarmAsync(100), Times.Once);
+        _audioServiceMock.Verify(s => s.PlayAlarmAsync(100, DefaultAlarmSound), Times.Once);
     }
 
     [Fact]
