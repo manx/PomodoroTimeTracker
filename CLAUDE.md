@@ -75,6 +75,31 @@ A WinUI 3 desktop application implementing the Pomodoro Technique with comprehen
 - Use `mcp__dotnet__dotnet_run` instead of `dotnet run`
 - MCP tools provide better integration and error handling
 
+### Agent Orchestration Workflow
+
+**Available Agents** (in `.claude/agents/`):
+
+| Agent | Purpose | Model |
+|-------|---------|-------|
+| backend-agent | Application/Infrastructure layer | sonnet |
+| ui-agent | WinUI 3 presentation layer | sonnet |
+| test-agent | Unit tests + failure analysis | sonnet |
+| git-agent | Commits and PRs | haiku |
+
+**Test Failure Feedback Loop:**
+1. Spawn implementation agent(s) for feature/fix
+2. Run `dotnet test` after implementation
+3. If tests fail → spawn test-agent for analysis
+4. test-agent produces structured failure report with layer analysis
+5. Spawn appropriate agent (backend/ui) with error context
+6. Repeat until all tests pass
+7. Spawn git-agent to commit
+
+**Parallel Execution:**
+- backend-agent and ui-agent can run in parallel for cross-layer features
+- test-agent runs after implementation is complete
+- git-agent runs last to coordinate commits
+
 ## Code Quality Standards
 
 **CRITICAL:** Before delivering ANY code, Claude MUST ensure it meets these quality standards:
