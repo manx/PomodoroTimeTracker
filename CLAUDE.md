@@ -63,6 +63,15 @@ A WinUI 3 desktop application implementing the Pomodoro Technique with comprehen
 - **ONE commit:** Tightly coupled changes (service + ViewModel + tests for same feature)
 - **MULTIPLE commits:** Logically separate changes (feature + unrelated docs)
 
+**Pre-Commit Cohesion Check:**
+Before committing, verify that all staged changes belong together logically:
+1. Run `git status` and `git diff --cached` to review what will be committed
+2. Check if changes span unrelated features or concerns
+3. If changes are NOT cohesive, ask the user how to proceed:
+   - Split into separate commits/PRs?
+   - Commit only part of the changes?
+   - Proceed anyway with a broader commit message?
+
 **Footer:**
 - Always include: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 - Always include: `Co-Authored-By: Claude <noreply@anthropic.com>`
@@ -166,6 +175,20 @@ Before presenting ANY code, Claude must verify:
 - [ ] **Memory leaks prevented?** - Disposable resources properly managed
 
 ## Implementation Workflow
+
+### Pre-Implementation Checklist
+**BEFORE starting any new feature, run the pre-implementation check:**
+
+```bash
+.claude/scripts/pre-implementation-check.sh
+```
+
+This script checks for:
+- Uncommitted changes
+- Open PRs
+- Sync status with origin/master
+
+If issues are found, ask user how to proceed before starting new work.
 
 ### For Simple Features (< 200 lines, straightforward logic)
 
