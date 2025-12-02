@@ -10,7 +10,7 @@ namespace PomodoroTimeTracker.WinUI3.ViewModels;
 /// <summary>
 /// ViewModel for adding or editing a project.
 /// </summary>
-internal partial class ProjectDetailViewModel : ViewModelBase
+internal sealed partial class ProjectDetailViewModel : ViewModelBase
 {
     private readonly IProjectService _projectService;
     private readonly IClientService _clientService;

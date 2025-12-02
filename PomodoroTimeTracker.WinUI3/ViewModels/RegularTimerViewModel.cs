@@ -45,7 +45,7 @@ internal enum RegularTimerState
 /// Simplified timer without Pomodoro cycle tracking.
 /// Sessions are saved with SessionType.Regular.
 /// </summary>
-internal partial class RegularTimerViewModel : ViewModelBase, ITimerWindowViewModel
+internal sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowViewModel
 {
     /// <summary>
     /// Maximum length for the description text field.

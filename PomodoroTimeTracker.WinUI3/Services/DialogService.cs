@@ -6,7 +6,7 @@ namespace PomodoroTimeTracker.WinUI3.Services;
 /// <summary>
 /// Implementation of dialog service for WinUI 3
 /// </summary>
-internal class DialogService : IDialogService
+internal sealed class DialogService : IDialogService
 {
     private static XamlRoot? GetXamlRoot()
     {

@@ -65,7 +65,7 @@ internal enum StopDialogResult
 /// Manages timer state, break cycles, and session tracking.
 /// Implements the complete Pomodoro workflow: Work → Short Break → ... → Long Break → repeat.
 /// </summary>
-internal partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewModel
+internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewModel
 {
     /// <summary>
     /// Maximum length for the objective text field.

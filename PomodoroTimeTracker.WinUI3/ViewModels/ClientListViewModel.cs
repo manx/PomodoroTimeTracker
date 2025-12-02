@@ -11,7 +11,7 @@ namespace PomodoroTimeTracker.WinUI3.ViewModels;
 /// <summary>
 /// ViewModel for the client list view.
 /// </summary>
-internal partial class ClientListViewModel : ViewModelBase
+internal sealed partial class ClientListViewModel : ViewModelBase
 {
     private readonly IClientService _clientService;
     private readonly IDialogService _dialogService;

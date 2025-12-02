@@ -310,7 +310,7 @@ internal sealed partial class TimerWindow : WindowEx
         return (DefaultPositionX, DefaultPositionY);
     }
 
-    private record WindowPosition(int X, int Y);
+    private sealed record WindowPosition(int X, int Y);
 
     private void SavePosition()
     {
