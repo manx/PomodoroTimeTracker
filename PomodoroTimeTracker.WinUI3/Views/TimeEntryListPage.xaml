@@ -76,13 +76,6 @@
                           Label="Add Manual"
                           Command="{x:Bind ViewModel.AddManualEntryCommand}"/>
             <AppBarSeparator/>
-            <AppBarButton Icon="Edit"
-                          Label="Edit"
-                          Command="{x:Bind ViewModel.EditEntryCommand}"/>
-            <AppBarButton Icon="Delete"
-                          Label="Delete"
-                          Command="{x:Bind ViewModel.DeleteEntryCommand}"/>
-            <AppBarSeparator/>
             <AppBarButton Icon="Refresh"
                           Label="Refresh"
                           Command="{x:Bind ViewModel.RefreshCommand}"/>
@@ -115,7 +108,7 @@
                             <!-- Entries for this date -->
                             <ItemsControl ItemsSource="{x:Bind Entries}">
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
+                                    <DataTemplate x:DataType="viewmodels:TimeEntryDisplayItem">
                                         <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                                 CornerRadius="4"
                                                 Padding="12"
@@ -124,30 +117,49 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
 
                                                 <StackPanel Grid.Column="0" Spacing="2">
-                                                    <TextBlock Text="{Binding Description}"
+                                                    <TextBlock Text="{x:Bind Description}"
                                                                Style="{StaticResource BodyTextBlockStyle}"
                                                                TextTrimming="CharacterEllipsis"/>
                                                     <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="{Binding ProjectDisplay}"
+                                                        <TextBlock Text="{x:Bind ProjectDisplay}"
                                                                    Style="{StaticResource CaptionTextBlockStyle}"
                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                                         <TextBlock Text=" • "
                                                                    Style="{StaticResource CaptionTextBlockStyle}"
                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                                        <TextBlock Text="{Binding TimeRangeDisplay}"
+                                                        <TextBlock Text="{x:Bind TimeRangeDisplay}"
                                                                    Style="{StaticResource CaptionTextBlockStyle}"
                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                                     </StackPanel>
                                                 </StackPanel>
 
                                                 <TextBlock Grid.Column="1"
-                                                           Text="{Binding DurationDisplay}"
+                                                           Text="{x:Bind DurationDisplay}"
                                                            Style="{StaticResource BodyStrongTextBlockStyle}"
                                                            VerticalAlignment="Center"
                                                            Margin="16,0,0,0"/>
+
+                                                <StackPanel Grid.Column="2"
+                                                            Orientation="Horizontal"
+                                                            Spacing="4"
+                                                            Margin="12,0,0,0">
+                                                    <Button Click="EditEntry_Click"
+                                                            Tag="{x:Bind Id}"
+                                                            ToolTipService.ToolTip="Edit"
+                                                            Padding="8">
+                                                        <FontIcon Glyph="&#xE70F;" FontSize="14"/>
+                                                    </Button>
+                                                    <Button Click="DeleteEntry_Click"
+                                                            Tag="{x:Bind Id}"
+                                                            ToolTipService.ToolTip="Delete"
+                                                            Padding="8">
+                                                        <FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                                                    </Button>
+                                                </StackPanel>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
