@@ -378,7 +378,9 @@ internal partial class RegularTimerViewModel : ViewModelBase, ITimerWindowViewMo
             return;
         }
 
-        _remainingSeconds += minutes * 60;
+        var additionalSeconds = minutes * 60;
+        _remainingSeconds += additionalSeconds;
+        _workDurationSeconds += additionalSeconds;
         UpdateTimerDisplay();
     }
 
