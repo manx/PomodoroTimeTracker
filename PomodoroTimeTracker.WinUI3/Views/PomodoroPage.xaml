@@ -144,7 +144,7 @@
                     Title="Wrap Up Period Active" />
 
                 <!--  Timer with Progress Meter  -->
-                <Grid Width="360" Height="400">
+                <Grid x:Name="TimerGrid" Width="360" Height="400">
                     <!--  Progress Arc Background  -->
                     <Canvas
                         Width="360"

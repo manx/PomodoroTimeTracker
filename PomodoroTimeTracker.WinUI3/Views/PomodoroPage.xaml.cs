@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
+using PomodoroTimeTracker.WinUI3.Helpers;
 using PomodoroTimeTracker.WinUI3.Services;
 using PomodoroTimeTracker.WinUI3.ViewModels;
 using Windows.Foundation;
@@ -32,6 +33,9 @@ internal sealed partial class PomodoroPage : Page
 
         // Subscribe to state changes to show/hide timer window
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+
+        // Set up context menu for timer area
+        TimerGrid.ContextFlyout = TimerContextMenuHelper.CreateTimerContextMenu(ViewModel);
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

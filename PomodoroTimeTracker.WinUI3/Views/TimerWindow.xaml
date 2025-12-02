@@ -15,30 +15,6 @@
         x:Name="RootGrid"
         Background="Black">
 
-        <!--  Context Menu for Right-Click  -->
-        <Grid.ContextFlyout>
-            <MenuFlyout>
-                <MenuFlyoutItem
-                    x:Name="PauseMenuItem"
-                    Click="PauseMenuItem_Click"
-                    Text="Pause" />
-                <MenuFlyoutItem
-                    x:Name="StopMenuItem"
-                    Click="StopMenuItem_Click"
-                    Text="Stop" />
-                <MenuFlyoutSeparator />
-                <MenuFlyoutItem
-                    Click="AddOneMinute_Click"
-                    Text="+ 1 minute" />
-                <MenuFlyoutItem
-                    Click="AddTwoMinutes_Click"
-                    Text="+ 2 minutes" />
-                <MenuFlyoutItem
-                    Click="AddFiveMinutes_Click"
-                    Text="+ 5 minutes" />
-            </MenuFlyout>
-        </Grid.ContextFlyout>
-
         <!--  Rectangular Progress Bar (fills from left to right)  -->
         <Grid>
             <!--  Progress Rectangle (Red overlay that increases from left to right)  -->

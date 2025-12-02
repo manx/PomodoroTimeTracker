@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using PomodoroTimeTracker.WinUI3.Helpers;
 using PomodoroTimeTracker.WinUI3.ViewModels;
 using Windows.Graphics;
 using Windows.Storage;
@@ -101,7 +103,6 @@ internal sealed partial class TimerWindow : WindowEx
     private WndProcDelegate? _wndProcDelegate;
     private IntPtr _oldWndProc;
     private IntPtr _hWnd;
-    private MenuFlyout? _stopSubmenu;
 
     public ITimerWindowViewModel ViewModel { get; }
 
@@ -113,113 +114,10 @@ internal sealed partial class TimerWindow : WindowEx
         // Subscribe to progress changes to update the visual arc
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
-        // Add right-tapped handler for context menu
-        RootGrid.RightTapped += RootGrid_RightTapped;
+        // Set up context menu using shared helper
+        RootGrid.ContextFlyout = TimerContextMenuHelper.CreateTimerContextMenu(ViewModel);
 
         InitializeWindow();
-    }
-
-    private void RootGrid_RightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
-    {
-        // Update the Pause menu item text based on current state
-        PauseMenuItem?.Text = ViewModel.IsPausedState ? "Resume" : "Pause";
-
-        // Context menu will show automatically via Grid.ContextFlyout
-    }
-
-    private void PauseMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        // Execute the pause/resume command
-        if (ViewModel.PauseResumeCommand.CanExecute(null))
-        {
-            ViewModel.PauseResumeCommand.Execute(null);
-        }
-    }
-
-    private void StopMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        // Stop the timer (pause it)
-        if (ViewModel.IsRunningState && ViewModel.PauseResumeCommand.CanExecute(null))
-        {
-            ViewModel.PauseResumeCommand.Execute(null);
-        }
-
-        // Calculate elapsed time for the menu text
-        var elapsedSeconds = ViewModel.ElapsedSeconds;
-        var minutes = elapsedSeconds / 60;
-        var seconds = elapsedSeconds % 60;
-
-        // Hide the main context menu first
-        if (RootGrid.ContextFlyout is MenuFlyout mainMenu)
-        {
-            mainMenu.Hide();
-        }
-
-        // Create the submenu dynamically
-        _stopSubmenu = new MenuFlyout
-        {
-            Placement = Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.Bottom
-        };
-
-        var saveMenuItem = new MenuFlyoutItem
-        {
-            Text = $"Save {minutes:D2}:{seconds:D2} work item"
-        };
-        saveMenuItem.Click += StopAndSave_Click;
-        _stopSubmenu.Items.Add(saveMenuItem);
-
-        var discardMenuItem = new MenuFlyoutItem
-        {
-            Text = "Discard work item"
-        };
-        discardMenuItem.Click += StopAndDiscard_Click;
-        _stopSubmenu.Items.Add(discardMenuItem);
-
-        var resumeMenuItem = new MenuFlyoutItem
-        {
-            Text = "Resume"
-        };
-        resumeMenuItem.Click += StopAndResume_Click;
-        _stopSubmenu.Items.Add(resumeMenuItem);
-
-        // Show the submenu at the same location (RootGrid) where the main menu was
-        _stopSubmenu.ShowAt(RootGrid);
-    }
-
-    private async void StopAndSave_Click(object sender, RoutedEventArgs e)
-    {
-        // Save the session (stop with save)
-        await ViewModel.SaveAndStopAsync();
-    }
-
-    private async void StopAndDiscard_Click(object sender, RoutedEventArgs e)
-    {
-        // Discard the session
-        await ViewModel.DiscardAndStopAsync();
-    }
-
-    private void StopAndResume_Click(object sender, RoutedEventArgs e)
-    {
-        // Resume the timer (just unpause if paused, otherwise do nothing)
-        if (ViewModel.IsPausedState && ViewModel.PauseResumeCommand.CanExecute(null))
-        {
-            ViewModel.PauseResumeCommand.Execute(null);
-        }
-    }
-
-    private void AddOneMinute_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.AddMinutes(1);
-    }
-
-    private void AddTwoMinutes_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.AddMinutes(2);
-    }
-
-    private void AddFiveMinutes_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.AddMinutes(5);
     }
 
     private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
@@ -245,16 +143,11 @@ internal sealed partial class TimerWindow : WindowEx
             // Dispatch to UI thread to show the context menu
             DispatcherQueue.TryEnqueue(() =>
             {
-                // Get the menu flyout from RootGrid
+                // Get the menu flyout from RootGrid (created by TimerContextMenuHelper)
                 if (RootGrid.ContextFlyout is MenuFlyout menuFlyout)
                 {
-                    // Update the Pause menu item text
-                    if (PauseMenuItem != null)
-                    {
-                        PauseMenuItem.Text = ViewModel.IsPausedState ? "Resume" : "Pause";
-                    }
-
                     // Show the menu at the pointer position
+                    // Note: Pause/Resume text is updated by helper's Opening event
                     menuFlyout.ShowAt(RootGrid);
                 }
             });
