@@ -49,11 +49,6 @@
                                Style="{StaticResource CaptionTextBlockStyle}"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Visibility="{x:Bind ViewModel.HasActiveEntryProject, Mode=OneWay}"/>
-                    <TextBlock Text="{x:Bind ViewModel.ActiveTimerDisplay, Mode=OneWay}"
-                               Style="{StaticResource SubtitleTextBlockStyle}"
-                               Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                               FontFamily="Consolas"
-                               Margin="0,4,0,0"/>
                 </StackPanel>
 
                 <Button Grid.Column="1"

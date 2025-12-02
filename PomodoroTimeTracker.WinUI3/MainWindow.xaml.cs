@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
@@ -14,6 +15,7 @@ namespace PomodoroTimeTracker.WinUI3
     {
         private readonly INavigationService _navigationService;
         private readonly IDialogService _dialogService;
+        private readonly IActiveTimerService _activeTimerService;
         private AppWindow? _appWindow;
         public MainWindowViewModel ViewModel { get; }
 
@@ -24,7 +26,11 @@ namespace PomodoroTimeTracker.WinUI3
             // Get services from DI
             _navigationService = App.Services.GetRequiredService<INavigationService>();
             _dialogService = App.Services.GetRequiredService<IDialogService>();
+            _activeTimerService = App.Services.GetRequiredService<IActiveTimerService>();
             ViewModel = App.Services.GetRequiredService<MainWindowViewModel>();
+
+            // Subscribe to active timer changes to update navigation menu
+            _activeTimerService.PropertyChanged += ActiveTimerService_PropertyChanged;
 
             // Set the navigation frame
             _navigationService.NavigationFrame = ContentFrame;
@@ -46,69 +52,124 @@ namespace PomodoroTimeTracker.WinUI3
             }
         }
 
+        private void ActiveTimerService_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            // Update navigation item enabled states when active timer changes
+            UpdateNavigationItemStates();
+        }
+
+        private void UpdateNavigationItemStates()
+        {
+            PomodoroNavItem.IsEnabled = _activeTimerService.IsPomodoroEnabled;
+            RegularTimerNavItem.IsEnabled = _activeTimerService.IsRegularTimerEnabled;
+        }
+
         private async void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
         {
-            // Get the PomodoroViewModel to check if there's an active session
-            var pomodoroViewModel = App.Services.GetRequiredService<PomodoroViewModel>();
-
-            // If there's an active work session (not during break), show the stop dialog
-            if (pomodoroViewModel.State == PomodoroState.Running ||
-                pomodoroViewModel.State == PomodoroState.Paused ||
-                pomodoroViewModel.State == PomodoroState.WrapUp)
+            // Check if any timer is active
+            if (!_activeTimerService.HasActiveTimer)
             {
-                // Cancel the close for now
-                args.Cancel = true;
+                return; // No active timer, allow close
+            }
 
-                // Pause the timer if running
-                if (pomodoroViewModel.State == PomodoroState.Running)
-                {
-                    pomodoroViewModel.PauseResumeCommand.Execute(null);
-                }
+            // Cancel the close for now
+            args.Cancel = true;
 
-                // Show the stop dialog
-                var result = await ShowStopConfirmationDialogAsync(pomodoroViewModel);
+            // Get the appropriate ViewModel and show dialog based on active timer type
+            ITimerWindowViewModel? activeViewModel = _activeTimerService.ActiveTimer switch
+            {
+                ActiveTimerType.Pomodoro => App.Services.GetRequiredService<PomodoroViewModel>(),
+                ActiveTimerType.RegularTimer => App.Services.GetRequiredService<RegularTimerViewModel>(),
+                _ => null
+            };
 
-                switch (result)
-                {
-                    case StopDialogResult.Resume:
-                        // User wants to continue, just resume if paused
-                        if (pomodoroViewModel.IsPausedState)
-                        {
-                            pomodoroViewModel.PauseResumeCommand.Execute(null);
-                        }
-                        break;
+            if (activeViewModel == null)
+            {
+                return;
+            }
 
-                    case StopDialogResult.Save:
-                        // Save the session and close
-                        await pomodoroViewModel.SaveAndStopAsync();
-                        // Unsubscribe from the event to avoid recursion
-                        if (_appWindow != null)
-                        {
-                            _appWindow.Closing -= AppWindow_Closing;
-                        }
-                        this.Close();
-                        break;
+            // Pause the timer if running
+            if (activeViewModel.PauseResumeCommand.CanExecute(null))
+            {
+                activeViewModel.PauseResumeCommand.Execute(null);
+            }
 
-                    case StopDialogResult.Discard:
-                        // Discard the session and close
-                        await pomodoroViewModel.DiscardAndStopAsync();
-                        // Unsubscribe from the event to avoid recursion
-                        if (_appWindow != null)
-                        {
-                            _appWindow.Closing -= AppWindow_Closing;
-                        }
-                        this.Close();
-                        break;
-                }
+            // Show the stop dialog
+            var result = await ShowStopConfirmationDialogAsync(activeViewModel);
+
+            switch (result)
+            {
+                case StopDialogResult.Resume:
+                    // User wants to continue, resume if paused
+                    if (activeViewModel.PauseResumeCommand.CanExecute(null))
+                    {
+                        activeViewModel.PauseResumeCommand.Execute(null);
+                    }
+                    break;
+
+                case StopDialogResult.Save:
+                    // Save the session and close
+                    await SaveActiveTimerAsync(activeViewModel);
+                    // Unsubscribe from the event to avoid recursion
+                    if (_appWindow != null)
+                    {
+                        _appWindow.Closing -= AppWindow_Closing;
+                    }
+                    this.Close();
+                    break;
+
+                case StopDialogResult.Discard:
+                    // Discard the session and close
+                    await DiscardActiveTimerAsync(activeViewModel);
+                    // Unsubscribe from the event to avoid recursion
+                    if (_appWindow != null)
+                    {
+                        _appWindow.Closing -= AppWindow_Closing;
+                    }
+                    this.Close();
+                    break;
             }
         }
 
-        private async Task<StopDialogResult> ShowStopConfirmationDialogAsync(PomodoroViewModel viewModel)
+        private static async Task SaveActiveTimerAsync(ITimerWindowViewModel viewModel)
         {
+            switch (viewModel)
+            {
+                case PomodoroViewModel pvm:
+                    await pvm.SaveAndStopAsync();
+                    break;
+                case RegularTimerViewModel rtvm:
+                    await rtvm.SaveAndStopAsync();
+                    break;
+            }
+        }
+
+        private static async Task DiscardActiveTimerAsync(ITimerWindowViewModel viewModel)
+        {
+            switch (viewModel)
+            {
+                case PomodoroViewModel pvm:
+                    await pvm.DiscardAndStopAsync();
+                    break;
+                case RegularTimerViewModel rtvm:
+                    await rtvm.DiscardAndStopAsync();
+                    break;
+            }
+        }
+
+        private async Task<StopDialogResult> ShowStopConfirmationDialogAsync(ITimerWindowViewModel viewModel)
+        {
+            string timerType = _activeTimerService.ActiveTimer switch
+            {
+                ActiveTimerType.Pomodoro => "Pomodoro",
+                ActiveTimerType.RegularTimer => "Regular Timer",
+                _ => "Timer"
+            };
+
             var dialog = new ContentDialog
             {
-                Title = "Pomodoro In Progress",
-                Content = $"You have a Pomodoro session running.\n\nElapsed time: {viewModel.TimerDisplay}\n\nWhat would you like to do?",
+                Title = $"{timerType} In Progress",
+                Content = $"You have a {timerType} session running.\n\nElapsed time: {viewModel.TimerDisplay}\n\nWhat would you like to do?",
                 PrimaryButtonText = "Save",
                 SecondaryButtonText = "Discard",
                 CloseButtonText = "Resume",

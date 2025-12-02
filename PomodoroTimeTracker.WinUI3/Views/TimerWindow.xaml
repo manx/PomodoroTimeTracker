@@ -16,7 +16,7 @@
         Background="Black">
 
         <!--  Rectangular Progress Bar (fills from left to right)  -->
-        <Grid>
+        <Grid Visibility="{x:Bind ViewModel.ShowProgressMeter, Mode=OneWay}">
             <!--  Progress Rectangle (Red overlay that increases from left to right)  -->
             <Rectangle
                 x:Name="ProgressRectangle"

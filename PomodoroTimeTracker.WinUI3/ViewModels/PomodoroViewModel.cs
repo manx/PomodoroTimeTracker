@@ -5,6 +5,7 @@ using Microsoft.UI.Dispatching;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
 using PomodoroTimeTracker.Domain.Entities;
+using PomodoroTimeTracker.WinUI3.Services;
 
 namespace PomodoroTimeTracker.WinUI3.ViewModels;
 
@@ -78,6 +79,7 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
     private readonly IClientService _clientService;
     private readonly IProjectService _projectService;
     private readonly IAudioService _audioService;
+    private readonly IActiveTimerService _activeTimerService;
     private readonly DispatcherQueue _dispatcherQueue;
     private readonly DispatcherQueueTimer _timer;
 
@@ -116,18 +118,21 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
     /// <param name="clientService">Service for managing clients.</param>
     /// <param name="projectService">Service for managing projects.</param>
     /// <param name="audioService">Service for playing audio notifications.</param>
+    /// <param name="activeTimerService">Service for coordinating active timer state.</param>
     public PomodoroViewModel(
         IPomodoroSessionService sessionService,
         IPomodoroSettingsService settingsService,
         IClientService clientService,
         IProjectService projectService,
-        IAudioService audioService)
+        IAudioService audioService,
+        IActiveTimerService activeTimerService)
     {
         _sessionService = sessionService;
         _settingsService = settingsService;
         _clientService = clientService;
         _projectService = projectService;
         _audioService = audioService;
+        _activeTimerService = activeTimerService;
 
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         _timer = _dispatcherQueue.CreateTimer();
@@ -293,6 +298,9 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
     /// Gets a value indicating whether the timer counts up. Pomodoro always counts down.
     /// </summary>
     public bool CountsUp => false;
+
+    /// <inheritdoc/>
+    public bool ShowProgressMeter => true;
 
     /// <summary>
     /// Gets or sets the session duration in minutes.
@@ -521,6 +529,12 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
 
     private async Task StartPomodoroAsync()
     {
+        // Try to set this as the active timer
+        if (!_activeTimerService.TrySetActiveTimer(ActiveTimerType.Pomodoro))
+        {
+            return; // Another timer is active
+        }
+
         try
         {
             // Create session
@@ -772,6 +786,9 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
 
     private void ResetToSetup()
     {
+        // Clear active timer when fully resetting to setup
+        _activeTimerService.ClearActiveTimer();
+
         State = PomodoroState.Setup;
         Objective = string.Empty;
         DurationMinutes = _settings?.WorkDurationMinutes ?? 25;

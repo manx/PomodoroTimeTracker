@@ -36,7 +36,9 @@
       "Bash(dotnet clean:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr edit:*)",
-      "Bash(gh pr merge:*)"
+      "Bash(gh pr merge:*)",
+      "Bash(gh pr:*)",
+      "SlashCommand(/implement-feature)"
     ],
     "deny": [],
     "ask": []

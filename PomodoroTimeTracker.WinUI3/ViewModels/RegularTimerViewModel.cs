@@ -5,6 +5,7 @@ using Microsoft.UI.Dispatching;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
 using PomodoroTimeTracker.Domain.Entities;
+using PomodoroTimeTracker.WinUI3.Services;
 
 namespace PomodoroTimeTracker.WinUI3.ViewModels;
 
@@ -57,6 +58,7 @@ internal sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindo
     private readonly IClientService _clientService;
     private readonly IProjectService _projectService;
     private readonly IAudioService _audioService;
+    private readonly IActiveTimerService _activeTimerService;
     private readonly DispatcherQueue _dispatcherQueue;
     private readonly DispatcherQueueTimer _timer;
 
@@ -88,13 +90,15 @@ internal sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindo
         IPomodoroSettingsService settingsService,
         IClientService clientService,
         IProjectService projectService,
-        IAudioService audioService)
+        IAudioService audioService,
+        IActiveTimerService activeTimerService)
     {
         _sessionService = sessionService;
         _settingsService = settingsService;
         _clientService = clientService;
         _projectService = projectService;
         _audioService = audioService;
+        _activeTimerService = activeTimerService;
 
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         _timer = _dispatcherQueue.CreateTimer();
@@ -250,6 +254,9 @@ internal sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindo
     /// Gets a value indicating whether the timer counts up. Regular Timer counts up.
     /// </summary>
     public bool CountsUp => true;
+
+    /// <inheritdoc/>
+    public bool ShowProgressMeter => true;
 
     /// <summary>
     /// Gets or sets the session duration in minutes.
@@ -447,6 +454,12 @@ internal sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindo
 
     private async Task StartTimerAsync()
     {
+        // Try to set this as the active timer
+        if (!_activeTimerService.TrySetActiveTimer(ActiveTimerType.RegularTimer))
+        {
+            return; // Another timer is active
+        }
+
         try
         {
             // Reset Pomodoro cycle when starting Regular Timer
@@ -658,6 +671,9 @@ internal sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindo
 
     private void ResetToSetup()
     {
+        // Clear active timer when resetting to setup
+        _activeTimerService.ClearActiveTimer();
+
         State = RegularTimerState.Setup;
         Description = string.Empty;
         DurationMinutes = 60; // Default for Regular Timer (TODO: add separate settings later)
