@@ -9,7 +9,7 @@ namespace PomodoroTimeTracker.WinUI3.ViewModels;
 /// ViewModel for the Pomodoro settings configuration page.
 /// Manages user preferences for timer durations, alarms, and notifications.
 /// </summary>
-internal partial class PomodoroSettingsViewModel : ViewModelBase
+internal sealed partial class PomodoroSettingsViewModel : ViewModelBase
 {
     private readonly IPomodoroSettingsService _settingsService;
     private readonly IAudioService _audioService;

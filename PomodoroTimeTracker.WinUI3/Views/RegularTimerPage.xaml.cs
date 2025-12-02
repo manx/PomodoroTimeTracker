@@ -1,5 +1,7 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
@@ -11,19 +13,19 @@ using Windows.Foundation;
 
 namespace PomodoroTimeTracker.WinUI3.Views;
 
-internal sealed partial class PomodoroPage : Page
+internal sealed partial class RegularTimerPage : Page
 {
-    public PomodoroViewModel ViewModel { get; }
-    private readonly ILogger<PomodoroPage> _logger;
+    public RegularTimerViewModel ViewModel { get; }
+    private readonly ILogger<RegularTimerPage> _logger;
     private readonly IDialogService _dialogService;
     private TimerWindow? _timerWindow;
 
-    public PomodoroPage()
+    public RegularTimerPage()
     {
         // Resolve dependencies first
-        _logger = App.GetService<ILogger<PomodoroPage>>();
+        _logger = App.GetService<ILogger<RegularTimerPage>>();
         _dialogService = App.GetService<IDialogService>();
-        ViewModel = App.GetService<PomodoroViewModel>();
+        ViewModel = App.GetService<RegularTimerViewModel>();
 
         // Initialize XAML after ViewModel is ready (x:Bind needs ViewModel)
         this.InitializeComponent();
@@ -31,7 +33,7 @@ internal sealed partial class PomodoroPage : Page
         // Set up the dialog callback after XAML initialization
         ViewModel.ShowStopDialog = ShowStopConfirmationDialogAsync;
 
-        // Subscribe to state changes to show/hide timer window
+        // Subscribe to state changes for progress arc updates and timer window
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
         // Set up context menu for timer area
@@ -98,14 +100,14 @@ internal sealed partial class PomodoroPage : Page
     {
         try
         {
-            _logger.LogInformation("Initializing PomodoroPage");
+            _logger.LogInformation("Initializing RegularTimerPage");
             await ViewModel.LoadAsync();
-            _logger.LogInformation("PomodoroPage initialized successfully");
+            _logger.LogInformation("RegularTimerPage initialized successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error initializing PomodoroPage");
-            await _dialogService.ShowErrorAsync("Unable to load pomodoro timer. Please try again.");
+            _logger.LogError(ex, "Error initializing RegularTimerPage");
+            await _dialogService.ShowErrorAsync("Unable to load regular timer. Please try again.");
         }
     }
 
@@ -113,7 +115,7 @@ internal sealed partial class PomodoroPage : Page
     {
         var dialog = new ContentDialog
         {
-            Title = "Stop Pomodoro?",
+            Title = "Stop Timer?",
             Content = "What would you like to do with this session?",
             PrimaryButtonText = "Save",
             SecondaryButtonText = "Discard",

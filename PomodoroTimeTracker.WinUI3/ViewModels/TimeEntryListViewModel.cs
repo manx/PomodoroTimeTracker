@@ -4,14 +4,13 @@ using CommunityToolkit.Mvvm.Input;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
 using PomodoroTimeTracker.WinUI3.Services;
-using IDispatcherTimer = PomodoroTimeTracker.Application.Interfaces.IDispatcherTimer;
 
 namespace PomodoroTimeTracker.WinUI3.ViewModels;
 
 /// <summary>
 /// Display item for a single time entry in the list.
 /// </summary>
-internal class TimeEntryDisplayItem
+internal sealed class TimeEntryDisplayItem
 {
     public int Id { get; set; }
     public string Description { get; set; } = string.Empty;
@@ -23,7 +22,7 @@ internal class TimeEntryDisplayItem
 /// <summary>
 /// Helper DTO for grouping time entries by date.
 /// </summary>
-internal class TimeEntryGroupDto
+internal sealed class TimeEntryGroupDto
 {
     public string DateHeader { get; set; } = string.Empty; // "Today", "Yesterday", "2025-01-20"
     public DateTime Date { get; set; }
@@ -33,51 +32,28 @@ internal class TimeEntryGroupDto
 /// <summary>
 /// ViewModel for the time entry list view.
 /// </summary>
-/// <remarks>
-/// <para>
-/// This ViewModel uses IDispatcherTimer (injected via constructor) instead of directly
-/// creating a DispatcherQueueTimer. This design choice enables unit testing.
-/// </para>
-/// <para>
-/// <b>Why timer injection matters:</b>
-/// WinUI 3's DispatcherQueueTimer requires a UI thread context. In unit tests,
-/// there is no UI thread, so DispatcherQueue.GetForCurrentThread() returns null.
-/// By injecting IDispatcherTimer, tests can provide a mock timer that doesn't
-/// require a UI thread, allowing full testing of timer-dependent logic.
-/// </para>
-/// </remarks>
-internal partial class TimeEntryListViewModel : ViewModelBase
+internal sealed partial class TimeEntryListViewModel : ViewModelBase
 {
     private readonly ITimeEntryService _timeEntryService;
     private readonly IProjectService _projectService;
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
 
-    // Timer is injected to enable unit testing. See class remarks for details.
-    private readonly IDispatcherTimer _timer;
-
     private ObservableCollection<TimeEntryGroupDto> _groupedEntries = new();
     private TimeEntryDto? _selectedEntry;
     private TimeEntryDto? _activeTimeEntry;
     private bool _isLoading;
-    private string _activeTimerDisplay = string.Empty;
 
     public TimeEntryListViewModel(
         ITimeEntryService timeEntryService,
         IProjectService projectService,
         IDialogService dialogService,
-        INavigationService navigationService,
-        IDispatcherTimer timer)
+        INavigationService navigationService)
     {
         _timeEntryService = timeEntryService;
         _projectService = projectService;
         _dialogService = dialogService;
         _navigationService = navigationService;
-        _timer = timer;
-
-        // Set up timer for active entry display
-        _timer.Interval = TimeSpan.FromSeconds(1);
-        _timer.Tick += Timer_Tick;
 
         StartNewEntryCommand = new AsyncRelayCommand(StartNewEntryAsync);
         StopActiveEntryCommand = new AsyncRelayCommand(StopActiveEntryAsync, () => HasActiveEntry);
@@ -119,26 +95,8 @@ internal partial class TimeEntryListViewModel : ViewModelBase
                 OnPropertyChanged(nameof(ActiveEntryDescription));
                 OnPropertyChanged(nameof(ActiveEntryProjectName));
                 ((AsyncRelayCommand)StopActiveEntryCommand).NotifyCanExecuteChanged();
-
-                // Start or stop timer based on active entry
-                if (value != null)
-                {
-                    UpdateActiveTimerDisplay();
-                    _timer.Start();
-                }
-                else
-                {
-                    _timer.Stop();
-                    ActiveTimerDisplay = string.Empty;
-                }
             }
         }
-    }
-
-    public string ActiveTimerDisplay
-    {
-        get => _activeTimerDisplay;
-        set => SetProperty(ref _activeTimerDisplay, value);
     }
 
     public bool HasActiveEntry => ActiveTimeEntry != null;
@@ -163,23 +121,6 @@ internal partial class TimeEntryListViewModel : ViewModelBase
     public ICommand EditEntryCommand { get; }
     public ICommand DeleteEntryCommand { get; }
     public ICommand RefreshCommand { get; }
-
-    private void Timer_Tick(object? sender, EventArgs e)
-    {
-        UpdateActiveTimerDisplay();
-    }
-
-    private void UpdateActiveTimerDisplay()
-    {
-        if (ActiveTimeEntry == null)
-        {
-            ActiveTimerDisplay = string.Empty;
-            return;
-        }
-
-        var elapsed = DateTime.Now - ActiveTimeEntry.StartTime;
-        ActiveTimerDisplay = $"{(int)elapsed.TotalHours:D2}:{elapsed.Minutes:D2}:{elapsed.Seconds:D2}";
-    }
 
     private async Task LoadEntriesAsync()
     {

@@ -1,8 +1,12 @@
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using PomodoroTimeTracker.WinUI3.Helpers;
 using PomodoroTimeTracker.WinUI3.ViewModels;
 using Windows.Graphics;
 using WinRT.Interop;
@@ -15,6 +19,14 @@ namespace PomodoroTimeTracker.WinUI3.Views;
 /// </summary>
 internal sealed partial class TimerWindow : WindowEx
 {
+    // File path for position persistence (file-based since app may be unpackaged)
+    private static readonly string PositionFilePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "PomodoroTimeTracker",
+        "timer-window-position.json");
+    private const int DefaultPositionX = 10;
+    private const int DefaultPositionY = 10;
+
     // Win32 API constants for window messages
     private const int WM_NCHITTEST = 0x0084;
     private const int WM_NCCALCSIZE = 0x0083;
@@ -22,6 +34,7 @@ internal sealed partial class TimerWindow : WindowEx
     private const int WM_NCRBUTTONDOWN = 0x00A4;
     private const int WM_NCRBUTTONUP = 0x00A5;
     private const int WM_PARENTNOTIFY = 0x0210;
+    private const int WM_EXITSIZEMOVE = 0x0232;
 
     // RECT structure for WM_SIZING
     [StructLayout(LayoutKind.Sequential)]
@@ -94,11 +107,10 @@ internal sealed partial class TimerWindow : WindowEx
     private WndProcDelegate? _wndProcDelegate;
     private IntPtr _oldWndProc;
     private IntPtr _hWnd;
-    private MenuFlyout? _stopSubmenu;
 
-    public PomodoroViewModel ViewModel { get; }
+    public ITimerWindowViewModel ViewModel { get; }
 
-    public TimerWindow(PomodoroViewModel viewModel)
+    public TimerWindow(ITimerWindowViewModel viewModel)
     {
         ViewModel = viewModel;
         this.InitializeComponent();
@@ -106,113 +118,10 @@ internal sealed partial class TimerWindow : WindowEx
         // Subscribe to progress changes to update the visual arc
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
-        // Add right-tapped handler for context menu
-        RootGrid.RightTapped += RootGrid_RightTapped;
+        // Set up context menu using shared helper
+        RootGrid.ContextFlyout = TimerContextMenuHelper.CreateTimerContextMenu(ViewModel);
 
         InitializeWindow();
-    }
-
-    private void RootGrid_RightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
-    {
-        // Update the Pause menu item text based on current state
-        PauseMenuItem?.Text = ViewModel.IsPausedState ? "Resume" : "Pause";
-
-        // Context menu will show automatically via Grid.ContextFlyout
-    }
-
-    private void PauseMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        // Execute the pause/resume command
-        if (ViewModel.PauseResumeCommand.CanExecute(null))
-        {
-            ViewModel.PauseResumeCommand.Execute(null);
-        }
-    }
-
-    private void StopMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        // Stop the timer (pause it)
-        if (ViewModel.State == PomodoroState.Running && ViewModel.PauseResumeCommand.CanExecute(null))
-        {
-            ViewModel.PauseResumeCommand.Execute(null);
-        }
-
-        // Calculate elapsed time for the menu text
-        var elapsedSeconds = ViewModel.ElapsedSeconds;
-        var minutes = elapsedSeconds / 60;
-        var seconds = elapsedSeconds % 60;
-
-        // Hide the main context menu first
-        if (RootGrid.ContextFlyout is MenuFlyout mainMenu)
-        {
-            mainMenu.Hide();
-        }
-
-        // Create the submenu dynamically
-        _stopSubmenu = new MenuFlyout
-        {
-            Placement = Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.Bottom
-        };
-
-        var saveMenuItem = new MenuFlyoutItem
-        {
-            Text = $"Save {minutes:D2}:{seconds:D2} work item"
-        };
-        saveMenuItem.Click += StopAndSave_Click;
-        _stopSubmenu.Items.Add(saveMenuItem);
-
-        var discardMenuItem = new MenuFlyoutItem
-        {
-            Text = "Discard work item"
-        };
-        discardMenuItem.Click += StopAndDiscard_Click;
-        _stopSubmenu.Items.Add(discardMenuItem);
-
-        var resumeMenuItem = new MenuFlyoutItem
-        {
-            Text = "Resume"
-        };
-        resumeMenuItem.Click += StopAndResume_Click;
-        _stopSubmenu.Items.Add(resumeMenuItem);
-
-        // Show the submenu at the same location (RootGrid) where the main menu was
-        _stopSubmenu.ShowAt(RootGrid);
-    }
-
-    private async void StopAndSave_Click(object sender, RoutedEventArgs e)
-    {
-        // Save the session (stop with save)
-        await ViewModel.SaveAndStopAsync();
-    }
-
-    private async void StopAndDiscard_Click(object sender, RoutedEventArgs e)
-    {
-        // Discard the session
-        await ViewModel.DiscardAndStopAsync();
-    }
-
-    private void StopAndResume_Click(object sender, RoutedEventArgs e)
-    {
-        // Resume the timer (just unpause if paused, otherwise do nothing)
-        if (ViewModel.IsPausedState && ViewModel.PauseResumeCommand.CanExecute(null))
-        {
-            ViewModel.PauseResumeCommand.Execute(null);
-        }
-    }
-
-    private void AddOneMinute_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.AddMinutes(1);
-    }
-
-    private void AddTwoMinutes_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.AddMinutes(2);
-    }
-
-    private void AddFiveMinutes_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.AddMinutes(5);
     }
 
     private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
@@ -238,22 +147,24 @@ internal sealed partial class TimerWindow : WindowEx
             // Dispatch to UI thread to show the context menu
             DispatcherQueue.TryEnqueue(() =>
             {
-                // Get the menu flyout from RootGrid
+                // Get the menu flyout from RootGrid (created by TimerContextMenuHelper)
                 if (RootGrid.ContextFlyout is MenuFlyout menuFlyout)
                 {
-                    // Update the Pause menu item text
-                    if (PauseMenuItem != null)
-                    {
-                        PauseMenuItem.Text = ViewModel.IsPausedState ? "Resume" : "Pause";
-                    }
-
                     // Show the menu at the pointer position
+                    // Note: Pause/Resume text is updated by helper's Opening event
                     menuFlyout.ShowAt(RootGrid);
                 }
             });
 
             // Let the default handler process it too
             return CallWindowProc(_oldWndProc, hWnd, msg, wParam, lParam);
+        }
+
+        // Save position when window move/resize ends
+        if (msg == WM_EXITSIZEMOVE)
+        {
+            // Dispatch to UI thread for WinRT API access
+            DispatcherQueue.TryEnqueue(() => SavePosition());
         }
 
         // Intercept hit testing for dragging (allow full window resizing)
@@ -297,15 +208,12 @@ internal sealed partial class TimerWindow : WindowEx
         this.Width = 150;
         this.Height = 50;
 
-        // Position in top-right corner
-        var displayArea = DisplayArea.Primary;
-        if (displayArea != null)
-        {
-            var workArea = displayArea.WorkArea;
-            var x = workArea.Width - 170; // 150px width + 20px margin
-            var y = 20; // 20px from top
-            this.Move(x, y);
-        }
+        // Load saved position or use default
+        var (x, y) = LoadSavedPosition();
+        this.Move(x, y);
+
+        // Save position when window is closed
+        this.Closed += TimerWindow_Closed;
 
         // Use WinUI 3's built-in dragging support
         ExtendsContentIntoTitleBar = true;
@@ -359,5 +267,105 @@ internal sealed partial class TimerWindow : WindowEx
 
         // Update the rectangle width
         ProgressRectangle.Width = progressWidth;
+    }
+
+    private void TimerWindow_Closed(object sender, WindowEventArgs args)
+    {
+        SavePosition();
+    }
+
+    private (int x, int y) LoadSavedPosition()
+    {
+        try
+        {
+            if (File.Exists(PositionFilePath))
+            {
+                var json = File.ReadAllText(PositionFilePath);
+                var position = JsonSerializer.Deserialize<WindowPosition>(json);
+
+                if (position != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"TimerWindow: Loaded position ({position.X}, {position.Y})");
+
+                    // Validate that saved position is still visible on some screen
+                    if (IsPositionOnScreen(position.X, position.Y))
+                    {
+                        return (position.X, position.Y);
+                    }
+
+                    System.Diagnostics.Debug.WriteLine("TimerWindow: Position not on screen, using default");
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("TimerWindow: No saved position file found");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading TimerWindow position: {ex.Message}");
+        }
+
+        // Fall back to default position
+        return (DefaultPositionX, DefaultPositionY);
+    }
+
+    private sealed record WindowPosition(int X, int Y);
+
+    private void SavePosition()
+    {
+        try
+        {
+            // Get current window position
+            if (!GetWindowRect(_hWnd, out var rect))
+            {
+                System.Diagnostics.Debug.WriteLine("TimerWindow: GetWindowRect failed");
+                return;
+            }
+
+            // Ensure directory exists
+            var directory = Path.GetDirectoryName(PositionFilePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var position = new WindowPosition(rect.Left, rect.Top);
+            var json = JsonSerializer.Serialize(position);
+            File.WriteAllText(PositionFilePath, json);
+
+            System.Diagnostics.Debug.WriteLine($"TimerWindow: Saved position ({rect.Left}, {rect.Top})");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error saving TimerWindow position: {ex.Message}");
+        }
+    }
+
+    private static bool IsPositionOnScreen(int x, int y)
+    {
+        try
+        {
+            // Check if the position is visible on any display
+            var displays = DisplayArea.FindAll();
+            foreach (var display in displays)
+            {
+                var workArea = display.WorkArea;
+                // Check if at least part of the window (top-left corner + some margin) is visible
+                if (x >= workArea.X - 100 && x < workArea.X + workArea.Width &&
+                    y >= workArea.Y - 50 && y < workArea.Y + workArea.Height)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        catch (Exception ex)
+        {
+            // DisplayArea.FindAll() can fail in certain contexts
+            // Trust the saved position if we can't validate
+            System.Diagnostics.Debug.WriteLine($"TimerWindow: IsPositionOnScreen failed: {ex.Message}");
+            return true;
+        }
     }
 }

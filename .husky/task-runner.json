@@ -9,9 +9,16 @@
          "group": "pre-commit"
       },
       {
+         "name": "build-tests",
+         "command": "dotnet",
+         "args": [ "build", "PomodoroTimeTracker.Tests", "-p:Platform=ARM64", "--verbosity", "quiet" ],
+         "output": "always",
+         "group": "pre-commit"
+      },
+      {
          "name": "run-tests",
          "command": "dotnet",
-         "args": [ "test", "PomodoroTimeTracker.sln", "--no-build", "--verbosity", "quiet", "--nologo" ],
+         "args": [ "test", "PomodoroTimeTracker.Tests", "--no-build", "-p:Platform=ARM64", "--verbosity", "quiet", "--nologo" ],
          "output": "always",
          "group": "pre-commit"
       },

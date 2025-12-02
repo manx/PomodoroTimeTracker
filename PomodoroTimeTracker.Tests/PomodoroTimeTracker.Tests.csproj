@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.19041</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -25,6 +25,7 @@
     <ProjectReference Include="..\PomodoroTimeTracker.Application\PomodoroTimeTracker.Application.csproj" />
     <ProjectReference Include="..\PomodoroTimeTracker.Infrastructure\PomodoroTimeTracker.Infrastructure.csproj" />
     <ProjectReference Include="..\PomodoroTimeTracker.Domain\PomodoroTimeTracker.Domain.csproj" />
+    <ProjectReference Include="..\PomodoroTimeTracker.WinUI3\PomodoroTimeTracker.WinUI3.csproj" />
   </ItemGroup>
 
 </Project>

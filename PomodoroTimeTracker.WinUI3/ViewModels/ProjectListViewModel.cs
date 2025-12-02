@@ -10,7 +10,7 @@ namespace PomodoroTimeTracker.WinUI3.ViewModels;
 /// <summary>
 /// ViewModel for the project list view.
 /// </summary>
-internal partial class ProjectListViewModel : ViewModelBase
+internal sealed partial class ProjectListViewModel : ViewModelBase
 {
     private readonly IProjectService _projectService;
     private readonly IDialogService _dialogService;
