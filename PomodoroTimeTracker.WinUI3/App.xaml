@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:PomodoroTimeTracker.WinUI3"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="using:Windows.UI"
     mc:Ignorable="d">
     <Application.Resources>
         <ResourceDictionary>
@@ -14,7 +15,7 @@
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->
-            <Color x:Key="Primary">#512BD4</Color>
+            <ui:Color x:Key="Primary">#512BD4</ui:Color>
 
             <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}" />
             <SolidColorBrush x:Key="WhiteBrush" Color="White" />

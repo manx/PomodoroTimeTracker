@@ -21,12 +21,16 @@
       "Bash(dotnet husky:*)",
       "Bash(dotnet test:*)",
       "Bash(git add:*)",
-      "Bash(dotnet clean:*)",
-      "Bash(Select-String -Pattern \"error|XamlCompiler\" -Context 2,2)",
-      "Bash(cat:*)",
-      "Bash(msbuild:*)",
-      "Bash(\"C:\\Users\\Lenovo\\.nuget\\packages\\microsoft.windowsappsdk.winui\\1.8.251105000\\tools\\net472\\XamlCompiler.exe\":*)",
-      "Bash(Select-String -Pattern \"error|Build succeeded|Build FAILED\" -Context 0,2)"
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git stash pop:*)",
+      "Bash(git init:*)",
+      "Bash(git checkout:*)",
+      "Bash(node --check:*)",
+      "Bash(git merge:*)",
+      "Bash(gh pr list:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

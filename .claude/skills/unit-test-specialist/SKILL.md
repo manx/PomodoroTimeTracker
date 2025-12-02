@@ -1,3 +1,12 @@
+---
+name: unit-test-specialist
+description: Expert guidance on unit testing for the Pomodoro Time Tracker. Activates when working with tests, test coverage, or testable code patterns.
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+---
+
 # Unit Test Specialist - Pomodoro Time Tracker
 
 **Activates when:** User asks for tests, mentions testing, unit tests, test coverage, or when creating/modifying testable code.
@@ -24,23 +33,28 @@ PomodoroTimeTracker.Tests/
 │   │   ├── PomodoroSessionServiceTests.cs    (20 tests) ✅
 │   │   ├── PomodoroSettingsServiceTests.cs   (22 tests) ✅
 │   │   ├── ClientServiceTests.cs             (18 tests) ✅
-│   │   └── ProjectServiceTests.cs            (22 tests) ✅
+│   │   ├── ProjectServiceTests.cs            (22 tests) ✅
+│   │   └── TimeEntryServiceTests.cs          (31 tests) ✅
 │   └── TestUtilities/
 │       └── (reserved for shared helpers)
-└── Infrastructure/
-    └── Repositories/
-        ├── PomodoroSessionRepositoryTests.cs  (22 tests) ✅
-        ├── PomodoroSettingsRepositoryTests.cs (11 tests) ✅
-        ├── ClientRepositoryTests.cs           (15 tests) ✅
-        └── ProjectRepositoryTests.cs          (14 tests) ✅
+├── Infrastructure/
+│   └── Repositories/
+│       ├── PomodoroSessionRepositoryTests.cs  (22 tests) ✅
+│       ├── PomodoroSettingsRepositoryTests.cs (11 tests) ✅
+│       ├── ClientRepositoryTests.cs           (15 tests) ✅
+│       └── ProjectRepositoryTests.cs          (14 tests) ✅
+└── WinUI3/
+    └── Services/
+        └── AudioServiceTests.cs               (35 tests) ✅
 
-Total: 144 tests, 100% pass rate
+Total: 210 tests, 100% pass rate
 ```
 
 **Coverage Status:**
-- ✅ Application Services - Complete (82 tests)
+- ✅ Application Services - Complete (113 tests)
 - ✅ Infrastructure Repositories - Complete (62 tests)
-- ⚠️ ViewModels - Not implemented (UI thread complexity)
+- ✅ UI Services - AudioService (35 tests)
+- ⚠️ ViewModels - Partial (IDispatcherTimer enables testing)
 - ⚠️ Domain Entities - Not needed (POCOs only)
 
 ---
@@ -1157,6 +1171,6 @@ Application Layer Tests (85)  <-- Update counts
 
 ---
 
-**Last Updated:** 2025-11-25
-**Current Test Count:** 144 tests (82 service, 62 repository)
+**Last Updated:** 2025-12-02
+**Current Test Count:** 210 tests (113 service, 62 repository, 35 UI services)
 **Maintained By:** Development Team
