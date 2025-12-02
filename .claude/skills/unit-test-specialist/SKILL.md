@@ -1,3 +1,12 @@
+---
+name: unit-test-specialist
+description: Expert guidance on unit testing for the Pomodoro Time Tracker. Activates when working with tests, test coverage, or testable code patterns.
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+---
+
 # Unit Test Specialist - Pomodoro Time Tracker
 
 **Activates when:** User asks for tests, mentions testing, unit tests, test coverage, or when creating/modifying testable code.
