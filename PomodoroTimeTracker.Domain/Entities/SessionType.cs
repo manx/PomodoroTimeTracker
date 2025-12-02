@@ -10,4 +10,5 @@ public enum SessionType
     /// Session recorded using the StopWatch timer (counts up, no duration limit).
     /// </summary>
     StopWatch
+    Regular
 }

@@ -39,6 +39,7 @@
       "Bash(gh pr merge:*)",
       "Bash(gh pr:*)",
       "SlashCommand(/implement-feature)"
+      "Bash(gh pr merge:*)"
     ],
     "deny": [],
     "ask": []
