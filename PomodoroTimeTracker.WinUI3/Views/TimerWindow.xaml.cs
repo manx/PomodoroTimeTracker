@@ -31,6 +31,7 @@ internal sealed partial class TimerWindow : WindowEx
     private const int WM_NCRBUTTONDOWN = 0x00A4;
     private const int WM_NCRBUTTONUP = 0x00A5;
     private const int WM_PARENTNOTIFY = 0x0210;
+    private const int WM_EXITSIZEMOVE = 0x0232;
 
     // RECT structure for WM_SIZING
     [StructLayout(LayoutKind.Sequential)]
@@ -154,6 +155,12 @@ internal sealed partial class TimerWindow : WindowEx
 
             // Let the default handler process it too
             return CallWindowProc(_oldWndProc, hWnd, msg, wParam, lParam);
+        }
+
+        // Save position when window move/resize ends
+        if (msg == WM_EXITSIZEMOVE)
+        {
+            SavePosition();
         }
 
         // Intercept hit testing for dragging (allow full window resizing)

@@ -31,7 +31,9 @@
       "Bash(git merge:*)",
       "Bash(gh pr list:*)",
       "Bash(done)",
-      "Bash(gh pr create:*)"
+      "Bash(gh pr create:*)",
+      "Bash(cat:*)",
+      "Bash(dotnet clean:*)"
     ],
     "deny": [],
     "ask": []
