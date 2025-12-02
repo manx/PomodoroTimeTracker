@@ -766,6 +766,8 @@ public PomodoroState State
 - Wrap up period implementation
 - Timer window with advanced features
 - Settings configuration with auto-calculate
+- Sound/alarm notifications with selectable sounds
+- Time Entry view with manual time tracking
 
 **Data Layer**
 - Complete database schema
@@ -780,18 +782,18 @@ public PomodoroState State
 - All ViewModels implemented
 - Client/Project CRUD pages
 - Pomodoro timer and settings pages
+- Time Entry list and detail pages
 - Compact timer window
 - Navigation system
 - Dialog service
 
-### Incomplete / TODO ⚠️
+**Testing**
+- 210 unit tests passing
+- TimeEntryService: 31 tests
+- AudioService: comprehensive coverage
+- IDispatcherTimer abstraction for ViewModel testability
 
-**Sound/Alarm Implementation** (HIGH PRIORITY)
-- Wrap up notification sound (TODO line 685-686 in PomodoroViewModel)
-- Main alarm sound (TODO line 693-694 in PomodoroViewModel)
-- Currently just Debug.WriteLine statements
-- Volume settings exist but not used
-- Need to implement audio playback
+### Incomplete / TODO ⚠️
 
 **Windows Notifications** (MEDIUM PRIORITY)
 - Toast notification integration
@@ -801,7 +803,7 @@ public PomodoroState State
 **Testing** (HIGH PRIORITY)
 - No unit tests for PomodoroViewModel
 - No integration tests for service layer
-- Need comprehensive test coverage
+- TimeEntryService has 31 tests (good coverage)
 
 **Error Handling** (MEDIUM PRIORITY)
 - Some basic try-catch but needs user-friendly messages
@@ -810,7 +812,6 @@ public PomodoroState State
 
 **UI Pages Not Implemented** (LOW PRIORITY)
 - Dashboard view (structure exists)
-- Time Entry view (structure exists)
 - Statistics view (structure exists)
 
 **Known Issues**
@@ -1009,9 +1010,9 @@ dotnet ef migrations list --project PomodoroTimeTracker.Infrastructure --startup
 
 ### Immediate TODOs (Active)
 1. **Move TimerWindow to top-left corner** - Reposition with minimal margins from screen borders
-2. **Implement sound alarms** - Wrap up notification and main alarm (currently TODO in code)
+2. ~~**Implement sound alarms**~~ - ✅ Done (Sound Selection feature, 2025-12-01)
 3. **Implement Dashboard view** - Home page with overview/summary
-4. **Implement Time Entry view** - Manual time tracking page
+4. ~~**Implement Time Entry view**~~ - ✅ Done (PR #11, 2025-12-01)
 5. **Implement Statistics view** - Reporting and analytics page
 
 ### Short Term (Next Sprint)
