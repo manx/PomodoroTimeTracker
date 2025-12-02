@@ -83,6 +83,7 @@ namespace PomodoroTimeTracker.WinUI3
                     // Timer ViewModels are Singleton to preserve state when navigating away
                     services.AddSingleton<ViewModels.PomodoroViewModel>();
                     services.AddSingleton<ViewModels.RegularTimerViewModel>();
+                    services.AddSingleton<ViewModels.StopWatchViewModel>();
 
                     // Register UI services
                     services.AddSingleton<Services.INavigationService, Services.NavigationService>();

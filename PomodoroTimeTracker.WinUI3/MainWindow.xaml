@@ -24,6 +24,11 @@
                         <FontIcon Glyph="&#xE916;"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem x:Name="StopWatchNavItem" Content="Stop Watch" Tag="StopWatch">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE91B;"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem Icon="Calendar" Content="Time Entry" Tag="TimeEntry"/>
 
                 <NavigationViewItemSeparator/>

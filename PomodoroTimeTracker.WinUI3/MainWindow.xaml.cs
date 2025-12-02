@@ -62,6 +62,7 @@ namespace PomodoroTimeTracker.WinUI3
         {
             PomodoroNavItem.IsEnabled = _activeTimerService.IsPomodoroEnabled;
             RegularTimerNavItem.IsEnabled = _activeTimerService.IsRegularTimerEnabled;
+            StopWatchNavItem.IsEnabled = _activeTimerService.IsStopWatchEnabled;
         }
 
         private async void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
@@ -80,6 +81,7 @@ namespace PomodoroTimeTracker.WinUI3
             {
                 ActiveTimerType.Pomodoro => App.Services.GetRequiredService<PomodoroViewModel>(),
                 ActiveTimerType.RegularTimer => App.Services.GetRequiredService<RegularTimerViewModel>(),
+                ActiveTimerType.StopWatch => App.Services.GetRequiredService<StopWatchViewModel>(),
                 _ => null
             };
 
@@ -141,6 +143,9 @@ namespace PomodoroTimeTracker.WinUI3
                 case RegularTimerViewModel rtvm:
                     await rtvm.SaveAndStopAsync();
                     break;
+                case StopWatchViewModel swvm:
+                    await swvm.SaveAndStopAsync();
+                    break;
             }
         }
 
@@ -154,6 +159,9 @@ namespace PomodoroTimeTracker.WinUI3
                 case RegularTimerViewModel rtvm:
                     await rtvm.DiscardAndStopAsync();
                     break;
+                case StopWatchViewModel swvm:
+                    await swvm.DiscardAndStopAsync();
+                    break;
             }
         }
 
@@ -163,6 +171,7 @@ namespace PomodoroTimeTracker.WinUI3
             {
                 ActiveTimerType.Pomodoro => "Pomodoro",
                 ActiveTimerType.RegularTimer => "Regular Timer",
+                ActiveTimerType.StopWatch => "Stop Watch",
                 _ => "Timer"
             };
 
@@ -203,6 +212,7 @@ namespace PomodoroTimeTracker.WinUI3
                 "Dashboard" => null,
                 "Pomodoro" => typeof(Views.PomodoroPage),
                 "RegularTimer" => typeof(Views.RegularTimerPage),
+                "StopWatch" => typeof(Views.StopWatchPage),
                 "TimeEntry" => typeof(Views.TimeEntryListPage),
                 "Clients" => typeof(Views.ClientListPage),
                 "Projects" => typeof(Views.ProjectListPage),
