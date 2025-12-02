@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.UI.Dispatching;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
 using PomodoroTimeTracker.Domain.Entities;
@@ -80,8 +79,7 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
     private readonly IProjectService _projectService;
     private readonly IAudioService _audioService;
     private readonly IActiveTimerService _activeTimerService;
-    private readonly DispatcherQueue _dispatcherQueue;
-    private readonly DispatcherQueueTimer _timer;
+    private readonly IDispatcherTimer _timer;
 
     private PomodoroState _state = PomodoroState.Setup;
     private int _remainingSeconds;
@@ -119,13 +117,15 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
     /// <param name="projectService">Service for managing projects.</param>
     /// <param name="audioService">Service for playing audio notifications.</param>
     /// <param name="activeTimerService">Service for coordinating active timer state.</param>
+    /// <param name="timer">Timer for updating UI every second.</param>
     public PomodoroViewModel(
         IPomodoroSessionService sessionService,
         IPomodoroSettingsService settingsService,
         IClientService clientService,
         IProjectService projectService,
         IAudioService audioService,
-        IActiveTimerService activeTimerService)
+        IActiveTimerService activeTimerService,
+        IDispatcherTimer timer)
     {
         _sessionService = sessionService;
         _settingsService = settingsService;
@@ -133,9 +133,8 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
         _projectService = projectService;
         _audioService = audioService;
         _activeTimerService = activeTimerService;
+        _timer = timer;
 
-        _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
-        _timer = _dispatcherQueue.CreateTimer();
         _timer.Interval = TimeSpan.FromSeconds(1);
         _timer.Tick += Timer_Tick;
 
