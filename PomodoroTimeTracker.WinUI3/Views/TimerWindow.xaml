@@ -60,11 +60,9 @@
                     FontSize="24"
                     FontWeight="Bold"
                     Text="{x:Bind ViewModel.TimerDisplay, Mode=OneWay}">
-                    <!--  Tooltip shows objective on hover (only during work sessions)  -->
+                    <!--  Tooltip shows description on hover  -->
                     <ToolTipService.ToolTip>
-                        <ToolTip
-                            Content="{x:Bind ViewModel.Objective, Mode=OneWay}"
-                            Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}" />
+                        <ToolTip Content="{x:Bind ViewModel.SessionDescription, Mode=OneWay}" />
                     </ToolTipService.ToolTip>
                 </TextBlock>
             </Viewbox>

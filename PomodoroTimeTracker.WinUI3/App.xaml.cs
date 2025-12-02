@@ -81,6 +81,7 @@ namespace PomodoroTimeTracker.WinUI3
                     services.AddTransient<ViewModels.TimeEntryDetailViewModel>();
                     services.AddTransient<ViewModels.PomodoroSettingsViewModel>();
                     services.AddTransient<ViewModels.PomodoroViewModel>();
+                    services.AddTransient<ViewModels.RegularTimerViewModel>();
 
                     // Register UI services
                     services.AddSingleton<Services.INavigationService, Services.NavigationService>();

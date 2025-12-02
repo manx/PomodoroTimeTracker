@@ -96,9 +96,9 @@ internal sealed partial class TimerWindow : WindowEx
     private IntPtr _hWnd;
     private MenuFlyout? _stopSubmenu;
 
-    public PomodoroViewModel ViewModel { get; }
+    public ITimerWindowViewModel ViewModel { get; }
 
-    public TimerWindow(PomodoroViewModel viewModel)
+    public TimerWindow(ITimerWindowViewModel viewModel)
     {
         ViewModel = viewModel;
         this.InitializeComponent();
@@ -132,7 +132,7 @@ internal sealed partial class TimerWindow : WindowEx
     private void StopMenuItem_Click(object sender, RoutedEventArgs e)
     {
         // Stop the timer (pause it)
-        if (ViewModel.State == PomodoroState.Running && ViewModel.PauseResumeCommand.CanExecute(null))
+        if (ViewModel.IsRunningState && ViewModel.PauseResumeCommand.CanExecute(null))
         {
             ViewModel.PauseResumeCommand.Execute(null);
         }
