@@ -5,6 +5,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using PomodoroTimeTracker.WinUI3.ViewModels;
 using Windows.Graphics;
+using Windows.Storage;
 using WinRT.Interop;
 using WinUIEx;
 
@@ -15,6 +16,12 @@ namespace PomodoroTimeTracker.WinUI3.Views;
 /// </summary>
 internal sealed partial class TimerWindow : WindowEx
 {
+    // Settings keys for position persistence
+    private const string SettingsKeyPositionX = "TimerWindowPositionX";
+    private const string SettingsKeyPositionY = "TimerWindowPositionY";
+    private const int DefaultPositionX = 10;
+    private const int DefaultPositionY = 10;
+
     // Win32 API constants for window messages
     private const int WM_NCHITTEST = 0x0084;
     private const int WM_NCCALCSIZE = 0x0083;
@@ -297,15 +304,12 @@ internal sealed partial class TimerWindow : WindowEx
         this.Width = 150;
         this.Height = 50;
 
-        // Position in top-right corner
-        var displayArea = DisplayArea.Primary;
-        if (displayArea != null)
-        {
-            var workArea = displayArea.WorkArea;
-            var x = workArea.Width - 170; // 150px width + 20px margin
-            var y = 20; // 20px from top
-            this.Move(x, y);
-        }
+        // Load saved position or use default
+        var (x, y) = LoadSavedPosition();
+        this.Move(x, y);
+
+        // Save position when window is closed
+        this.Closed += TimerWindow_Closed;
 
         // Use WinUI 3's built-in dragging support
         ExtendsContentIntoTitleBar = true;
@@ -359,5 +363,73 @@ internal sealed partial class TimerWindow : WindowEx
 
         // Update the rectangle width
         ProgressRectangle.Width = progressWidth;
+    }
+
+    private void TimerWindow_Closed(object sender, WindowEventArgs args)
+    {
+        SavePosition();
+    }
+
+    private (int x, int y) LoadSavedPosition()
+    {
+        try
+        {
+            var localSettings = ApplicationData.Current.LocalSettings;
+
+            if (localSettings.Values.TryGetValue(SettingsKeyPositionX, out var xValue) &&
+                localSettings.Values.TryGetValue(SettingsKeyPositionY, out var yValue) &&
+                xValue is int x && yValue is int y)
+            {
+                // Validate that saved position is still visible on some screen
+                if (IsPositionOnScreen(x, y))
+                {
+                    return (x, y);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading TimerWindow position: {ex.Message}");
+        }
+
+        // Fall back to default position
+        return (DefaultPositionX, DefaultPositionY);
+    }
+
+    private void SavePosition()
+    {
+        try
+        {
+            // Get current window position
+            if (!GetWindowRect(_hWnd, out var rect))
+            {
+                return;
+            }
+
+            var localSettings = ApplicationData.Current.LocalSettings;
+            localSettings.Values[SettingsKeyPositionX] = rect.Left;
+            localSettings.Values[SettingsKeyPositionY] = rect.Top;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error saving TimerWindow position: {ex.Message}");
+        }
+    }
+
+    private static bool IsPositionOnScreen(int x, int y)
+    {
+        // Check if the position is visible on any display
+        var displays = DisplayArea.FindAll();
+        foreach (var display in displays)
+        {
+            var workArea = display.WorkArea;
+            // Check if at least part of the window (top-left corner + some margin) is visible
+            if (x >= workArea.X - 100 && x < workArea.X + workArea.Width &&
+                y >= workArea.Y - 50 && y < workArea.Y + workArea.Height)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
