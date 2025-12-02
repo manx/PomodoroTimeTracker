@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -7,7 +9,6 @@ using Microsoft.UI.Xaml.Controls;
 using PomodoroTimeTracker.WinUI3.Helpers;
 using PomodoroTimeTracker.WinUI3.ViewModels;
 using Windows.Graphics;
-using Windows.Storage;
 using WinRT.Interop;
 using WinUIEx;
 
@@ -18,9 +19,11 @@ namespace PomodoroTimeTracker.WinUI3.Views;
 /// </summary>
 internal sealed partial class TimerWindow : WindowEx
 {
-    // Settings keys for position persistence
-    private const string SettingsKeyPositionX = "TimerWindowPositionX";
-    private const string SettingsKeyPositionY = "TimerWindowPositionY";
+    // File path for position persistence (file-based since app may be unpackaged)
+    private static readonly string PositionFilePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "PomodoroTimeTracker",
+        "timer-window-position.json");
     private const int DefaultPositionX = 10;
     private const int DefaultPositionY = 10;
 
@@ -160,7 +163,8 @@ internal sealed partial class TimerWindow : WindowEx
         // Save position when window move/resize ends
         if (msg == WM_EXITSIZEMOVE)
         {
-            SavePosition();
+            // Dispatch to UI thread for WinRT API access
+            DispatcherQueue.TryEnqueue(() => SavePosition());
         }
 
         // Intercept hit testing for dragging (allow full window resizing)
@@ -274,17 +278,27 @@ internal sealed partial class TimerWindow : WindowEx
     {
         try
         {
-            var localSettings = ApplicationData.Current.LocalSettings;
-
-            if (localSettings.Values.TryGetValue(SettingsKeyPositionX, out var xValue) &&
-                localSettings.Values.TryGetValue(SettingsKeyPositionY, out var yValue) &&
-                xValue is int x && yValue is int y)
+            if (File.Exists(PositionFilePath))
             {
-                // Validate that saved position is still visible on some screen
-                if (IsPositionOnScreen(x, y))
+                var json = File.ReadAllText(PositionFilePath);
+                var position = JsonSerializer.Deserialize<WindowPosition>(json);
+
+                if (position != null)
                 {
-                    return (x, y);
+                    System.Diagnostics.Debug.WriteLine($"TimerWindow: Loaded position ({position.X}, {position.Y})");
+
+                    // Validate that saved position is still visible on some screen
+                    if (IsPositionOnScreen(position.X, position.Y))
+                    {
+                        return (position.X, position.Y);
+                    }
+
+                    System.Diagnostics.Debug.WriteLine("TimerWindow: Position not on screen, using default");
                 }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("TimerWindow: No saved position file found");
             }
         }
         catch (Exception ex)
@@ -296,6 +310,8 @@ internal sealed partial class TimerWindow : WindowEx
         return (DefaultPositionX, DefaultPositionY);
     }
 
+    private record WindowPosition(int X, int Y);
+
     private void SavePosition()
     {
         try
@@ -303,12 +319,22 @@ internal sealed partial class TimerWindow : WindowEx
             // Get current window position
             if (!GetWindowRect(_hWnd, out var rect))
             {
+                System.Diagnostics.Debug.WriteLine("TimerWindow: GetWindowRect failed");
                 return;
             }
 
-            var localSettings = ApplicationData.Current.LocalSettings;
-            localSettings.Values[SettingsKeyPositionX] = rect.Left;
-            localSettings.Values[SettingsKeyPositionY] = rect.Top;
+            // Ensure directory exists
+            var directory = Path.GetDirectoryName(PositionFilePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var position = new WindowPosition(rect.Left, rect.Top);
+            var json = JsonSerializer.Serialize(position);
+            File.WriteAllText(PositionFilePath, json);
+
+            System.Diagnostics.Debug.WriteLine($"TimerWindow: Saved position ({rect.Left}, {rect.Top})");
         }
         catch (Exception ex)
         {
@@ -318,18 +344,28 @@ internal sealed partial class TimerWindow : WindowEx
 
     private static bool IsPositionOnScreen(int x, int y)
     {
-        // Check if the position is visible on any display
-        var displays = DisplayArea.FindAll();
-        foreach (var display in displays)
+        try
         {
-            var workArea = display.WorkArea;
-            // Check if at least part of the window (top-left corner + some margin) is visible
-            if (x >= workArea.X - 100 && x < workArea.X + workArea.Width &&
-                y >= workArea.Y - 50 && y < workArea.Y + workArea.Height)
+            // Check if the position is visible on any display
+            var displays = DisplayArea.FindAll();
+            foreach (var display in displays)
             {
-                return true;
+                var workArea = display.WorkArea;
+                // Check if at least part of the window (top-left corner + some margin) is visible
+                if (x >= workArea.X - 100 && x < workArea.X + workArea.Width &&
+                    y >= workArea.Y - 50 && y < workArea.Y + workArea.Height)
+                {
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
+        catch (Exception ex)
+        {
+            // DisplayArea.FindAll() can fail in certain contexts
+            // Trust the saved position if we can't validate
+            System.Diagnostics.Debug.WriteLine($"TimerWindow: IsPositionOnScreen failed: {ex.Message}");
+            return true;
+        }
     }
 }
