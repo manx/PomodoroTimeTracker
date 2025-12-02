@@ -19,6 +19,11 @@
                 <NavigationViewItemHeader Content="Main" />
                 <NavigationViewItem Icon="Home" Content="Dashboard" Tag="Dashboard"/>
                 <NavigationViewItem Icon="Clock" Content="Pomodoro Timer" Tag="Pomodoro"/>
+                <NavigationViewItem Content="Regular Timer" Tag="RegularTimer">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE916;"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem Icon="Calendar" Content="Time Entry" Tag="TimeEntry"/>
 
                 <NavigationViewItemSeparator/>

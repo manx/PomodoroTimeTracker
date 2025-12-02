@@ -11,7 +11,7 @@ namespace PomodoroTimeTracker.WinUI3.Services;
 /// <summary>
 /// Implementation of audio service for playing Windows system sounds.
 /// </summary>
-internal class AudioService : IAudioService, IDisposable
+internal sealed class AudioService : IAudioService, IDisposable
 {
     private readonly ILogger<AudioService> _logger;
     private MediaPlayer? _mediaPlayer;

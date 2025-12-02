@@ -12,7 +12,7 @@ namespace PomodoroTimeTracker.WinUI3.ViewModels;
 /// <summary>
 /// ViewModel for adding or editing a time entry.
 /// </summary>
-internal partial class TimeEntryDetailViewModel : ViewModelBase
+internal sealed partial class TimeEntryDetailViewModel : ViewModelBase
 {
     private readonly ITimeEntryService _timeEntryService;
     private readonly IProjectService _projectService;

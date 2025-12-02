@@ -4,5 +4,6 @@ public enum SessionType
 {
     Work,
     ShortBreak,
-    LongBreak
+    LongBreak,
+    Regular
 }

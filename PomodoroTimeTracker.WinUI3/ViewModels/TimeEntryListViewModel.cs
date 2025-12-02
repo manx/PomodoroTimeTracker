@@ -11,7 +11,7 @@ namespace PomodoroTimeTracker.WinUI3.ViewModels;
 /// <summary>
 /// Display item for a single time entry in the list.
 /// </summary>
-internal class TimeEntryDisplayItem
+internal sealed class TimeEntryDisplayItem
 {
     public int Id { get; set; }
     public string Description { get; set; } = string.Empty;
@@ -23,7 +23,7 @@ internal class TimeEntryDisplayItem
 /// <summary>
 /// Helper DTO for grouping time entries by date.
 /// </summary>
-internal class TimeEntryGroupDto
+internal sealed class TimeEntryGroupDto
 {
     public string DateHeader { get; set; } = string.Empty; // "Today", "Yesterday", "2025-01-20"
     public DateTime Date { get; set; }
@@ -46,7 +46,7 @@ internal class TimeEntryGroupDto
 /// require a UI thread, allowing full testing of timer-dependent logic.
 /// </para>
 /// </remarks>
-internal partial class TimeEntryListViewModel : ViewModelBase
+internal sealed partial class TimeEntryListViewModel : ViewModelBase
 {
     private readonly ITimeEntryService _timeEntryService;
     private readonly IProjectService _projectService;

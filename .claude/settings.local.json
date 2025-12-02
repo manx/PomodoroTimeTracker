@@ -30,7 +30,13 @@
       "Bash(node --check:*)",
       "Bash(git merge:*)",
       "Bash(gh pr list:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(gh pr create:*)",
+      "Bash(cat:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr edit:*)",
+      "Bash(gh pr merge:*)"
     ],
     "deny": [],
     "ask": []

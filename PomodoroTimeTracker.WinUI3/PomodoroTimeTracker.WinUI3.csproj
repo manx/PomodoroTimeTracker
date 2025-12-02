@@ -7,8 +7,7 @@
 
         <!-- WinUI 3 -->
         <UseWinUI>true</UseWinUI>
-        <EnableMsixTooling>false</EnableMsixTooling>
-        <WindowsPackageType>None</WindowsPackageType>
+        <EnableMsixTooling>true</EnableMsixTooling>
 
         <!-- Project Options -->
         <Nullable>enable</Nullable>
@@ -18,7 +17,7 @@
 
         <!-- Code Analysis -->
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
-        <AnalysisLevel>latest-all</AnalysisLevel>
+        <AnalysisLevel>latest-recommended</AnalysisLevel>
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
         <!-- App Options -->

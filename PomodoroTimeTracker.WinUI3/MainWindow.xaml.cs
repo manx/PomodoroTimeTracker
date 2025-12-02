@@ -141,6 +141,7 @@ namespace PomodoroTimeTracker.WinUI3
             {
                 "Dashboard" => null,
                 "Pomodoro" => typeof(Views.PomodoroPage),
+                "RegularTimer" => typeof(Views.RegularTimerPage),
                 "TimeEntry" => typeof(Views.TimeEntryListPage),
                 "Clients" => typeof(Views.ClientListPage),
                 "Projects" => typeof(Views.ProjectListPage),
