@@ -41,4 +41,9 @@ internal interface INavigationService
     /// Store the ID of a project to select after navigation (after create or update)
     /// </summary>
     int? ProjectIdToSelect { get; set; }
+
+    /// <summary>
+    /// Store the ID of a time entry to select after navigation (after create or update)
+    /// </summary>
+    int? TimeEntryIdToSelect { get; set; }
 }
