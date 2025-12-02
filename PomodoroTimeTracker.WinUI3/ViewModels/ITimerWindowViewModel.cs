@@ -64,4 +64,9 @@ internal interface ITimerWindowViewModel : INotifyPropertyChanged
     /// </summary>
     /// <param name="minutes">Number of minutes to add.</param>
     void AddMinutes(int minutes);
+
+    /// <summary>
+    /// Gets a value indicating whether the progress meter should be shown.
+    /// </summary>
+    bool ShowProgressMeter { get; }
 }

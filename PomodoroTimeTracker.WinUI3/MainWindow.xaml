@@ -18,10 +18,15 @@
             <NavigationView.MenuItems>
                 <NavigationViewItemHeader Content="Main" />
                 <NavigationViewItem Icon="Home" Content="Dashboard" Tag="Dashboard"/>
-                <NavigationViewItem Icon="Clock" Content="Pomodoro Timer" Tag="Pomodoro"/>
-                <NavigationViewItem Content="Regular Timer" Tag="RegularTimer">
+                <NavigationViewItem x:Name="PomodoroNavItem" Icon="Clock" Content="Pomodoro Timer" Tag="Pomodoro"/>
+                <NavigationViewItem x:Name="RegularTimerNavItem" Content="Regular Timer" Tag="RegularTimer">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE916;"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="StopWatchNavItem" Content="Stop Watch" Tag="StopWatch">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE91B;"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Icon="Calendar" Content="Time Entry" Tag="TimeEntry"/>

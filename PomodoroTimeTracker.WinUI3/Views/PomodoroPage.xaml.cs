@@ -81,7 +81,17 @@ internal sealed partial class PomodoroPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        _ = InitializeAsync();
+
+        // Only initialize if we're in setup state (not returning to an active timer)
+        if (ViewModel.IsSetupState)
+        {
+            _ = InitializeAsync();
+        }
+        else
+        {
+            // Timer is active, show the timer window
+            ShowTimerWindow();
+        }
     }
 
     private async Task InitializeAsync()
