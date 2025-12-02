@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using PomodoroTimeTracker.WinUI3.ViewModels;
 
@@ -39,5 +40,21 @@ internal sealed partial class TimeEntryListPage : Page
 
         var result = await dialog.ShowAsync();
         return result == ContentDialogResult.Primary ? textBox.Text : null;
+    }
+
+    private void EditEntry_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is int id)
+        {
+            ViewModel.EditEntryById(id);
+        }
+    }
+
+    private async void DeleteEntry_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is int id)
+        {
+            await ViewModel.DeleteEntryByIdAsync(id);
+        }
     }
 }

@@ -365,4 +365,48 @@ internal partial class TimeEntryListViewModel : ViewModelBase
     {
         return SelectedEntry != null;
     }
+
+    /// <summary>
+    /// Navigates to edit page for a specific entry by ID.
+    /// Used by inline edit buttons in the list.
+    /// </summary>
+    public void EditEntryById(int id)
+    {
+        _navigationService.NavigateTo(typeof(Views.TimeEntryDetailPage), id);
+    }
+
+    /// <summary>
+    /// Deletes a specific entry by ID with confirmation.
+    /// Used by inline delete buttons in the list.
+    /// </summary>
+    public async Task DeleteEntryByIdAsync(int id)
+    {
+        // Find the entry in the grouped entries
+        TimeEntryDisplayItem? entry = null;
+        foreach (var group in GroupedEntries)
+        {
+            entry = group.Entries.FirstOrDefault(e => e.Id == id);
+            if (entry != null)
+                break;
+        }
+
+        var description = entry?.Description ?? "this entry";
+        var confirmed = await _dialogService.ShowConfirmationAsync(
+            $"Are you sure you want to delete this time entry?\n\nDescription: {description}",
+            "Confirm Delete");
+
+        if (confirmed)
+        {
+            try
+            {
+                await _timeEntryService.DeleteTimeEntryAsync(id);
+                await _dialogService.ShowInformationAsync("Time entry deleted successfully.", "Success");
+                await LoadEntriesAsync();
+            }
+            catch (Exception ex)
+            {
+                await _dialogService.ShowErrorAsync($"Failed to delete time entry: {ex.Message}", "Error");
+            }
+        }
+    }
 }

@@ -52,20 +52,41 @@
 
                 <!-- Start Date/Time -->
                 <StackPanel Orientation="Horizontal" Spacing="16">
-                    <DatePicker Header="Start Date"
-                                Date="{x:Bind ViewModel.StartDate, Mode=TwoWay}"/>
-                    <TimePicker Header="Start Time"
-                                Time="{x:Bind ViewModel.StartTime, Mode=TwoWay}"
-                                ClockIdentifier="24HourClock"/>
+                    <CalendarDatePicker Header="Start Date"
+                                        Date="{x:Bind ViewModel.StartDate, Mode=TwoWay}"
+                                        PlaceholderText="Select date"/>
+                    <StackPanel>
+                        <TextBlock Text="Start Time" Style="{StaticResource BodyTextBlockStyle}" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <ComboBox ItemsSource="{x:Bind ViewModel.Hours}"
+                                      SelectedItem="{x:Bind ViewModel.StartHour, Mode=TwoWay}"
+                                      Width="70"/>
+                            <ComboBox ItemsSource="{x:Bind ViewModel.Minutes}"
+                                      SelectedItem="{x:Bind ViewModel.StartMinute, Mode=TwoWay}"
+                                      Width="70"/>
+                        </StackPanel>
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- End Date/Time -->
                 <StackPanel Orientation="Horizontal" Spacing="16">
-                    <DatePicker Header="End Date"
-                                Date="{x:Bind ViewModel.EndDateValue, Mode=TwoWay}"/>
-                    <TimePicker Header="End Time"
-                                Time="{x:Bind ViewModel.EndTimeValue, Mode=TwoWay}"
-                                ClockIdentifier="24HourClock"/>
+                    <CalendarDatePicker Header="End Date"
+                                        Date="{x:Bind ViewModel.EndDate, Mode=TwoWay}"
+                                        Foreground="{x:Bind ViewModel.EndDateForeground, Mode=OneWay}"
+                                        PlaceholderText="Select date"/>
+                    <StackPanel>
+                        <TextBlock Text="End Time" Style="{StaticResource BodyTextBlockStyle}" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <ComboBox ItemsSource="{x:Bind ViewModel.Hours}"
+                                      SelectedItem="{x:Bind ViewModel.EndHour, Mode=TwoWay}"
+                                      Foreground="{x:Bind ViewModel.EndTimeForeground, Mode=OneWay}"
+                                      Width="70"/>
+                            <ComboBox ItemsSource="{x:Bind ViewModel.Minutes}"
+                                      SelectedItem="{x:Bind ViewModel.EndMinute, Mode=TwoWay}"
+                                      Foreground="{x:Bind ViewModel.EndTimeForeground, Mode=OneWay}"
+                                      Width="70"/>
+                        </StackPanel>
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- Duration Display -->

@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
 using PomodoroTimeTracker.WinUI3.Services;
@@ -21,12 +23,25 @@ internal partial class TimeEntryDetailViewModel : ViewModelBase
     private string _description = string.Empty;
     private int? _selectedProjectId;
     private ObservableCollection<ProjectDto> _projects = new();
-    private DateTimeOffset _startDate = DateTimeOffset.Now;
+    private DateTimeOffset? _startDate = DateTimeOffset.Now;
     private TimeSpan _startTime = DateTime.Now.TimeOfDay;
+    private int _startHour = DateTime.Now.Hour;
+    private int _startMinute = DateTime.Now.Minute;
     private DateTimeOffset? _endDate;
     private TimeSpan? _endTime;
+    private int _endHour = DateTime.Now.Hour;
+    private int _endMinute = DateTime.Now.Minute;
     private bool _isSaving;
     private bool _isLoading;
+
+    private static readonly IReadOnlyList<int> HoursList = Enumerable.Range(0, 24).ToList();
+    private static readonly IReadOnlyList<int> MinutesList = Enumerable.Range(0, 60).ToList();
+
+    /// <summary>Hours 0-23 for ComboBox binding.</summary>
+    public IReadOnlyList<int> Hours => HoursList;
+
+    /// <summary>Minutes 0-59 for ComboBox binding.</summary>
+    public IReadOnlyList<int> Minutes => MinutesList;
 
     public TimeEntryDetailViewModel(
         ITimeEntryService timeEntryService,
@@ -67,7 +82,7 @@ internal partial class TimeEntryDetailViewModel : ViewModelBase
         set => SetProperty(ref _projects, value);
     }
 
-    public DateTimeOffset StartDate
+    public DateTimeOffset? StartDate
     {
         get => _startDate;
         set
@@ -75,9 +90,29 @@ internal partial class TimeEntryDetailViewModel : ViewModelBase
             if (SetProperty(ref _startDate, value))
             {
                 OnPropertyChanged(nameof(DurationDisplay));
+                OnPropertyChanged(nameof(IsEndDateInvalid));
+                OnPropertyChanged(nameof(EndDateForeground));
+                OnPropertyChanged(nameof(IsEndTimeInvalid));
+                OnPropertyChanged(nameof(EndTimeForeground));
             }
         }
     }
+
+    /// <summary>
+    /// True when End Date is before Start Date.
+    /// </summary>
+    public bool IsEndDateInvalid =>
+        StartDate.HasValue &&
+        EndDate.HasValue &&
+        EndDate.Value.Date < StartDate.Value.Date;
+
+    /// <summary>
+    /// Returns red brush when end date is invalid, otherwise default foreground.
+    /// </summary>
+    public SolidColorBrush EndDateForeground =>
+        IsEndDateInvalid
+            ? new SolidColorBrush(Colors.Red)
+            : new SolidColorBrush(Colors.White);
 
     public TimeSpan StartTime
     {
@@ -86,7 +121,45 @@ internal partial class TimeEntryDetailViewModel : ViewModelBase
         {
             if (SetProperty(ref _startTime, value))
             {
+                // Sync StartHour/StartMinute fields
+                _startHour = value.Hours;
+                _startMinute = value.Minutes;
+                OnPropertyChanged(nameof(StartHour));
+                OnPropertyChanged(nameof(StartMinute));
+
                 OnPropertyChanged(nameof(DurationDisplay));
+                OnPropertyChanged(nameof(IsEndTimeInvalid));
+                OnPropertyChanged(nameof(EndTimeForeground));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Start hour (0-23) for ComboBox binding. Updates StartTime when changed.
+    /// </summary>
+    public int StartHour
+    {
+        get => _startHour;
+        set
+        {
+            if (SetProperty(ref _startHour, value))
+            {
+                StartTime = new TimeSpan(_startHour, _startMinute, 0);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Start minute (0-59) for ComboBox binding. Updates StartTime when changed.
+    /// </summary>
+    public int StartMinute
+    {
+        get => _startMinute;
+        set
+        {
+            if (SetProperty(ref _startMinute, value))
+            {
+                StartTime = new TimeSpan(_startHour, _startMinute, 0);
             }
         }
     }
@@ -100,6 +173,10 @@ internal partial class TimeEntryDetailViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(DurationDisplay));
                 OnPropertyChanged(nameof(IsRunning));
+                OnPropertyChanged(nameof(IsEndDateInvalid));
+                OnPropertyChanged(nameof(EndDateForeground));
+                OnPropertyChanged(nameof(IsEndTimeInvalid));
+                OnPropertyChanged(nameof(EndTimeForeground));
             }
         }
     }
@@ -111,8 +188,19 @@ internal partial class TimeEntryDetailViewModel : ViewModelBase
         {
             if (SetProperty(ref _endTime, value))
             {
+                // Sync EndHour/EndMinute fields (without triggering their setters)
+                if (value.HasValue)
+                {
+                    _endHour = value.Value.Hours;
+                    _endMinute = value.Value.Minutes;
+                    OnPropertyChanged(nameof(EndHour));
+                    OnPropertyChanged(nameof(EndMinute));
+                }
+
                 OnPropertyChanged(nameof(DurationDisplay));
                 OnPropertyChanged(nameof(IsRunning));
+                OnPropertyChanged(nameof(IsEndTimeInvalid));
+                OnPropertyChanged(nameof(EndTimeForeground));
             }
         }
     }
@@ -121,10 +209,10 @@ internal partial class TimeEntryDetailViewModel : ViewModelBase
     {
         get
         {
-            if (!EndDate.HasValue || !EndTime.HasValue)
+            if (!StartDate.HasValue || !EndDate.HasValue || !EndTime.HasValue)
                 return "Running...";
 
-            var startDateTime = StartDate.Date.Add(StartTime);
+            var startDateTime = StartDate.Value.Date.Add(StartTime);
             var endDateTime = EndDate.Value.Date.Add(EndTime.Value);
 
             if (endDateTime <= startDateTime)
@@ -142,6 +230,24 @@ internal partial class TimeEntryDetailViewModel : ViewModelBase
     }
 
     public bool IsRunning => !EndDate.HasValue || !EndTime.HasValue;
+
+    /// <summary>
+    /// True when End Time is before or equal to Start Time on the same day.
+    /// </summary>
+    public bool IsEndTimeInvalid =>
+        StartDate.HasValue &&
+        EndDate.HasValue &&
+        EndTime.HasValue &&
+        StartDate.Value.Date == EndDate.Value.Date &&
+        EndTime.Value <= StartTime;
+
+    /// <summary>
+    /// Returns red brush when end time is invalid, otherwise default foreground.
+    /// </summary>
+    public SolidColorBrush EndTimeForeground =>
+        IsEndTimeInvalid
+            ? new SolidColorBrush(Colors.Red)
+            : new SolidColorBrush(Colors.White);
 
     public bool IsSaving
     {
@@ -165,22 +271,45 @@ internal partial class TimeEntryDetailViewModel : ViewModelBase
 
     public bool IsEditMode => _timeEntryId.HasValue;
 
-    // Non-nullable wrappers for DatePicker/TimePicker binding
-    public DateTimeOffset EndDateValue
-    {
-        get => _endDate ?? DateTimeOffset.Now;
-        set
-        {
-            EndDate = value;
-        }
-    }
-
+    // Non-nullable wrapper for TimePicker binding (TimePicker doesn't support nullable)
     public TimeSpan EndTimeValue
     {
         get => _endTime ?? DateTime.Now.TimeOfDay;
         set
         {
             EndTime = value;
+        }
+    }
+
+    /// <summary>
+    /// End hour (0-23) for ComboBox binding. Updates EndTime when changed.
+    /// </summary>
+    public int EndHour
+    {
+        get => _endHour;
+        set
+        {
+            if (SetProperty(ref _endHour, value))
+            {
+                // Update EndTime from hour/minute
+                EndTime = new TimeSpan(_endHour, _endMinute, 0);
+            }
+        }
+    }
+
+    /// <summary>
+    /// End minute (0-59) for ComboBox binding. Updates EndTime when changed.
+    /// </summary>
+    public int EndMinute
+    {
+        get => _endMinute;
+        set
+        {
+            if (SetProperty(ref _endMinute, value))
+            {
+                // Update EndTime from hour/minute
+                EndTime = new TimeSpan(_endHour, _endMinute, 0);
+            }
         }
     }
 
@@ -275,7 +404,13 @@ internal partial class TimeEntryDetailViewModel : ViewModelBase
         {
             IsSaving = true;
 
-            var startDateTime = StartDate.Date.Add(StartTime);
+            if (!StartDate.HasValue)
+            {
+                await _dialogService.ShowErrorAsync("Start date is required.", "Missing Date");
+                return;
+            }
+
+            var startDateTime = StartDate.Value.Date.Add(StartTime);
             DateTime? endDateTime = null;
             int? durationMinutes = null;
 
