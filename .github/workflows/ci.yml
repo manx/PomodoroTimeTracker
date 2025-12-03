@@ -22,6 +22,7 @@ on:
 env:
   DOTNET_VERSION: '9.0.x'                    # Vilken .NET-version vi använder
   BUILD_CONFIGURATION: Release                # Release build (optimerad)
+  BUILD_PLATFORM: x64                         # Platform for WinUI 3 projects
   SOLUTION_PATH: ./PomodoroTimeTracker.sln   # Sökväg till solution-fil
 
 # ============================================
@@ -84,15 +85,15 @@ jobs:
 
       # STEG 4: Restore NuGet packages
       - name: Restore dependencies
-        run: dotnet restore ${{ env.SOLUTION_PATH }}
+        run: dotnet restore ${{ env.SOLUTION_PATH }} -p:Platform=${{ env.BUILD_PLATFORM }}
 
       # STEG 5: Build solution
       - name: Build solution
-        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration ${{ env.BUILD_CONFIGURATION }} -p:Platform=${{ env.BUILD_PLATFORM }} --no-restore
 
       # STEG 6: Run tests with coverage
       - name: Run tests
-        run: dotnet test ${{ env.SOLUTION_PATH }} --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --verbosity normal --collect:"XPlat Code Coverage"
+        run: dotnet test ${{ env.SOLUTION_PATH }} --configuration ${{ env.BUILD_CONFIGURATION }} -p:Platform=${{ env.BUILD_PLATFORM }} --no-build --verbosity normal --collect:"XPlat Code Coverage"
 
       # STEG 7: Upload test coverage
       - name: Upload coverage reports to Codecov
@@ -109,6 +110,6 @@ jobs:
         with:
           name: pomodoro-build-${{ github.run_number }}
           path: |
-            **/bin/${{ env.BUILD_CONFIGURATION }}/**
+            **/bin/${{ env.BUILD_PLATFORM }}/${{ env.BUILD_CONFIGURATION }}/**
             !**/*.pdb
           retention-days: 30                 # Behåll i 30 dagar
