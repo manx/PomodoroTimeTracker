@@ -4,14 +4,14 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
-using PomodoroTimeTracker.WinUI3.Services;
+using PomodoroTimeTracker.ViewModels.Services;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// ViewModel for the client list view.
 /// </summary>
-internal sealed partial class ClientListViewModel : ViewModelBase
+public sealed partial class ClientListViewModel : ViewModelBase
 {
     private readonly IClientService _clientService;
     private readonly IDialogService _dialogService;
@@ -115,7 +115,7 @@ internal sealed partial class ClientListViewModel : ViewModelBase
     private void AddClient()
     {
         // Navigate to client detail view in "add" mode
-        _navigationService.NavigateTo(typeof(Views.ClientDetailPage), null);
+        _navigationService.NavigateTo(PageNames.ClientDetail, null);
     }
 
     private void EditClient()
@@ -123,7 +123,7 @@ internal sealed partial class ClientListViewModel : ViewModelBase
         if (SelectedClient != null)
         {
             // Navigate to client detail view in "edit" mode
-            _navigationService.NavigateTo(typeof(Views.ClientDetailPage), SelectedClient.Id);
+            _navigationService.NavigateTo(PageNames.ClientDetail, SelectedClient.Id);
         }
     }
 

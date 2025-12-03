@@ -3,14 +3,14 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
-using PomodoroTimeTracker.WinUI3.Services;
+using PomodoroTimeTracker.ViewModels.Services;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// ViewModel for adding or editing a project.
 /// </summary>
-internal sealed partial class ProjectDetailViewModel : ViewModelBase
+public sealed partial class ProjectDetailViewModel : ViewModelBase
 {
     private readonly IProjectService _projectService;
     private readonly IClientService _clientService;

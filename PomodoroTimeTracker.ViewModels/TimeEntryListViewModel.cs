@@ -3,14 +3,14 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
-using PomodoroTimeTracker.WinUI3.Services;
+using PomodoroTimeTracker.ViewModels.Services;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// Display item for a single time entry in the list.
 /// </summary>
-internal sealed class TimeEntryDisplayItem
+public sealed class TimeEntryDisplayItem
 {
     public int Id { get; set; }
     public string Description { get; set; } = string.Empty;
@@ -22,7 +22,7 @@ internal sealed class TimeEntryDisplayItem
 /// <summary>
 /// Helper DTO for grouping time entries by date.
 /// </summary>
-internal sealed class TimeEntryGroupDto
+public sealed class TimeEntryGroupDto
 {
     public string DateHeader { get; set; } = string.Empty; // "Today", "Yesterday", "2025-01-20"
     public DateTime Date { get; set; }
@@ -32,7 +32,7 @@ internal sealed class TimeEntryGroupDto
 /// <summary>
 /// ViewModel for the time entry list view.
 /// </summary>
-internal sealed partial class TimeEntryListViewModel : ViewModelBase
+public sealed partial class TimeEntryListViewModel : ViewModelBase
 {
     private readonly ITimeEntryService _timeEntryService;
     private readonly IProjectService _projectService;
@@ -267,14 +267,14 @@ internal sealed partial class TimeEntryListViewModel : ViewModelBase
 
     private void AddManualEntry()
     {
-        _navigationService.NavigateTo(typeof(Views.TimeEntryDetailPage), null);
+        _navigationService.NavigateTo(PageNames.TimeEntryDetail, null);
     }
 
     private void EditEntry()
     {
         if (SelectedEntry != null)
         {
-            _navigationService.NavigateTo(typeof(Views.TimeEntryDetailPage), SelectedEntry.Id);
+            _navigationService.NavigateTo(PageNames.TimeEntryDetail, SelectedEntry.Id);
         }
     }
 
@@ -313,7 +313,7 @@ internal sealed partial class TimeEntryListViewModel : ViewModelBase
     /// </summary>
     public void EditEntryById(int id)
     {
-        _navigationService.NavigateTo(typeof(Views.TimeEntryDetailPage), id);
+        _navigationService.NavigateTo(PageNames.TimeEntryDetail, id);
     }
 
     /// <summary>

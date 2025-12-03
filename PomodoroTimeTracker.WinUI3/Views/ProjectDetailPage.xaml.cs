@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Navigation;
-using PomodoroTimeTracker.WinUI3.Services;
-using PomodoroTimeTracker.WinUI3.ViewModels;
+using PomodoroTimeTracker.ViewModels;
+using PomodoroTimeTracker.ViewModels.Services;
 
 namespace PomodoroTimeTracker.WinUI3.Views;
 

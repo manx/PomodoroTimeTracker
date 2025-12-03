@@ -10,6 +10,8 @@ using PomodoroTimeTracker.Application.Services;
 using PomodoroTimeTracker.Domain.Interfaces;
 using PomodoroTimeTracker.Infrastructure.Data;
 using PomodoroTimeTracker.Infrastructure.Repositories;
+using PomodoroTimeTracker.ViewModels;
+using PomodoroTimeTracker.ViewModels.Services;
 
 namespace PomodoroTimeTracker.WinUI3
 {
@@ -72,24 +74,25 @@ namespace PomodoroTimeTracker.WinUI3
                     services.AddScoped<IPomodoroSettingsService, PomodoroSettingsService>();
 
                     // Register ViewModels
-                    services.AddTransient<ViewModels.MainWindowViewModel>();
-                    services.AddTransient<ViewModels.ClientListViewModel>();
-                    services.AddTransient<ViewModels.ClientDetailViewModel>();
-                    services.AddTransient<ViewModels.ProjectListViewModel>();
-                    services.AddTransient<ViewModels.ProjectDetailViewModel>();
-                    services.AddTransient<ViewModels.TimeEntryListViewModel>();
-                    services.AddTransient<ViewModels.TimeEntryDetailViewModel>();
-                    services.AddTransient<ViewModels.PomodoroSettingsViewModel>();
+                    services.AddTransient<MainWindowViewModel>();
+                    services.AddTransient<ClientListViewModel>();
+                    services.AddTransient<ClientDetailViewModel>();
+                    services.AddTransient<ProjectListViewModel>();
+                    services.AddTransient<ProjectDetailViewModel>();
+                    services.AddTransient<TimeEntryListViewModel>();
+                    services.AddTransient<TimeEntryDetailViewModel>();
+                    services.AddTransient<PomodoroSettingsViewModel>();
                     // Timer ViewModels are Singleton to preserve state when navigating away
-                    services.AddSingleton<ViewModels.PomodoroViewModel>();
-                    services.AddSingleton<ViewModels.RegularTimerViewModel>();
-                    services.AddSingleton<ViewModels.StopWatchViewModel>();
+                    services.AddSingleton<PomodoroViewModel>();
+                    services.AddSingleton<RegularTimerViewModel>();
+                    services.AddSingleton<StopWatchViewModel>();
 
                     // Register UI services
-                    services.AddSingleton<Services.INavigationService, Services.NavigationService>();
-                    services.AddSingleton<Services.IDialogService, Services.DialogService>();
+                    services.AddSingleton<INavigationService, Services.NavigationService>();
+                    services.AddSingleton<IDialogService, Services.DialogService>();
                     services.AddSingleton<IAudioService, Services.AudioService>();
-                    services.AddSingleton<Services.IActiveTimerService, Services.ActiveTimerService>();
+                    services.AddSingleton<IActiveTimerService, Services.ActiveTimerService>();
+                    services.AddSingleton<IPomodoroStateService, Services.PomodoroStateService>();
                     services.AddTransient<IDispatcherTimer, Services.DispatcherTimerWrapper>();
                 })
                 .Build();
@@ -127,7 +130,7 @@ namespace PomodoroTimeTracker.WinUI3
                 logger.LogCritical(ex, "Fatal error during application startup");
 
                 // Show error to user
-                var dialogService = Services.GetService<Services.IDialogService>();
+                var dialogService = Services.GetService<IDialogService>();
                 if (dialogService != null)
                 {
                     await dialogService.ShowErrorAsync(

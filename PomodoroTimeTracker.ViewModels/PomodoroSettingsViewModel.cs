@@ -3,13 +3,13 @@ using CommunityToolkit.Mvvm.Input;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// ViewModel for the Pomodoro settings configuration page.
 /// Manages user preferences for timer durations, alarms, and notifications.
 /// </summary>
-internal sealed partial class PomodoroSettingsViewModel : ViewModelBase
+public sealed partial class PomodoroSettingsViewModel : ViewModelBase
 {
     private readonly IPomodoroSettingsService _settingsService;
     private readonly IAudioService _audioService;

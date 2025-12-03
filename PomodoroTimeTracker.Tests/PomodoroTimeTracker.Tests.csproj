@@ -25,6 +25,7 @@
     <ProjectReference Include="..\PomodoroTimeTracker.Application\PomodoroTimeTracker.Application.csproj" />
     <ProjectReference Include="..\PomodoroTimeTracker.Infrastructure\PomodoroTimeTracker.Infrastructure.csproj" />
     <ProjectReference Include="..\PomodoroTimeTracker.Domain\PomodoroTimeTracker.Domain.csproj" />
+    <ProjectReference Include="..\PomodoroTimeTracker.ViewModels\PomodoroTimeTracker.ViewModels.csproj" />
     <ProjectReference Include="..\PomodoroTimeTracker.WinUI3\PomodoroTimeTracker.WinUI3.csproj" />
   </ItemGroup>
 

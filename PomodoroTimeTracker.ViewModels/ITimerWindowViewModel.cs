@@ -1,13 +1,13 @@
 using System.ComponentModel;
 using System.Windows.Input;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// Interface for ViewModels that can be displayed in the TimerWindow.
 /// Implemented by both PomodoroViewModel and RegularTimerViewModel.
 /// </summary>
-internal interface ITimerWindowViewModel : INotifyPropertyChanged
+public interface ITimerWindowViewModel : INotifyPropertyChanged
 {
     /// <summary>
     /// Gets the progress percentage (0-100) for the progress bar.

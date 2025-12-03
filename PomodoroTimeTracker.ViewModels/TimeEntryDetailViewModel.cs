@@ -5,14 +5,14 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
-using PomodoroTimeTracker.WinUI3.Services;
+using PomodoroTimeTracker.ViewModels.Services;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// ViewModel for adding or editing a time entry.
 /// </summary>
-internal sealed partial class TimeEntryDetailViewModel : ViewModelBase
+public sealed partial class TimeEntryDetailViewModel : ViewModelBase
 {
     private readonly ITimeEntryService _timeEntryService;
     private readonly IProjectService _projectService;

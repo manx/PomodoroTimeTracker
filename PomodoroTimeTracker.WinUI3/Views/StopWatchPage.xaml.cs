@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using PomodoroTimeTracker.ViewModels;
+using PomodoroTimeTracker.ViewModels.Services;
 using PomodoroTimeTracker.WinUI3.Helpers;
-using PomodoroTimeTracker.WinUI3.Services;
-using PomodoroTimeTracker.WinUI3.ViewModels;
 
 namespace PomodoroTimeTracker.WinUI3.Views;
 

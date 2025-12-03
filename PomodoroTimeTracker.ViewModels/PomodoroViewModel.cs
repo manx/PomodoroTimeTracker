@@ -4,14 +4,14 @@ using CommunityToolkit.Mvvm.Input;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
 using PomodoroTimeTracker.Domain.Entities;
-using PomodoroTimeTracker.WinUI3.Services;
+using PomodoroTimeTracker.ViewModels.Services;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// Represents the current state of the Pomodoro timer.
 /// </summary>
-internal enum PomodoroState
+public enum PomodoroState
 {
     /// <summary>
     /// Configuring the session before starting (initial state).
@@ -42,7 +42,7 @@ internal enum PomodoroState
 /// <summary>
 /// Represents the user's choice when stopping a session early.
 /// </summary>
-internal enum StopDialogResult
+public enum StopDialogResult
 {
     /// <summary>
     /// Resume the session as if it was only paused.
@@ -65,7 +65,7 @@ internal enum StopDialogResult
 /// Manages timer state, break cycles, and session tracking.
 /// Implements the complete Pomodoro workflow: Work → Short Break → ... → Long Break → repeat.
 /// </summary>
-internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewModel
+public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewModel
 {
     /// <summary>
     /// Maximum length for the objective text field.
@@ -79,6 +79,7 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
     private readonly IProjectService _projectService;
     private readonly IAudioService _audioService;
     private readonly IActiveTimerService _activeTimerService;
+    private readonly IPomodoroStateService _pomodoroStateService;
     private readonly IDispatcherTimer _timer;
 
     private PomodoroState _state = PomodoroState.Setup;
@@ -86,12 +87,6 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
     private int _totalSeconds;
     private int _pomodoroCount = 0; // Tracks which pomodoro we're on (0-3)
 
-    // TODO: Consider refactoring to ITimerStateService for cleaner architecture
-    /// <summary>
-    /// Static property to share pomodoro cycle count with RegularTimerViewModel.
-    /// Can be reset by RegularTimerViewModel when starting a regular timer session.
-    /// </summary>
-    public static int CurrentPomodoroCount { get; internal set; }
     private int _workDurationSeconds; // The original work duration (without grace period)
     private PomodoroSessionDto? _currentSession;
     private PomodoroSettingsDto? _settings;
@@ -117,6 +112,7 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
     /// <param name="projectService">Service for managing projects.</param>
     /// <param name="audioService">Service for playing audio notifications.</param>
     /// <param name="activeTimerService">Service for coordinating active timer state.</param>
+    /// <param name="pomodoroStateService">Service for managing Pomodoro cycle state.</param>
     /// <param name="timer">Timer for updating UI every second.</param>
     public PomodoroViewModel(
         IPomodoroSessionService sessionService,
@@ -125,6 +121,7 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
         IProjectService projectService,
         IAudioService audioService,
         IActiveTimerService activeTimerService,
+        IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
     {
         _sessionService = sessionService;
@@ -133,6 +130,7 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
         _projectService = projectService;
         _audioService = audioService;
         _activeTimerService = activeTimerService;
+        _pomodoroStateService = pomodoroStateService;
         _timer = timer;
 
         _timer.Interval = TimeSpan.FromSeconds(1);
@@ -750,7 +748,7 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
         {
             // Pomodoro finished (wrap up period ended), start appropriate break
             _pomodoroCount++;
-            CurrentPomodoroCount = _pomodoroCount;
+            _pomodoroStateService.CurrentPomodoroCount = _pomodoroCount;
             await StartBreakAsync();
         }
     }
@@ -768,7 +766,7 @@ internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowVie
         if (isLongBreak)
         {
             _pomodoroCount = 0; // Reset cycle
-            CurrentPomodoroCount = 0;
+            _pomodoroStateService.ResetCycle();
         }
 
         _totalSeconds = breakDuration * 60;

@@ -1,9 +1,9 @@
-namespace PomodoroTimeTracker.WinUI3.Services;
+namespace PomodoroTimeTracker.ViewModels.Services;
 
 /// <summary>
 /// Service for displaying dialogs and messages
 /// </summary>
-internal interface IDialogService
+public interface IDialogService
 {
     /// <summary>
     /// Show an information message

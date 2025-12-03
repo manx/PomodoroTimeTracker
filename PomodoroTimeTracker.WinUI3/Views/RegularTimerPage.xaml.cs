@@ -6,9 +6,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
+using PomodoroTimeTracker.ViewModels;
+using PomodoroTimeTracker.ViewModels.Services;
 using PomodoroTimeTracker.WinUI3.Helpers;
-using PomodoroTimeTracker.WinUI3.Services;
-using PomodoroTimeTracker.WinUI3.ViewModels;
 using Windows.Foundation;
 
 namespace PomodoroTimeTracker.WinUI3.Views;
