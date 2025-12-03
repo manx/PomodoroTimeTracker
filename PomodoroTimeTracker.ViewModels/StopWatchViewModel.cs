@@ -4,14 +4,14 @@ using CommunityToolkit.Mvvm.Input;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
 using PomodoroTimeTracker.Domain.Entities;
-using PomodoroTimeTracker.WinUI3.Services;
+using PomodoroTimeTracker.ViewModels.Services;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// Represents the current state of the Stopwatch timer.
 /// </summary>
-internal enum StopWatchState
+public enum StopWatchState
 {
     /// <summary>
     /// Configuring the session before starting (initial state).
@@ -34,7 +34,7 @@ internal enum StopWatchState
 /// Simple timer that counts up indefinitely with no duration limit, wrap-up period, or sounds.
 /// Sessions are saved with SessionType.StopWatch.
 /// </summary>
-internal sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowViewModel
+public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowViewModel
 {
     /// <summary>
     /// Maximum length for the description text field.

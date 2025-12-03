@@ -5,8 +5,8 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using PomodoroTimeTracker.WinUI3.Services;
-using PomodoroTimeTracker.WinUI3.ViewModels;
+using PomodoroTimeTracker.ViewModels;
+using PomodoroTimeTracker.ViewModels.Services;
 using WinRT.Interop;
 
 namespace PomodoroTimeTracker.WinUI3

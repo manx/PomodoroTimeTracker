@@ -1,11 +1,11 @@
 using System.ComponentModel;
 
-namespace PomodoroTimeTracker.WinUI3.Services;
+namespace PomodoroTimeTracker.ViewModels.Services;
 
 /// <summary>
 /// Represents which timer type is currently active.
 /// </summary>
-internal enum ActiveTimerType
+public enum ActiveTimerType
 {
     /// <summary>
     /// No timer is currently running.
@@ -32,7 +32,7 @@ internal enum ActiveTimerType
 /// Service for coordinating active timer state across the application.
 /// Ensures only one timer can run at a time and provides state for menu item enabling.
 /// </summary>
-internal interface IActiveTimerService : INotifyPropertyChanged
+public interface IActiveTimerService : INotifyPropertyChanged
 {
     /// <summary>
     /// Gets the currently active timer type (None if no timer running).

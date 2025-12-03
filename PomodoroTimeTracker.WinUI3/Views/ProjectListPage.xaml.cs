@@ -1,5 +1,5 @@
 using Microsoft.UI.Xaml.Controls;
-using PomodoroTimeTracker.WinUI3.ViewModels;
+using PomodoroTimeTracker.ViewModels;
 
 namespace PomodoroTimeTracker.WinUI3.Views;
 

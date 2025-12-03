@@ -1,13 +1,13 @@
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
-using PomodoroTimeTracker.WinUI3.Services;
+using PomodoroTimeTracker.ViewModels.Services;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// ViewModel for the main application window.
 /// </summary>
-internal sealed partial class MainWindowViewModel : ViewModelBase
+public sealed partial class MainWindowViewModel : ViewModelBase
 {
     private readonly INavigationService _navigationService;
     private readonly IDialogService _dialogService;
@@ -61,12 +61,12 @@ internal sealed partial class MainWindowViewModel : ViewModelBase
 
     private void NavigateToClients()
     {
-        _navigationService.NavigateTo(typeof(Views.ClientListPage));
+        _navigationService.NavigateTo(PageNames.ClientList);
     }
 
     private void NavigateToProjects()
     {
-        _navigationService.NavigateTo(typeof(Views.ProjectListPage));
+        _navigationService.NavigateTo(PageNames.ProjectList);
     }
 
     private async void NavigateToStatistics()

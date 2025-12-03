@@ -4,14 +4,14 @@ using CommunityToolkit.Mvvm.Input;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
 using PomodoroTimeTracker.Domain.Entities;
-using PomodoroTimeTracker.WinUI3.Services;
+using PomodoroTimeTracker.ViewModels.Services;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// Represents the current state of the Pomodoro timer.
 /// </summary>
-internal enum PomodoroState
+public enum PomodoroState
 {
     /// <summary>
     /// Configuring the session before starting (initial state).
@@ -42,7 +42,7 @@ internal enum PomodoroState
 /// <summary>
 /// Represents the user's choice when stopping a session early.
 /// </summary>
-internal enum StopDialogResult
+public enum StopDialogResult
 {
     /// <summary>
     /// Resume the session as if it was only paused.
@@ -65,7 +65,7 @@ internal enum StopDialogResult
 /// Manages timer state, break cycles, and session tracking.
 /// Implements the complete Pomodoro workflow: Work → Short Break → ... → Long Break → repeat.
 /// </summary>
-internal sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewModel
+public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewModel
 {
     /// <summary>
     /// Maximum length for the objective text field.

@@ -4,15 +4,15 @@ using CommunityToolkit.Mvvm.Input;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
 using PomodoroTimeTracker.Domain.Entities;
-using PomodoroTimeTracker.WinUI3.Services;
+using PomodoroTimeTracker.ViewModels.Services;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// Represents the current state of the Regular timer.
 /// Simplified version of PomodoroState - no Break state.
 /// </summary>
-internal enum RegularTimerState
+public enum RegularTimerState
 {
     /// <summary>
     /// Configuring the session before starting (initial state).
@@ -45,7 +45,7 @@ internal enum RegularTimerState
 /// Simplified timer without Pomodoro cycle tracking.
 /// Sessions are saved with SessionType.Regular.
 /// </summary>
-internal sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowViewModel
+public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowViewModel
 {
     /// <summary>
     /// Maximum length for the description text field.

@@ -3,14 +3,14 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
-using PomodoroTimeTracker.WinUI3.Services;
+using PomodoroTimeTracker.ViewModels.Services;
 
-namespace PomodoroTimeTracker.WinUI3.ViewModels;
+namespace PomodoroTimeTracker.ViewModels;
 
 /// <summary>
 /// ViewModel for the project list view.
 /// </summary>
-internal sealed partial class ProjectListViewModel : ViewModelBase
+public sealed partial class ProjectListViewModel : ViewModelBase
 {
     private readonly IProjectService _projectService;
     private readonly IDialogService _dialogService;
@@ -100,14 +100,14 @@ internal sealed partial class ProjectListViewModel : ViewModelBase
 
     private void AddProject()
     {
-        _navigationService.NavigateTo(typeof(Views.ProjectDetailPage), null);
+        _navigationService.NavigateTo(PageNames.ProjectDetail, null);
     }
 
     private void EditProject()
     {
         if (SelectedProject != null)
         {
-            _navigationService.NavigateTo(typeof(Views.ProjectDetailPage), SelectedProject.Id);
+            _navigationService.NavigateTo(PageNames.ProjectDetail, SelectedProject.Id);
         }
     }
 
