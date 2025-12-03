@@ -79,6 +79,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
     private readonly IProjectService _projectService;
     private readonly IAudioService _audioService;
     private readonly IActiveTimerService _activeTimerService;
+    private readonly IPomodoroStateService _pomodoroStateService;
     private readonly IDispatcherTimer _timer;
 
     private PomodoroState _state = PomodoroState.Setup;
@@ -86,12 +87,6 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
     private int _totalSeconds;
     private int _pomodoroCount = 0; // Tracks which pomodoro we're on (0-3)
 
-    // TODO: Consider refactoring to ITimerStateService for cleaner architecture
-    /// <summary>
-    /// Static property to share pomodoro cycle count with RegularTimerViewModel.
-    /// Can be reset by RegularTimerViewModel when starting a regular timer session.
-    /// </summary>
-    public static int CurrentPomodoroCount { get; internal set; }
     private int _workDurationSeconds; // The original work duration (without grace period)
     private PomodoroSessionDto? _currentSession;
     private PomodoroSettingsDto? _settings;
@@ -117,6 +112,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
     /// <param name="projectService">Service for managing projects.</param>
     /// <param name="audioService">Service for playing audio notifications.</param>
     /// <param name="activeTimerService">Service for coordinating active timer state.</param>
+    /// <param name="pomodoroStateService">Service for managing Pomodoro cycle state.</param>
     /// <param name="timer">Timer for updating UI every second.</param>
     public PomodoroViewModel(
         IPomodoroSessionService sessionService,
@@ -125,6 +121,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         IProjectService projectService,
         IAudioService audioService,
         IActiveTimerService activeTimerService,
+        IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
     {
         _sessionService = sessionService;
@@ -133,6 +130,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         _projectService = projectService;
         _audioService = audioService;
         _activeTimerService = activeTimerService;
+        _pomodoroStateService = pomodoroStateService;
         _timer = timer;
 
         _timer.Interval = TimeSpan.FromSeconds(1);
@@ -750,7 +748,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         {
             // Pomodoro finished (wrap up period ended), start appropriate break
             _pomodoroCount++;
-            CurrentPomodoroCount = _pomodoroCount;
+            _pomodoroStateService.CurrentPomodoroCount = _pomodoroCount;
             await StartBreakAsync();
         }
     }
@@ -768,7 +766,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         if (isLongBreak)
         {
             _pomodoroCount = 0; // Reset cycle
-            CurrentPomodoroCount = 0;
+            _pomodoroStateService.ResetCycle();
         }
 
         _totalSeconds = breakDuration * 60;

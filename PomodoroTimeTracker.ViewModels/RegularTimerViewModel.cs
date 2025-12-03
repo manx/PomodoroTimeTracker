@@ -58,6 +58,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
     private readonly IProjectService _projectService;
     private readonly IAudioService _audioService;
     private readonly IActiveTimerService _activeTimerService;
+    private readonly IPomodoroStateService _pomodoroStateService;
     private readonly IDispatcherTimer _timer;
 
     private RegularTimerState _state = RegularTimerState.Setup;
@@ -89,6 +90,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
     /// <param name="projectService">Service for managing projects.</param>
     /// <param name="audioService">Service for playing audio notifications.</param>
     /// <param name="activeTimerService">Service for coordinating active timer state.</param>
+    /// <param name="pomodoroStateService">Service for managing Pomodoro cycle state.</param>
     /// <param name="timer">Timer for updating UI every second.</param>
     public RegularTimerViewModel(
         IPomodoroSessionService sessionService,
@@ -97,6 +99,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
         IProjectService projectService,
         IAudioService audioService,
         IActiveTimerService activeTimerService,
+        IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
     {
         _sessionService = sessionService;
@@ -105,6 +108,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
         _projectService = projectService;
         _audioService = audioService;
         _activeTimerService = activeTimerService;
+        _pomodoroStateService = pomodoroStateService;
         _timer = timer;
 
         _timer.Interval = TimeSpan.FromSeconds(1);
@@ -172,7 +176,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
     /// Gets a value indicating whether there's an active Pomodoro cycle.
     /// Used to show warning to user.
     /// </summary>
-    public bool ShowCycleWarning => PomodoroViewModel.CurrentPomodoroCount > 0;
+    public bool ShowCycleWarning => _pomodoroStateService.CurrentPomodoroCount > 0;
 
     /// <summary>
     /// Gets or sets the collection of available clients.
@@ -468,7 +472,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
         try
         {
             // Reset Pomodoro cycle when starting Regular Timer
-            PomodoroViewModel.CurrentPomodoroCount = 0;
+            _pomodoroStateService.ResetCycle();
             OnPropertyChanged(nameof(ShowCycleWarning));
 
             // Create session with SessionType.Regular

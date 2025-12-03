@@ -21,6 +21,7 @@ public class RegularTimerViewModelTests
     private readonly Mock<IProjectService> _projectServiceMock;
     private readonly Mock<IAudioService> _audioServiceMock;
     private readonly Mock<IActiveTimerService> _activeTimerServiceMock;
+    private readonly Mock<IPomodoroStateService> _pomodoroStateServiceMock;
     private readonly Mock<IDispatcherTimer> _timerMock;
 
     public RegularTimerViewModelTests()
@@ -31,6 +32,7 @@ public class RegularTimerViewModelTests
         _projectServiceMock = new Mock<IProjectService>();
         _audioServiceMock = new Mock<IAudioService>();
         _activeTimerServiceMock = new Mock<IActiveTimerService>();
+        _pomodoroStateServiceMock = new Mock<IPomodoroStateService>();
         _timerMock = new Mock<IDispatcherTimer>();
 
         // Default setup
@@ -60,6 +62,7 @@ public class RegularTimerViewModelTests
             _projectServiceMock.Object,
             _audioServiceMock.Object,
             _activeTimerServiceMock.Object,
+            _pomodoroStateServiceMock.Object,
             _timerMock.Object);
     }
 

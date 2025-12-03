@@ -19,6 +19,7 @@ public class StopWatchViewModelTests
     private readonly Mock<IClientService> _clientServiceMock;
     private readonly Mock<IProjectService> _projectServiceMock;
     private readonly Mock<IActiveTimerService> _activeTimerServiceMock;
+    private readonly Mock<IPomodoroStateService> _pomodoroStateServiceMock;
     private readonly Mock<IDispatcherTimer> _timerMock;
 
     public StopWatchViewModelTests()
@@ -27,6 +28,7 @@ public class StopWatchViewModelTests
         _clientServiceMock = new Mock<IClientService>();
         _projectServiceMock = new Mock<IProjectService>();
         _activeTimerServiceMock = new Mock<IActiveTimerService>();
+        _pomodoroStateServiceMock = new Mock<IPomodoroStateService>();
         _timerMock = new Mock<IDispatcherTimer>();
 
         // Default setup
@@ -45,6 +47,7 @@ public class StopWatchViewModelTests
             _clientServiceMock.Object,
             _projectServiceMock.Object,
             _activeTimerServiceMock.Object,
+            _pomodoroStateServiceMock.Object,
             _timerMock.Object);
     }
 
