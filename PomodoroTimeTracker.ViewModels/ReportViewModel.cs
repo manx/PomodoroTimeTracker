@@ -19,13 +19,82 @@ public enum ReportTimePeriod
 }
 
 /// <summary>
-/// Display item for a project in the report breakdown.
+/// Represents a selectable week option for the report.
 /// </summary>
-public sealed class ProjectReportItem
+public sealed class WeekOption
 {
-    public int ProjectId { get; set; }
-    public string ProjectName { get; set; } = string.Empty;
-    public string ClientName { get; set; } = string.Empty;
+    public int Year { get; }
+    public int WeekNumber { get; }
+    public DateTime StartDate { get; }
+    public DateTime EndDate { get; }
+
+    // TODO: Handle week start day based on user locale/settings (Sunday vs Monday)
+    // TODO: Handle week year at end of December (week 1 may belong to next year, week 52/53 may belong to previous year)
+    public WeekOption(DateTime dateInWeek)
+    {
+        // Get week start (Sunday)
+        StartDate = dateInWeek.AddDays(-(int)dateInWeek.DayOfWeek);
+        EndDate = StartDate.AddDays(6);
+        Year = StartDate.Year;
+        WeekNumber = GetIso8601WeekNumber(StartDate);
+    }
+
+    public string Display => $"{Year}, Week {WeekNumber} ({StartDate:MMM d})";
+
+    // TODO: Handle different week number systems (ISO 8601 vs US) based on user locale/settings
+    private static int GetIso8601WeekNumber(DateTime date)
+    {
+        var day = System.Globalization.CultureInfo.InvariantCulture.Calendar.GetDayOfWeek(date);
+        if (day >= DayOfWeek.Monday && day <= DayOfWeek.Wednesday)
+        {
+            date = date.AddDays(3);
+        }
+        return System.Globalization.CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(
+            date, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is WeekOption other && Year == other.Year && WeekNumber == other.WeekNumber;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Year, WeekNumber);
+}
+
+/// <summary>
+/// Represents a selectable month option for the report.
+/// </summary>
+public sealed class MonthOption
+{
+    public int Year { get; }
+    public int Month { get; }
+
+    public MonthOption(int year, int month)
+    {
+        Year = year;
+        Month = month;
+    }
+
+    public MonthOption(DateTime date) : this(date.Year, date.Month) { }
+
+    public string Display => $"{new DateTime(Year, Month, 1):MMMM yyyy}";
+
+    public DateTime StartDate => new(Year, Month, 1);
+    public DateTime EndDate => StartDate.AddMonths(1).AddDays(-1);
+
+    public override bool Equals(object? obj)
+    {
+        return obj is MonthOption other && Year == other.Year && Month == other.Month;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Year, Month);
+}
+
+/// <summary>
+/// Base class for report breakdown items.
+/// </summary>
+public abstract class ReportItemBase
+{
     public int PomodoroCount { get; set; }
     public int PomodoroMinutes { get; set; }
     public int TimeEntryCount { get; set; }
@@ -37,7 +106,7 @@ public sealed class ProjectReportItem
     public string PomodoroDisplay => $"{PomodoroCount} sessions ({FormatDuration(PomodoroMinutes)})";
     public string TimeEntryDisplay => $"{TimeEntryCount} entries ({FormatDuration(TimeEntryMinutes)})";
 
-    private static string FormatDuration(int minutes)
+    protected static string FormatDuration(int minutes)
     {
         if (minutes == 0)
             return "0m";
@@ -54,11 +123,39 @@ public sealed class ProjectReportItem
 }
 
 /// <summary>
+/// Display item for a project in the report breakdown.
+/// </summary>
+public sealed class ProjectReportItem : ReportItemBase
+{
+    public int ProjectId { get; set; }
+    public string ProjectName { get; set; } = string.Empty;
+    public string ClientName { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Filter option for client/project dropdowns.
+/// </summary>
+public sealed class FilterOption
+{
+    public int? Id { get; }
+    public string Name { get; }
+
+    public FilterOption(int? id, string name)
+    {
+        Id = id;
+        Name = name;
+    }
+
+    public static FilterOption All { get; } = new(null, "All");
+}
+
+/// <summary>
 /// ViewModel for the report view showing combined statistics.
 /// </summary>
 public sealed partial class ReportViewModel : ViewModelBase
 {
     private readonly IStatisticsService _statisticsService;
+    private readonly IProjectService _projectService;
     private readonly IDialogService _dialogService;
 
     private ReportTimePeriod _selectedTimePeriod = ReportTimePeriod.Daily;
@@ -66,6 +163,19 @@ public sealed partial class ReportViewModel : ViewModelBase
     private DateTimeOffset _customStartDate = DateTimeOffset.Now.AddDays(-7);
     private DateTimeOffset _customEndDate = DateTimeOffset.Now;
     private bool _isLoading;
+
+    // Week/Month selection
+    private WeekOption? _selectedWeek;
+    private MonthOption? _selectedMonth;
+    private ObservableCollection<WeekOption> _weekOptions = new();
+    private ObservableCollection<MonthOption> _monthOptions = new();
+
+    // Client/Project filters
+    private ObservableCollection<FilterOption> _clientFilterOptions = new();
+    private ObservableCollection<FilterOption> _projectFilterOptions = new();
+    private FilterOption _selectedClientFilter = FilterOption.All;
+    private FilterOption _selectedProjectFilter = FilterOption.All;
+    private List<ProjectReportItem> _allProjectItems = new();
 
     // Statistics data
     private int _totalPomodoros;
@@ -77,9 +187,11 @@ public sealed partial class ReportViewModel : ViewModelBase
 
     public ReportViewModel(
         IStatisticsService statisticsService,
+        IProjectService projectService,
         IDialogService dialogService)
     {
         _statisticsService = statisticsService;
+        _projectService = projectService;
         _dialogService = dialogService;
 
         LoadReportCommand = new AsyncRelayCommand(LoadReportAsync);
@@ -92,7 +204,43 @@ public sealed partial class ReportViewModel : ViewModelBase
         NextPeriodCommand = new RelayCommand(GoToNextPeriod);
         GoToTodayCommand = new RelayCommand(GoToToday);
 
-        _ = LoadReportAsync();
+        // Initialize week/month options
+        InitializeWeekOptions();
+        InitializeMonthOptions();
+
+        _ = InitializeAsync();
+    }
+
+    private async Task InitializeAsync()
+    {
+        await LoadFilterOptionsAsync();
+        await LoadReportAsync();
+    }
+
+    private async Task LoadFilterOptionsAsync()
+    {
+        var projects = await _projectService.GetAllProjectsAsync();
+
+        // Build client filter options from distinct clients
+        var clients = projects
+            .Where(p => p.ClientId.HasValue)
+            .Select(p => new { p.ClientId, p.ClientName })
+            .Distinct()
+            .OrderBy(c => c.ClientName)
+            .ToList();
+
+        var clientOptions = new List<FilterOption> { FilterOption.All };
+        clientOptions.AddRange(clients.Select(c => new FilterOption(c.ClientId, c.ClientName ?? "Unknown")));
+        ClientFilterOptions = new ObservableCollection<FilterOption>(clientOptions);
+        SelectedClientFilter = FilterOption.All;
+
+        // Build project filter options
+        var projectOptions = new List<FilterOption> { FilterOption.All };
+        projectOptions.AddRange(projects
+            .OrderBy(p => p.Name)
+            .Select(p => new FilterOption(p.Id, p.Name)));
+        ProjectFilterOptions = new ObservableCollection<FilterOption>(projectOptions);
+        SelectedProjectFilter = FilterOption.All;
     }
 
     #region Time Period Selection
@@ -119,6 +267,110 @@ public sealed partial class ReportViewModel : ViewModelBase
     public bool IsMonthlySelected => SelectedTimePeriod == ReportTimePeriod.Monthly;
     public bool IsCustomSelected => SelectedTimePeriod == ReportTimePeriod.Custom;
     public bool IsNotCustomSelected => !IsCustomSelected;
+
+    #endregion
+
+    #region Client/Project Filters
+
+    public ObservableCollection<FilterOption> ClientFilterOptions
+    {
+        get => _clientFilterOptions;
+        set => SetProperty(ref _clientFilterOptions, value);
+    }
+
+    public FilterOption SelectedClientFilter
+    {
+        get => _selectedClientFilter;
+        set
+        {
+            if (SetProperty(ref _selectedClientFilter, value))
+            {
+                OnClientFilterChanged();
+            }
+        }
+    }
+
+    public ObservableCollection<FilterOption> ProjectFilterOptions
+    {
+        get => _projectFilterOptions;
+        set => SetProperty(ref _projectFilterOptions, value);
+    }
+
+    public FilterOption SelectedProjectFilter
+    {
+        get => _selectedProjectFilter;
+        set
+        {
+            if (SetProperty(ref _selectedProjectFilter, value))
+            {
+                ApplyFilters();
+            }
+        }
+    }
+
+    private void OnClientFilterChanged()
+    {
+        // When client changes, update project filter options to only show that client's projects
+        if (_selectedClientFilter.Id == null)
+        {
+            // "All" selected - show all projects
+            _ = LoadFilterOptionsAsync();
+        }
+        else
+        {
+            // Filter projects by selected client
+            _ = UpdateProjectFilterForClientAsync(_selectedClientFilter.Id.Value);
+        }
+        ApplyFilters();
+    }
+
+    private async Task UpdateProjectFilterForClientAsync(int clientId)
+    {
+        var projects = await _projectService.GetProjectsByClientIdAsync(clientId);
+        var projectOptions = new List<FilterOption> { FilterOption.All };
+        projectOptions.AddRange(projects
+            .OrderBy(p => p.Name)
+            .Select(p => new FilterOption(p.Id, p.Name)));
+        ProjectFilterOptions = new ObservableCollection<FilterOption>(projectOptions);
+        SelectedProjectFilter = FilterOption.All;
+    }
+
+    private void ApplyFilters()
+    {
+        if (_allProjectItems.Count == 0)
+        {
+            ProjectBreakdown = new ObservableCollection<ProjectReportItem>();
+            return;
+        }
+
+        var filtered = _allProjectItems.AsEnumerable();
+
+        // Apply client filter
+        if (_selectedClientFilter.Id != null)
+        {
+            var clientName = _selectedClientFilter.Name;
+            filtered = filtered.Where(p => p.ClientName == clientName);
+        }
+
+        // Apply project filter
+        if (_selectedProjectFilter.Id != null)
+        {
+            filtered = filtered.Where(p => p.ProjectId == _selectedProjectFilter.Id);
+        }
+
+        // Recalculate percentages based on filtered total
+        var filteredList = filtered.ToList();
+        var filteredTotal = filteredList.Sum(p => p.TotalMinutes);
+
+        foreach (var item in filteredList)
+        {
+            item.PercentageOfTotal = filteredTotal > 0
+                ? (double)item.TotalMinutes / filteredTotal * 100
+                : 0;
+        }
+
+        ProjectBreakdown = new ObservableCollection<ProjectReportItem>(filteredList);
+    }
 
     #endregion
 
@@ -207,6 +459,91 @@ public sealed partial class ReportViewModel : ViewModelBase
     private static DateTime GetMonthEnd(DateTime date)
     {
         return GetMonthStart(date).AddMonths(1).AddDays(-1);
+    }
+
+    #endregion
+
+    #region Week/Month Selection
+
+    public ObservableCollection<WeekOption> WeekOptions
+    {
+        get => _weekOptions;
+        set => SetProperty(ref _weekOptions, value);
+    }
+
+    public WeekOption? SelectedWeek
+    {
+        get => _selectedWeek;
+        set
+        {
+            if (SetProperty(ref _selectedWeek, value) && value != null)
+            {
+                // Update SelectedDate to match the week without triggering reload
+                _selectedDate = new DateTimeOffset(value.StartDate);
+                OnPropertyChanged(nameof(SelectedDate));
+                OnPropertyChanged(nameof(DateRangeDisplay));
+                _ = LoadReportAsync();
+            }
+        }
+    }
+
+    public ObservableCollection<MonthOption> MonthOptions
+    {
+        get => _monthOptions;
+        set => SetProperty(ref _monthOptions, value);
+    }
+
+    public MonthOption? SelectedMonth
+    {
+        get => _selectedMonth;
+        set
+        {
+            if (SetProperty(ref _selectedMonth, value) && value != null)
+            {
+                // Update SelectedDate to match the month without triggering reload
+                _selectedDate = new DateTimeOffset(value.StartDate);
+                OnPropertyChanged(nameof(SelectedDate));
+                OnPropertyChanged(nameof(DateRangeDisplay));
+                _ = LoadReportAsync();
+            }
+        }
+    }
+
+    private void InitializeWeekOptions()
+    {
+        var options = new List<WeekOption>();
+        var today = DateTime.Today;
+
+        // Generate weeks: 52 weeks back + current week (no future weeks)
+        for (int i = -52; i <= 0; i++)
+        {
+            options.Add(new WeekOption(today.AddDays(i * 7)));
+        }
+
+        WeekOptions = new ObservableCollection<WeekOption>(options);
+
+        // Select current week
+        var currentWeek = new WeekOption(today);
+        SelectedWeek = WeekOptions.FirstOrDefault(w => w.Equals(currentWeek));
+    }
+
+    private void InitializeMonthOptions()
+    {
+        var options = new List<MonthOption>();
+        var today = DateTime.Today;
+
+        // Generate months: 24 months back + current month (no future months)
+        for (int i = -24; i <= 0; i++)
+        {
+            var date = today.AddMonths(i);
+            options.Add(new MonthOption(date));
+        }
+
+        MonthOptions = new ObservableCollection<MonthOption>(options);
+
+        // Select current month
+        var currentMonth = new MonthOption(today);
+        SelectedMonth = MonthOptions.FirstOrDefault(m => m.Equals(currentMonth));
     }
 
     #endregion
@@ -319,7 +656,7 @@ public sealed partial class ReportViewModel : ViewModelBase
 
     #endregion
 
-    #region Project Breakdown
+    #region Breakdown
 
     public ObservableCollection<ProjectReportItem> ProjectBreakdown
     {
@@ -438,11 +775,11 @@ public sealed partial class ReportViewModel : ViewModelBase
         TotalTimeEntries = timeEntryStats.Total;
         TotalTimeEntryMinutes = timeEntryStats.TotalMinutes;
 
-        // Build project breakdown
-        BuildProjectBreakdown(pomodoroStats.ByProject, timeEntryStats.ByProject);
+        // Build breakdowns
+        BuildBreakdowns(pomodoroStats.ByProject, timeEntryStats.ByProject);
     }
 
-    private void BuildProjectBreakdown(
+    private void BuildBreakdowns(
         List<ProjectStatsDto> pomodoroByProject,
         List<ProjectStatsDto> timeEntryByProject)
     {
@@ -481,20 +818,13 @@ public sealed partial class ReportViewModel : ViewModelBase
             projectDict[t.ProjectId].TimeEntryMinutes = t.Minutes;
         }
 
-        // Calculate percentages and sort by total time
-        var totalMinutes = CombinedTotalMinutes;
-        var items = projectDict.Values
+        // Sort by total time
+        _allProjectItems = projectDict.Values
             .OrderByDescending(p => p.TotalMinutes)
             .ToList();
 
-        foreach (var item in items)
-        {
-            item.PercentageOfTotal = totalMinutes > 0
-                ? (double)item.TotalMinutes / totalMinutes * 100
-                : 0;
-        }
-
-        ProjectBreakdown = new ObservableCollection<ProjectReportItem>(items);
+        // Apply current filters
+        ApplyFilters();
     }
 
     #endregion
