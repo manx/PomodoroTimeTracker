@@ -287,7 +287,7 @@ This section should be updated when:
 
 **PomodoroTimeTracker.Domain** (Core Layer)
 - Business entities: `Client`, `Project`, `PomodoroSession`, `PomodoroSettings`, `TimeEntry`
-- Enums: `SessionType` (Work, ShortBreak, LongBreak)
+- Enums: `SessionType` (Work, ShortBreak, LongBreak, Regular, StopWatch)
 - Repository interfaces
 - No external dependencies
 
@@ -298,8 +298,9 @@ This section should be updated when:
   - `IPomodoroSettingsService` - Settings management
   - `IClientService` - Client management
   - `IProjectService` - Project management with client filtering
-  - `ITimeEntryService` - Manual time entry (structure in place)
+  - `ITimeEntryService` - Manual time entry
   - `IStatisticsService` - Reporting (structure in place)
+- `IDispatcherTimer` - Timer abstraction for testability
 - References: Domain only
 
 **PomodoroTimeTracker.Infrastructure** (Data Layer)
@@ -310,12 +311,23 @@ This section should be updated when:
 - Automatic migrations on startup
 - References: Domain, Application
 
+**PomodoroTimeTracker.ViewModels** (ViewModel Layer - WinUI Class Library)
+- All ViewModels extracted for testability (377 tests)
+- Timer ViewModels: `PomodoroViewModel`, `RegularTimerViewModel`, `StopWatchViewModel`
+- CRUD ViewModels: `ClientListViewModel`, `ClientDetailViewModel`, `ProjectListViewModel`, etc.
+- Service interfaces for UI abstraction:
+  - `INavigationService` - Page navigation
+  - `IDialogService` - Dialog display
+  - `IActiveTimerService` - Single timer enforcement
+  - `IPomodoroStateService` - Pomodoro cycle tracking
+- References: Domain, Application
+
 **PomodoroTimeTracker.WinUI3** (Presentation Layer)
-- MVVM pattern with ViewModels
 - XAML views and pages
-- UI services: NavigationService, DialogService
-- Timer window with advanced features
-- References: Application (not Infrastructure directly)
+- UI service implementations: NavigationService, DialogService, AudioService
+- `DispatcherTimerWrapper` - IDispatcherTimer implementation
+- Timer window with Win32 interop
+- References: Application, ViewModels
 
 ### Architectural Patterns
 
@@ -349,23 +361,46 @@ Repository → Database → back through layers → UI Update
 
 ### Dependency Injection
 ```csharp
-// Scoped: DbContext, Repositories, Services
-services.AddScoped<IPomodoroSessionService, PomodoroSessionService>();
-services.AddScoped<IPomodoroSettingsService, PomodoroSettingsService>();
+// Scoped: DbContext, Repositories
+services.AddDbContext<ApplicationDbContext>(...);
+services.AddScoped<IUnitOfWork, UnitOfWork>();
+services.AddScoped<IClientRepository, ClientRepository>();
+services.AddScoped<IProjectRepository, ProjectRepository>();
+services.AddScoped<IPomodoroSessionRepository, PomodoroSessionRepository>();
+services.AddScoped<ITimeEntryRepository, TimeEntryRepository>();
+
+// Scoped: Application Services
 services.AddScoped<IClientService, ClientService>();
 services.AddScoped<IProjectService, ProjectService>();
+services.AddScoped<IPomodoroSessionService, PomodoroSessionService>();
+services.AddScoped<ITimeEntryService, TimeEntryService>();
+services.AddScoped<IStatisticsService, StatisticsService>();
+services.AddScoped<IPomodoroSettingsService, PomodoroSettingsService>();
 
-// Transient: ViewModels
-services.AddTransient<PomodoroViewModel>();
-services.AddTransient<PomodoroSettingsViewModel>();
+// Transient: CRUD ViewModels (new instance per request)
+services.AddTransient<MainWindowViewModel>();
 services.AddTransient<ClientListViewModel>();
 services.AddTransient<ClientDetailViewModel>();
 services.AddTransient<ProjectListViewModel>();
 services.AddTransient<ProjectDetailViewModel>();
+services.AddTransient<TimeEntryListViewModel>();
+services.AddTransient<TimeEntryDetailViewModel>();
+services.AddTransient<PomodoroSettingsViewModel>();
+
+// Singleton: Timer ViewModels (maintain state across navigation)
+services.AddSingleton<PomodoroViewModel>();
+services.AddSingleton<RegularTimerViewModel>();
+services.AddSingleton<StopWatchViewModel>();
 
 // Singleton: UI Services
 services.AddSingleton<INavigationService, NavigationService>();
 services.AddSingleton<IDialogService, DialogService>();
+services.AddSingleton<IAudioService, AudioService>();
+services.AddSingleton<IActiveTimerService, ActiveTimerService>();
+services.AddSingleton<IPomodoroStateService, PomodoroStateService>();
+
+// Transient: Timer abstraction for testability
+services.AddTransient<IDispatcherTimer, DispatcherTimerWrapper>();
 
 // Helper Method
 public static T GetService<T>() where T : class
@@ -788,10 +823,11 @@ public PomodoroState State
 - Dialog service
 
 **Testing**
-- 210 unit tests passing
-- TimeEntryService: 31 tests
-- AudioService: comprehensive coverage
-- IDispatcherTimer abstraction for ViewModel testability
+- 377 unit tests passing (100% pass rate)
+- ViewModel layer: 158 tests (PomodoroViewModel, RegularTimerViewModel, StopWatchViewModel, etc.)
+- Application layer: 148 tests (services, DTOs)
+- Infrastructure layer: 71 tests (repositories)
+- IDispatcherTimer abstraction enables ViewModel testing without UI thread
 
 ### Incomplete / TODO ⚠️
 
@@ -800,10 +836,9 @@ public PomodoroState State
 - FlashWindow implementation
 - Settings exist but not implemented
 
-**Testing** (HIGH PRIORITY)
-- No unit tests for PomodoroViewModel
-- No integration tests for service layer
-- TimeEntryService has 31 tests (good coverage)
+**Testing** (LOW PRIORITY - mostly complete)
+- Integration tests for end-to-end scenarios
+- UI automation tests for complex workflows
 
 **Error Handling** (MEDIUM PRIORITY)
 - Some basic try-catch but needs user-friendly messages
@@ -818,6 +853,21 @@ public PomodoroState State
 - WinUI 3 borderless window white bar (framework limitation, using WinUIEx workaround)
 
 ## Recent Development History
+
+### ViewModels Extraction for Testability (2025-12-04)
+- Extracted all ViewModels from WinUI3 project to new `PomodoroTimeTracker.ViewModels` WinUI Class Library
+- Created `IDispatcherTimer` interface for timer testability without UI thread
+- Added `IActiveTimerService` for single-timer enforcement across timer types
+- Added `IPomodoroStateService` to replace static `PomodoroViewModel.CurrentPomodoroCount`
+- 158 new ViewModel tests (total now 377 tests)
+- Enabled comprehensive testing of timer logic, state transitions, and business rules
+- PR #16: Major architectural improvement for testability
+
+### INavigationService Cleanup (2025-12-04)
+- Removed `NavigationFrame` property from `INavigationService` interface
+- Frame management now internal to concrete `NavigationService` implementation
+- Keeps interface UI-agnostic (ViewModels never needed Frame access)
+- PR #17: Minor interface cleanup
 
 ### Sound Selection Feature (2025-12-01)
 - Added dropdown menus for selecting WrapUp and Alarm sounds in Settings
@@ -1077,6 +1127,6 @@ dotnet ef migrations list --project PomodoroTimeTracker.Infrastructure --startup
 
 ---
 
-**Last Updated**: 2025-01-24
+**Last Updated**: 2025-12-04
 **Current Version**: 1.0.0-beta
 **Status**: Active Development

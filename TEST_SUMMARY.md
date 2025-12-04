@@ -2,10 +2,10 @@
 
 Comprehensive test coverage for the Pomodoro Time Tracker application.
 
-**Last Updated:** 2025-11-25
-**Total Tests:** 144
+**Last Updated:** 2025-12-04
+**Total Tests:** 377
 **Pass Rate:** 100%
-**Execution Time:** ~473ms
+**Execution Time:** ~4s
 
 ---
 
@@ -15,31 +15,120 @@ Comprehensive test coverage for the Pomodoro Time Tracker application.
 
 | Layer | Test Files | Test Count | Type | Status |
 |-------|-----------|------------|------|--------|
-| **Application** | 4 | 82 | Unit Tests (Mock-based) | ✅ Complete |
+| **ViewModels** | 7 | 158 | Unit Tests (Mock-based) | ✅ Complete |
+| **Application** | 5 | 99 | Unit Tests (Mock-based) | ✅ Complete |
 | **Infrastructure** | 4 | 62 | Integration Tests (InMemory) | ✅ Complete |
+| **WinUI3 Services** | 1 | 30 | Unit Tests (Mock-based) | ✅ Complete |
 | **Domain** | 0 | 0 | - | ⚠️ Not needed (POCOs) |
-| **WinUI3** | 0 | 0 | - | ⚠️ Complex (UI automation) |
-| **Total** | **8** | **144** | - | ✅ **100% Pass** |
+| **Total** | **17** | **377*** | - | ✅ **100% Pass** |
+
+*\*349 test methods, 377 test cases (Theory tests with InlineData expand to multiple cases)*
 
 ### Test Distribution
 
 ```
-Application Layer Tests (82)
-├── PomodoroSessionServiceTests  (20) ████████████████████
-├── PomodoroSettingsServiceTests (22) ██████████████████████
-├── ClientServiceTests           (18) ══════════════════
-└── ProjectServiceTests          (22) ██████████████████████
+ViewModel Layer Tests (158)
+├── PomodoroViewModelTests       (42) ██████████████████████████████████████████
+├── StopWatchViewModelTests      (31) ═══════════════════════════════
+├── RegularTimerViewModelTests   (30) ══════════════════════════════
+├── ClientListViewModelTests     (15) ═══════════════
+├── ClientDetailViewModelTests   (15) ═══════════════
+├── ProjectListViewModelTests    (15) ═══════════════
+└── ProjectDetailViewModelTests  (10) ══════════
+
+Application Layer Tests (99)
+├── TimeEntryServiceTests        (31) ═══════════════════════════════
+├── ProjectServiceTests          (21) ═════════════════════
+├── PomodoroSessionServiceTests  (20) ════════════════════
+├── ClientServiceTests           (17) ═════════════════
+└── PomodoroSettingsServiceTests (10) ══════════
 
 Infrastructure Layer Tests (62)
-├── PomodoroSessionRepositoryTests  (22) ██████████████████████
-├── PomodoroSettingsRepositoryTests (11) ═══════════
+├── ProjectRepositoryTests          (21) ═════════════════════
+├── PomodoroSessionRepositoryTests  (18) ══════════════════
 ├── ClientRepositoryTests           (15) ═══════════════
-└── ProjectRepositoryTests          (14) ══════════════
+└── PomodoroSettingsRepositoryTests  (8) ════════
+
+WinUI3 Services Tests (30)
+└── AudioServiceTests               (30) ══════════════════════════════
 ```
 
 ---
 
-## Application Layer Tests (82)
+## ViewModel Layer Tests (158)
+
+### PomodoroViewModel (42 tests)
+
+**Coverage:** Timer states, break cycles, session management, commands
+
+| Test Category | Count | Coverage |
+|--------------|-------|----------|
+| Initial State | 6 | Constructor, defaults, state properties |
+| LoadAsync | 3 | Clients, settings, last session data |
+| StartPomodoroCommand | 4 | Validation, session creation, timer start |
+| PauseResumeCommand | 4 | State transitions, timer control |
+| StopPomodoroCommand | 4 | Dialog flow, save/discard/resume |
+| Timer Tick | 6 | Countdown, wrap-up, break transitions |
+| Break Cycle | 5 | Short/long break logic, cycle tracking |
+| Property Changes | 6 | Notifications, dependent properties |
+| Client/Project Selection | 4 | Loading, filtering, selection |
+
+**Key Patterns Tested:**
+- ✅ IDispatcherTimer mock for timer control
+- ✅ State machine transitions (Setup→Running→Paused→WrapUp→Break)
+- ✅ Break cycle logic (4 pomodoros → long break)
+- ✅ IPomodoroStateService for cycle tracking
+
+---
+
+### StopWatchViewModel (31 tests)
+
+**Coverage:** Count-up timer, elapsed time tracking
+
+| Test Category | Count | Coverage |
+|--------------|-------|----------|
+| Initial State | 6 | Constructor, CountsUp=true, no progress meter |
+| StartTimerCommand | 4 | Validation, session creation |
+| PauseResumeCommand | 4 | State transitions |
+| StopCommand | 2 | CanExecute logic |
+| SaveAndStopAsync | 3 | Session save, state reset |
+| DiscardAndStopAsync | 1 | Session deletion |
+| State Properties | 3 | Notifications |
+| Client Selection | 3 | Project loading |
+
+---
+
+### RegularTimerViewModel (30 tests)
+
+**Coverage:** Fixed-duration count-up timer with wrap-up
+
+| Test Category | Count | Coverage |
+|--------------|-------|----------|
+| Initial State | 5 | Constructor, timer interval |
+| LoadAsync | 1 | Settings and clients |
+| StartTimerCommand | 4 | Session creation, active timer check |
+| PauseResumeCommand | 4 | State transitions |
+| StopCommand | 2 | CanExecute logic |
+| SaveAndStopAsync | 3 | Session save, state reset |
+| DiscardAndStopAsync | 1 | Session deletion |
+| AddMinutes | 2 | Time adjustment |
+| State Properties | 4 | Notifications |
+| Client Selection | 4 | Project loading |
+
+---
+
+### Client & Project ViewModels (55 tests)
+
+| ViewModel | Tests | Coverage |
+|-----------|-------|----------|
+| ClientListViewModel | 15 | CRUD, filtering, navigation |
+| ClientDetailViewModel | 15 | Create/edit, validation, save |
+| ProjectListViewModel | 15 | CRUD, client filtering, navigation |
+| ProjectDetailViewModel | 10 | Create/edit, client selection |
+
+---
+
+## Application Layer Tests (99)
 
 ### PomodoroSessionService (20 tests)
 
@@ -439,11 +528,11 @@ dotnet test --verbosity normal
 
 ```
 Test Run Successful.
-Total tests: 144
-     Passed: 144
+Total tests: 377
+     Passed: 377
      Failed: 0
    Skipped: 0
- Total time: 0.473 Seconds
+ Total time: 4 Seconds
 ```
 
 ---
@@ -459,32 +548,32 @@ Total tests: 144
 - **Decision:** No tests needed for simple data models
 
 #### WinUI3 Presentation Layer
-- **Status:** ⚠️ Not tested
-- **Reason:** Complex UI automation required
-- **Components:** ViewModels, Pages, TimerWindow
-- **Challenge:**
-  - DispatcherQueueTimer requires UI thread
-  - XAML data binding difficult to test
-  - Would require UI automation framework
-- **Future:** Consider extracting testable logic from ViewModels
+- **ViewModels:** ✅ Fully tested (158 tests) - extracted to separate library
+- **Pages/XAML:** ⚠️ Not tested (UI automation complex)
+- **TimerWindow:** ⚠️ Not tested (Win32 interop)
+
+**Key Testing Pattern:**
+- ViewModels extracted to `PomodoroTimeTracker.ViewModels` WinUI Class Library
+- `IDispatcherTimer` interface enables timer mocking
+- `IPomodoroStateService` replaces static state
+- `ShowStopDialog` callback pattern for dialog mocking
 
 ### Known Testing Limitations
 
-1. **Timer Logic in PomodoroViewModel:**
-   - ~700 lines of complex state machine
-   - Uses DispatcherQueueTimer (UI thread dependent)
-   - Callback pattern for dialogs
-   - **Recommendation:** Extract timer interface for testing
+1. **XAML Pages:**
+   - UI automation would require WinAppDriver/Appium
+   - Data binding verified via x:Bind compile-time checking
+   - **Status:** Low priority, ViewModels cover logic
 
-2. **UI Services:**
-   - NavigationService
-   - DialogService
-   - **Recommendation:** Mock for ViewModel tests if added
+2. **TimerWindow:**
+   - Uses Win32 interop (DwmExtendFrameIntoClientArea)
+   - Complex window positioning logic
+   - **Status:** Manual testing sufficient
 
-3. **Sound/Alarm Implementation:**
-   - Currently TODO in code (lines 685-686, 693-694)
-   - Volume settings exist but unused
-   - **Action Required:** Implement before testing
+3. **NavigationService/DialogService:**
+   - Mocked in ViewModel tests
+   - Concrete implementations are simple wrappers
+   - **Status:** ✅ Adequately covered via mocks
 
 ---
 
@@ -539,19 +628,21 @@ Before merging:
 
 ## Future Test Improvements
 
-### Short Term (Next Sprint)
-1. **Add ViewModel Tests** (if refactored)
-   - Extract timer interface
-   - Mock DispatcherQueueTimer
-   - Test state machine transitions
-   - Test command CanExecute logic
+### Completed ✅
+1. **ViewModel Tests** - Added 158 tests
+   - ✅ Extracted timer to IDispatcherTimer interface
+   - ✅ Mock DispatcherQueueTimer via Moq
+   - ✅ Test state machine transitions
+   - ✅ Test command CanExecute logic
+   - ✅ IPomodoroStateService for cycle tracking
 
-2. **Integration Tests for Services**
+### Short Term
+1. **Integration Tests for Services**
    - Test full stack: Service → Repository → Database
    - Verify transaction behavior
    - Test UnitOfWork SaveChanges
 
-3. **Performance Tests**
+2. **Performance Tests**
    - Benchmark repository queries
    - Identify slow tests (>100ms)
    - Optimize InMemory database usage
@@ -568,7 +659,7 @@ Before merging:
 
 3. **Code Coverage Reporting**
    - Integrate coverlet for coverage metrics
-   - Target: >90% coverage for Application/Infrastructure
+   - Target: >90% coverage for Application/Infrastructure/ViewModels
 
 ### Long Term
 1. **UI Automation**
@@ -596,6 +687,7 @@ Before merging:
 
 | Date | Total Tests | Pass Rate | Duration | Notes |
 |------|-------------|-----------|----------|-------|
+| 2025-12-04 | 377 | 100% | 4s | Added ViewModel tests (158), TimeEntryService tests (31), AudioService tests (30) |
 | 2025-11-25 | 144 | 100% | 473ms | Initial complete test suite |
 
 ---
