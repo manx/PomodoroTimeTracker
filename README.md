@@ -95,22 +95,30 @@ PomodoroTimeTracker/
 │   ├── Repositories/                    # Repository implementations
 │   └── Migrations/                      # EF Core migrations
 │
-└── PomodoroTimeTracker.WinUI3/         # Presentation layer (WinUI 3)
+├── PomodoroTimeTracker.ViewModels/      # ViewModels (WinUI Class Library)
+│   ├── PomodoroViewModel.cs             # Pomodoro timer with state machine
+│   ├── RegularTimerViewModel.cs         # Regular countdown timer
+│   ├── StopWatchViewModel.cs            # Stopwatch functionality
+│   ├── ClientListViewModel.cs           # Client CRUD operations
+│   ├── ProjectListViewModel.cs          # Project management
+│   ├── TimeEntryListViewModel.cs        # Time entry tracking
+│   └── Services/                        # UI abstractions (IDialogService, etc.)
+│
+├── PomodoroTimeTracker.Tests/           # Unit tests (377 tests)
+│   ├── ViewModels/                      # ViewModel tests
+│   ├── Application/                     # Service tests
+│   └── Infrastructure/                  # Repository tests
+│
+└── PomodoroTimeTracker.WinUI3/          # Presentation layer (WinUI 3)
     ├── Views/                           # XAML pages
     │   ├── PomodoroPage.xaml            # Main Pomodoro timer interface
-    │   ├── PomodoroSettingsPage.xaml   # Settings configuration
-    │   ├── ClientListPage.xaml
-    │   ├── ClientDetailPage.xaml
-    │   ├── ProjectListPage.xaml
-    │   └── ProjectDetailPage.xaml
-    ├── ViewModels/                      # ViewModels (MVVM)
-    │   ├── PomodoroViewModel.cs         # Pomodoro timer logic
-    │   ├── PomodoroSettingsViewModel.cs
-    │   ├── ClientListViewModel.cs
-    │   └── ...
-    ├── Services/                        # UI services
+    │   ├── RegularTimerPage.xaml        # Regular timer UI
+    │   ├── StopWatchPage.xaml           # Stopwatch UI
+    │   └── ...                          # Other pages
+    ├── Services/                        # UI service implementations
     │   ├── NavigationService.cs
-    │   └── DialogService.cs
+    │   ├── DialogService.cs
+    │   └── AudioService.cs
     ├── MainWindow.xaml                  # Main window with NavigationView
     └── App.xaml.cs                      # Application startup & DI
 ```
