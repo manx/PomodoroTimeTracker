@@ -65,7 +65,7 @@ public enum StopDialogResult
 /// Manages timer state, break cycles, and session tracking.
 /// Implements the complete Pomodoro workflow: Work → Short Break → ... → Long Break → repeat.
 /// </summary>
-public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewModel
+public sealed partial class PomodoroViewModel : TimerViewModelBase
 {
     /// <summary>
     /// Maximum length for the objective text field.
@@ -73,14 +73,8 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
     /// </summary>
     public const int ObjectiveMaxLength = 90;
 
-    private readonly IPomodoroSessionService _sessionService;
     private readonly IPomodoroSettingsService _settingsService;
-    private readonly IClientService _clientService;
-    private readonly IProjectService _projectService;
     private readonly IAudioService _audioService;
-    private readonly IActiveTimerService _activeTimerService;
-    private readonly IPomodoroStateService _pomodoroStateService;
-    private readonly IDispatcherTimer _timer;
 
     private PomodoroState _state = PomodoroState.Setup;
     private int _remainingSeconds;
@@ -88,19 +82,13 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
     private int _pomodoroCount = 0; // Tracks which pomodoro we're on (0-3)
 
     private int _workDurationSeconds; // The original work duration (without grace period)
-    private PomodoroSessionDto? _currentSession;
     private PomodoroSettingsDto? _settings;
 
     // Setup screen properties
-    private ObservableCollection<ClientDto> _clients = new();
-    private ObservableCollection<ProjectDto> _projects = new();
-    private ClientDto? _selectedClient;
-    private ProjectDto? _selectedProject;
     private string _objective = string.Empty;
     private int _durationMinutes;
 
     // Timer display properties
-    private string _timerDisplay = "00:00";
     private double _progressPercentage;
 
     /// <summary>
@@ -123,22 +111,16 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         IActiveTimerService activeTimerService,
         IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
+        : base(sessionService, clientService, projectService, activeTimerService, pomodoroStateService, timer)
     {
-        _sessionService = sessionService;
         _settingsService = settingsService;
-        _clientService = clientService;
-        _projectService = projectService;
         _audioService = audioService;
-        _activeTimerService = activeTimerService;
-        _pomodoroStateService = pomodoroStateService;
-        _timer = timer;
 
-        _timer.Interval = TimeSpan.FromSeconds(1);
-        _timer.Tick += Timer_Tick;
+        Timer.Tick += Timer_Tick;
 
         StartPomodoroCommand = new AsyncRelayCommand(StartPomodoroAsync, CanStartPomodoro);
         PauseResumeCommand = new RelayCommand(PauseResume, CanPauseResume);
-        StopCommand = new AsyncRelayCommand(ShowStopDialogAsync, CanStop);
+        StopCommand = new AsyncRelayCommand(ShowStopDialogInternalAsync, CanStop);
     }
 
     #region Properties
@@ -170,25 +152,17 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         }
     }
 
-    /// <summary>
-    /// Gets a value indicating whether the timer is in Setup state.
-    /// </summary>
-    public bool IsSetupState => State == PomodoroState.Setup;
+    /// <inheritdoc/>
+    public override bool IsSetupState => State == PomodoroState.Setup;
 
-    /// <summary>
-    /// Gets a value indicating whether the timer is actively running.
-    /// </summary>
-    public bool IsRunningState => State == PomodoroState.Running;
+    /// <inheritdoc/>
+    public override bool IsRunningState => State == PomodoroState.Running;
 
-    /// <summary>
-    /// Gets a value indicating whether the timer is paused.
-    /// </summary>
-    public bool IsPausedState => State == PomodoroState.Paused;
+    /// <inheritdoc/>
+    public override bool IsPausedState => State == PomodoroState.Paused;
 
-    /// <summary>
-    /// Gets a value indicating whether the timer is in wrap up period.
-    /// </summary>
-    public bool IsWrapUpState => State == PomodoroState.WrapUp;
+    /// <inheritdoc/>
+    public override bool IsWrapUpState => State == PomodoroState.WrapUp;
 
     /// <summary>
     /// Gets a value indicating whether the timer is in a break period.
@@ -207,61 +181,10 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
     /// </summary>
     public bool IsNotBreakState => !IsBreakState;
 
-    /// <summary>
-    /// Gets or sets the collection of available clients.
-    /// </summary>
-    public ObservableCollection<ClientDto> Clients
+    /// <inheritdoc/>
+    protected override void OnSelectedProjectChanged()
     {
-        get => _clients;
-        set => SetProperty(ref _clients, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the collection of projects for the selected client.
-    /// Filtered automatically when client selection changes.
-    /// </summary>
-    public ObservableCollection<ProjectDto> Projects
-    {
-        get => _projects;
-        set => SetProperty(ref _projects, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the selected client.
-    /// When changed, automatically loads projects for that client.
-    /// </summary>
-    public ClientDto? SelectedClient
-    {
-        get => _selectedClient;
-        set
-        {
-            if (SetProperty(ref _selectedClient, value))
-            {
-                OnPropertyChanged(nameof(IsClientSelected));
-                _ = LoadProjectsForClientAsync();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets a value indicating whether a client is currently selected.
-    /// Used to enable/disable the project dropdown.
-    /// </summary>
-    public bool IsClientSelected => SelectedClient != null;
-
-    /// <summary>
-    /// Gets or sets the selected project for this session.
-    /// </summary>
-    public ProjectDto? SelectedProject
-    {
-        get => _selectedProject;
-        set
-        {
-            if (SetProperty(ref _selectedProject, value))
-            {
-                ((AsyncRelayCommand)StartPomodoroCommand).NotifyCanExecuteChanged();
-            }
-        }
+        ((AsyncRelayCommand)StartPomodoroCommand).NotifyCanExecuteChanged();
     }
 
     /// <summary>
@@ -286,18 +209,14 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
     /// </summary>
     public string ObjectiveCharacterCount => $"{Objective.Length}/{ObjectiveMaxLength}";
 
-    /// <summary>
-    /// Gets the session description for TimerWindow display.
-    /// </summary>
-    public string SessionDescription => Objective;
-
-    /// <summary>
-    /// Gets a value indicating whether the timer counts up. Pomodoro always counts down.
-    /// </summary>
-    public bool CountsUp => false;
+    /// <inheritdoc/>
+    public override string SessionDescription => Objective;
 
     /// <inheritdoc/>
-    public bool ShowProgressMeter => true;
+    public override bool CountsUp => false;
+
+    /// <inheritdoc/>
+    public override bool ShowProgressMeter => true;
 
     /// <summary>
     /// Gets or sets the session duration in minutes.
@@ -309,35 +228,20 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         set => SetProperty(ref _durationMinutes, value);
     }
 
+    /// <inheritdoc/>
+    public override double ProgressPercentage => _progressPercentage;
+
     /// <summary>
-    /// Gets or sets the timer display string in MM:SS format.
+    /// Sets the progress percentage. Used internally by UpdateTimerDisplay.
     /// </summary>
-    public string TimerDisplay
+    private void SetProgressPercentage(double value)
     {
-        get => _timerDisplay;
-        set => SetProperty(ref _timerDisplay, value);
+        if (_progressPercentage != value)
+        {
+            _progressPercentage = value;
+            OnPropertyChanged(nameof(ProgressPercentage));
+        }
     }
-
-    /// <summary>
-    /// Gets or sets the progress percentage (0-100) for the progress ring.
-    /// </summary>
-    public double ProgressPercentage
-    {
-        get => _progressPercentage;
-        set => SetProperty(ref _progressPercentage, value);
-    }
-
-    /// <summary>
-    /// Gets the icon glyph for the pause/resume button.
-    /// Returns pause icon when running, play icon when paused.
-    /// </summary>
-    public string PauseResumeIcon => State == PomodoroState.Running ? "\uE769" : "\uE768"; // Pause : Play
-
-    /// <summary>
-    /// Gets the text for the pause/resume button.
-    /// Returns "Pause" when running, "Resume" when paused.
-    /// </summary>
-    public string PauseResumeText => IsPausedState ? "Resume" : "Pause";
 
     /// <summary>
     /// Gets the label describing the current session type.
@@ -365,23 +269,14 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
     /// </summary>
     public ICommand StartPomodoroCommand { get; }
 
-    /// <summary>
-    /// Gets the command to pause or resume the timer.
-    /// Available only when state is Running or Paused.
-    /// </summary>
-    public ICommand PauseResumeCommand { get; }
+    /// <inheritdoc/>
+    public override ICommand PauseResumeCommand { get; }
 
     /// <summary>
     /// Gets the command to stop the current session early.
     /// Shows a dialog with save, discard, or resume options.
     /// </summary>
     public ICommand StopCommand { get; }
-
-    /// <summary>
-    /// Gets or sets the callback function to show the stop confirmation dialog.
-    /// Set by the Page to maintain separation between ViewModel and View.
-    /// </summary>
-    public Func<Task<StopDialogResult>>? ShowStopDialog { get; set; }
 
     private bool CanStartPomodoro() => !string.IsNullOrWhiteSpace(Objective) && State == PomodoroState.Setup;
     private bool CanPauseResume() => State == PomodoroState.Running || State == PomodoroState.Paused || State == PomodoroState.WrapUp;
@@ -404,8 +299,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
             DurationMinutes = _settings.WorkDurationMinutes;
 
             // Load clients
-            var clients = await _clientService.GetAllClientsAsync();
-            Clients = new ObservableCollection<ClientDto>(clients);
+            await LoadClientsAsync();
 
             // Try to load last session's client/project
             await LoadLastSessionDataAsync();
@@ -422,7 +316,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
     /// During WrapUp, extends the wrap up period instead of the work period.
     /// </summary>
     /// <param name="minutes">Number of minutes to add</param>
-    public void AddMinutes(int minutes)
+    public override void AddMinutes(int minutes)
     {
         // Only allow adding time during active work sessions and wrap up period (not during breaks)
         if (State != PomodoroState.Running &&
@@ -439,11 +333,8 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         UpdateTimerDisplay();
     }
 
-    /// <summary>
-    /// Gets the elapsed time in seconds for the current work session.
-    /// Returns the time that has passed since the work period started.
-    /// </summary>
-    public int ElapsedSeconds
+    /// <inheritdoc/>
+    public override int ElapsedSeconds
     {
         get
         {
@@ -463,71 +354,67 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
 
     #endregion
 
+    #region Abstract Member Implementations
+
+    /// <inheritdoc/>
+    protected override ActiveTimerType TimerType => ActiveTimerType.Pomodoro;
+
+    /// <inheritdoc/>
+    protected override SessionType SessionTypeValue => SessionType.Work;
+
+    /// <inheritdoc/>
+    protected override string GetStopNotes()
+    {
+        return IsWrapUpState
+            ? $"Stopped during wrap up period with {TimerDisplay} remaining"
+            : $"Stopped early at {TimerDisplay}";
+    }
+
+    /// <inheritdoc/>
+    protected override bool IsCompletedWhenStopped() => IsWrapUpState;
+
+    /// <inheritdoc/>
+    protected override void PauseResumeCore()
+    {
+        if (State == PomodoroState.Running || State == PomodoroState.WrapUp)
+        {
+            Timer.Stop();
+            State = PomodoroState.Paused;
+        }
+        else if (State == PomodoroState.Paused)
+        {
+            Timer.Start();
+            // Return to appropriate state based on remaining time
+            State = _remainingSeconds > 0 ? PomodoroState.Running : PomodoroState.WrapUp;
+        }
+
+        OnPropertyChanged(nameof(PauseResumeIcon));
+    }
+
+    /// <inheritdoc/>
+    protected override void ResetToSetupCore()
+    {
+        // Clear active timer when fully resetting to setup
+        ClearActiveTimer();
+
+        State = PomodoroState.Setup;
+        Objective = string.Empty;
+        DurationMinutes = _settings?.WorkDurationMinutes ?? 25;
+        TimerDisplay = "00:00";
+        SetProgressPercentage(0);
+        CurrentSession = null;
+
+        OnPropertyChanged(nameof(SessionTypeLabel));
+    }
+
+    #endregion
+
     #region Private Methods
-
-    private async Task LoadLastSessionDataAsync()
-    {
-        try
-        {
-            var sessions = await _sessionService.GetAllSessionsAsync();
-            var lastSession = sessions
-                .Where(s => s.SessionType == SessionType.Work)
-                .OrderByDescending(s => s.StartTime)
-                .FirstOrDefault();
-
-            if (lastSession?.ProjectId != null)
-            {
-                var project = await _projectService.GetProjectByIdAsync(lastSession.ProjectId.Value);
-                if (project != null)
-                {
-                    // Set client first
-                    SelectedClient = Clients.FirstOrDefault(c => c.Id == project.ClientId);
-
-                    // Projects will be loaded by SelectedClient setter
-                    // Wait a bit for async loading
-                    await Task.Delay(100);
-
-                    // Then set project
-                    SelectedProject = Projects.FirstOrDefault(p => p.Id == project.Id);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error loading last session data: {ex.Message}");
-        }
-    }
-
-    private async Task LoadProjectsForClientAsync()
-    {
-        if (SelectedClient == null)
-        {
-            Projects.Clear();
-            SelectedProject = null;
-            return;
-        }
-
-        try
-        {
-            var projects = await _projectService.GetProjectsByClientIdAsync(SelectedClient.Id);
-            Projects = new ObservableCollection<ProjectDto>(projects);
-
-            // Clear selection if previous project doesn't belong to new client
-            if (SelectedProject != null && !Projects.Any(p => p.Id == SelectedProject.Id))
-            {
-                SelectedProject = null;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error loading projects: {ex.Message}");
-        }
-    }
 
     private async Task StartPomodoroAsync()
     {
         // Try to set this as the active timer
-        if (!_activeTimerService.TrySetActiveTimer(ActiveTimerType.Pomodoro))
+        if (!TrySetActiveTimer())
         {
             return; // Another timer is active
         }
@@ -543,7 +430,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
                 Objective = Objective
             };
 
-            _currentSession = await _sessionService.CreateSessionAsync(createDto);
+            CurrentSession = await SessionService.CreateSessionAsync(createDto);
 
             // Initialize timer
             // Total time = work duration + wrap up period
@@ -555,7 +442,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
             UpdateTimerDisplay();
 
             State = PomodoroState.Running;
-            _timer.Start();
+            Timer.Start();
         }
         catch (Exception ex)
         {
@@ -565,102 +452,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
 
     private void PauseResume()
     {
-        if (State == PomodoroState.Running || State == PomodoroState.WrapUp)
-        {
-            _timer.Stop();
-            State = PomodoroState.Paused;
-        }
-        else if (State == PomodoroState.Paused)
-        {
-            _timer.Start();
-            // Return to appropriate state based on remaining time
-            State = _remainingSeconds > 0 ? PomodoroState.Running : PomodoroState.WrapUp;
-        }
-
-        OnPropertyChanged(nameof(PauseResumeIcon));
-    }
-
-    private async Task ShowStopDialogAsync()
-    {
-        // Pause timer while dialog is showing
-        bool wasRunning = State == PomodoroState.Running;
-        if (wasRunning)
-        {
-            PauseResume();
-        }
-
-        if (ShowStopDialog != null)
-        {
-            var result = await ShowStopDialog();
-
-            switch (result)
-            {
-                case StopDialogResult.Resume:
-                    if (wasRunning)
-                    {
-                        PauseResume(); // Resume
-                    }
-                    break;
-
-                case StopDialogResult.Save:
-                    await SaveAndStopAsync();
-                    break;
-
-                case StopDialogResult.Discard:
-                    await DiscardAndStopAsync();
-                    break;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Saves the current session as a partial completion and returns to setup.
-    /// Called when user chooses "Save" from the stop dialog.
-    /// </summary>
-    public async Task SaveAndStopAsync()
-    {
-        _timer.Stop();
-
-        if (_currentSession != null)
-        {
-            string notes = IsWrapUpState
-                ? $"Stopped during wrap up period with {_timerDisplay} remaining"
-                : $"Stopped early at {_timerDisplay}";
-
-            // Save the session with current progress
-            var updateDto = new UpdatePomodoroSessionDto
-            {
-                Id = _currentSession.Id,
-                ProjectId = _currentSession.ProjectId,
-                StartTime = _currentSession.StartTime,
-                EndTime = DateTime.UtcNow,
-                DurationMinutes = _currentSession.DurationMinutes,
-                IsCompleted = IsWrapUpState, // If in wrap up period, work was completed
-                SessionType = _currentSession.SessionType,
-                Objective = _currentSession.Objective,
-                Notes = notes
-            };
-
-            await _sessionService.UpdateSessionAsync(updateDto);
-        }
-
-        ResetToSetup();
-    }
-
-    /// <summary>
-    /// Deletes the current session and returns to setup.
-    /// Called when user chooses "Discard" from the stop dialog.
-    /// </summary>
-    public async Task DiscardAndStopAsync()
-    {
-        _timer.Stop();
-
-        if (_currentSession != null)
-        {
-            await _sessionService.DeleteSessionAsync(_currentSession.Id);
-        }
-
-        ResetToSetup();
+        PauseResumeCore();
     }
 
     private void Timer_Tick(object? sender, object e)
@@ -699,16 +491,16 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         {
             // During wrap up, show progress as counting down wrap up period
             int wrapUpPeriodSeconds = (_settings?.WrapUpPeriodMinutes ?? 3) * 60;
-            ProgressPercentage = wrapUpPeriodSeconds > 0
+            SetProgressPercentage(wrapUpPeriodSeconds > 0
                 ? ((double)(wrapUpPeriodSeconds - _remainingSeconds) / wrapUpPeriodSeconds) * 100
-                : 100;
+                : 100);
         }
         else
         {
             // During work, show progress towards work duration
-            ProgressPercentage = _workDurationSeconds > 0
+            SetProgressPercentage(_workDurationSeconds > 0
                 ? ((double)(_workDurationSeconds - _remainingSeconds) / _workDurationSeconds) * 100
-                : 0;
+                : 0);
         }
     }
 
@@ -724,7 +516,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
 
     private async void OnTimerComplete()
     {
-        _timer.Stop();
+        Timer.Stop();
 
         System.Diagnostics.Debug.WriteLine("Main alarm - Timer complete!");
 
@@ -734,21 +526,21 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         }
 
         // Complete current session if it's a work session (including wrap up)
-        if (_currentSession != null && (State == PomodoroState.WrapUp || State == PomodoroState.Running))
+        if (CurrentSession != null && (State == PomodoroState.WrapUp || State == PomodoroState.Running))
         {
-            await _sessionService.CompleteSessionAsync(_currentSession.Id);
+            await SessionService.CompleteSessionAsync(CurrentSession.Id);
         }
 
         if (State == PomodoroState.Break)
         {
             // Break finished, return to setup for next pomodoro
-            ResetToSetup();
+            ResetToSetupCore();
         }
         else
         {
             // Pomodoro finished (wrap up period ended), start appropriate break
             _pomodoroCount++;
-            _pomodoroStateService.CurrentPomodoroCount = _pomodoroCount;
+            PomodoroStateService.CurrentPomodoroCount = _pomodoroCount;
             await StartBreakAsync();
         }
     }
@@ -766,7 +558,7 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         if (isLongBreak)
         {
             _pomodoroCount = 0; // Reset cycle
-            _pomodoroStateService.ResetCycle();
+            PomodoroStateService.ResetCycle();
         }
 
         _totalSeconds = breakDuration * 60;
@@ -776,24 +568,9 @@ public sealed partial class PomodoroViewModel : ViewModelBase, ITimerWindowViewM
         OnPropertyChanged(nameof(SessionTypeLabel));
 
         State = PomodoroState.Break;
-        _timer.Start();
+        Timer.Start();
 
         await Task.CompletedTask;
-    }
-
-    private void ResetToSetup()
-    {
-        // Clear active timer when fully resetting to setup
-        _activeTimerService.ClearActiveTimer();
-
-        State = PomodoroState.Setup;
-        Objective = string.Empty;
-        DurationMinutes = _settings?.WorkDurationMinutes ?? 25;
-        TimerDisplay = "00:00";
-        ProgressPercentage = 0;
-        _currentSession = null;
-
-        OnPropertyChanged(nameof(SessionTypeLabel));
     }
 
     #endregion

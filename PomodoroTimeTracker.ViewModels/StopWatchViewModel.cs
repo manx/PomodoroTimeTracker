@@ -34,33 +34,16 @@ public enum StopWatchState
 /// Simple timer that counts up indefinitely with no duration limit, wrap-up period, or sounds.
 /// Sessions are saved with SessionType.StopWatch.
 /// </summary>
-public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowViewModel
+public sealed partial class StopWatchViewModel : TimerViewModelBase
 {
     /// <summary>
     /// Maximum length for the description text field.
     /// </summary>
     public const int DescriptionMaxLength = 90;
 
-    private readonly IPomodoroSessionService _sessionService;
-    private readonly IClientService _clientService;
-    private readonly IProjectService _projectService;
-    private readonly IActiveTimerService _activeTimerService;
-    private readonly IPomodoroStateService _pomodoroStateService;
-    private readonly IDispatcherTimer _timer;
-
     private StopWatchState _state = StopWatchState.Setup;
     private int _elapsedSeconds;
-    private PomodoroSessionDto? _currentSession;
-
-    // Setup screen properties
-    private ObservableCollection<ClientDto> _clients = new();
-    private ObservableCollection<ProjectDto> _projects = new();
-    private ClientDto? _selectedClient;
-    private ProjectDto? _selectedProject;
     private string _description = string.Empty;
-
-    // Timer display properties
-    private string _timerDisplay = "00:00";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StopWatchViewModel"/> class.
@@ -72,20 +55,13 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
         IActiveTimerService activeTimerService,
         IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
+        : base(sessionService, clientService, projectService, activeTimerService, pomodoroStateService, timer)
     {
-        _sessionService = sessionService;
-        _clientService = clientService;
-        _projectService = projectService;
-        _activeTimerService = activeTimerService;
-        _pomodoroStateService = pomodoroStateService;
-        _timer = timer;
-
-        _timer.Interval = TimeSpan.FromSeconds(1);
-        _timer.Tick += Timer_Tick;
+        Timer.Tick += Timer_Tick;
 
         StartTimerCommand = new AsyncRelayCommand(StartTimerAsync, CanStartTimer);
         PauseResumeCommand = new RelayCommand(PauseResume, CanPauseResume);
-        StopCommand = new AsyncRelayCommand(ShowStopDialogAsync, CanStop);
+        StopCommand = new AsyncRelayCommand(ShowStopDialogInternalAsync, CanStop);
     }
 
     #region Properties
@@ -103,6 +79,7 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
                 OnPropertyChanged(nameof(IsSetupState));
                 OnPropertyChanged(nameof(IsRunningState));
                 OnPropertyChanged(nameof(IsPausedState));
+                OnPropertyChanged(nameof(IsWrapUpState));
                 OnPropertyChanged(nameof(IsTimerActive));
                 OnPropertyChanged(nameof(PauseResumeText));
                 ((AsyncRelayCommand)StartTimerCommand).NotifyCanExecuteChanged();
@@ -112,20 +89,20 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
         }
     }
 
-    /// <summary>
-    /// Gets a value indicating whether the timer is in Setup state.
-    /// </summary>
-    public bool IsSetupState => State == StopWatchState.Setup;
+    /// <inheritdoc/>
+    public override bool IsSetupState => State == StopWatchState.Setup;
 
-    /// <summary>
-    /// Gets a value indicating whether the timer is actively running.
-    /// </summary>
-    public bool IsRunningState => State == StopWatchState.Running;
+    /// <inheritdoc/>
+    public override bool IsRunningState => State == StopWatchState.Running;
 
-    /// <summary>
-    /// Gets a value indicating whether the timer is paused.
-    /// </summary>
-    public bool IsPausedState => State == StopWatchState.Paused;
+    /// <inheritdoc/>
+    public override bool IsPausedState => State == StopWatchState.Paused;
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// StopWatch has no wrap up state, so this always returns false.
+    /// </remarks>
+    public override bool IsWrapUpState => false;
 
     /// <summary>
     /// Gets a value indicating whether the timer is active (running or paused).
@@ -136,60 +113,12 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
     /// Gets a value indicating whether there's an active Pomodoro cycle.
     /// Used to show warning to user.
     /// </summary>
-    public bool ShowCycleWarning => _pomodoroStateService.CurrentPomodoroCount > 0;
+    public bool ShowCycleWarning => PomodoroStateService.CurrentPomodoroCount > 0;
 
-    /// <summary>
-    /// Gets or sets the collection of available clients.
-    /// </summary>
-    public ObservableCollection<ClientDto> Clients
+    /// <inheritdoc/>
+    protected override void OnSelectedProjectChanged()
     {
-        get => _clients;
-        set => SetProperty(ref _clients, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the collection of projects for the selected client.
-    /// </summary>
-    public ObservableCollection<ProjectDto> Projects
-    {
-        get => _projects;
-        set => SetProperty(ref _projects, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the selected client.
-    /// </summary>
-    public ClientDto? SelectedClient
-    {
-        get => _selectedClient;
-        set
-        {
-            if (SetProperty(ref _selectedClient, value))
-            {
-                OnPropertyChanged(nameof(IsClientSelected));
-                _ = LoadProjectsForClientAsync();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets a value indicating whether a client is currently selected.
-    /// </summary>
-    public bool IsClientSelected => SelectedClient != null;
-
-    /// <summary>
-    /// Gets or sets the selected project for this session.
-    /// </summary>
-    public ProjectDto? SelectedProject
-    {
-        get => _selectedProject;
-        set
-        {
-            if (SetProperty(ref _selectedProject, value))
-            {
-                ((AsyncRelayCommand)StartTimerCommand).NotifyCanExecuteChanged();
-            }
-        }
+        ((AsyncRelayCommand)StartTimerCommand).NotifyCanExecuteChanged();
     }
 
     /// <summary>
@@ -214,45 +143,23 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
     /// </summary>
     public string DescriptionCharacterCount => $"{Description.Length}/{DescriptionMaxLength}";
 
-    /// <summary>
-    /// Gets the session description for TimerWindow display.
-    /// </summary>
-    public string SessionDescription => Description;
+    /// <inheritdoc/>
+    public override string SessionDescription => Description;
 
-    /// <summary>
-    /// Gets a value indicating whether the timer counts up. Stopwatch always counts up.
-    /// </summary>
-    public bool CountsUp => true;
+    /// <inheritdoc/>
+    public override bool CountsUp => true;
 
     /// <inheritdoc/>
     /// <remarks>
     /// Stopwatch has no progress to track, so meter is not shown.
     /// </remarks>
-    public bool ShowProgressMeter => false;
+    public override bool ShowProgressMeter => false;
 
-    /// <summary>
-    /// Gets or sets the timer display string in HH:MM:SS or MM:SS format.
-    /// </summary>
-    public string TimerDisplay
-    {
-        get => _timerDisplay;
-        set => SetProperty(ref _timerDisplay, value);
-    }
-
-    /// <summary>
-    /// Gets the progress percentage (always 0 for stopwatch - no progress to track).
-    /// </summary>
-    public double ProgressPercentage => 0;
-
-    /// <summary>
-    /// Gets the icon glyph for the pause/resume button.
-    /// </summary>
-    public string PauseResumeIcon => State == StopWatchState.Running ? "\uE769" : "\uE768";
-
-    /// <summary>
-    /// Gets the text for the pause/resume button.
-    /// </summary>
-    public string PauseResumeText => IsPausedState ? "Resume" : "Pause";
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Stopwatch always returns 0 - no progress to track.
+    /// </remarks>
+    public override double ProgressPercentage => 0;
 
     #endregion
 
@@ -263,20 +170,13 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
     /// </summary>
     public ICommand StartTimerCommand { get; }
 
-    /// <summary>
-    /// Gets the command to pause or resume the timer.
-    /// </summary>
-    public ICommand PauseResumeCommand { get; }
+    /// <inheritdoc/>
+    public override ICommand PauseResumeCommand { get; }
 
     /// <summary>
     /// Gets the command to stop the current session early.
     /// </summary>
     public ICommand StopCommand { get; }
-
-    /// <summary>
-    /// Gets or sets the callback function to show the stop confirmation dialog.
-    /// </summary>
-    public Func<Task<StopDialogResult>>? ShowStopDialog { get; set; }
 
     private bool CanStartTimer() => !string.IsNullOrWhiteSpace(Description) && State == StopWatchState.Setup;
     private bool CanPauseResume() => State == StopWatchState.Running || State == StopWatchState.Paused;
@@ -294,8 +194,7 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
         try
         {
             // Load clients
-            var clients = await _clientService.GetAllClientsAsync();
-            Clients = new ObservableCollection<ClientDto>(clients);
+            await LoadClientsAsync();
 
             // Refresh warning state
             OnPropertyChanged(nameof(ShowCycleWarning));
@@ -309,83 +208,82 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
         }
     }
 
-    /// <summary>
-    /// Adds time to the current timer session.
+    /// <inheritdoc/>
+    /// <remarks>
     /// For stopwatch, this doesn't make much sense (already counting up indefinitely),
     /// but included for interface compatibility. Does nothing for stopwatch.
-    /// </summary>
-    /// <param name="minutes">Number of minutes to add (ignored for stopwatch)</param>
-    public void AddMinutes(int minutes)
+    /// </remarks>
+    public override void AddMinutes(int minutes)
     {
         // Stopwatch counts up indefinitely - adding time doesn't make sense
         // Method exists only for ITimerWindowViewModel interface compatibility
     }
 
-    /// <summary>
-    /// Gets the elapsed time in seconds for the current session.
-    /// </summary>
-    public int ElapsedSeconds => _elapsedSeconds;
+    /// <inheritdoc/>
+    public override int ElapsedSeconds => _elapsedSeconds;
+
+    #endregion
+
+    #region Abstract Implementations
+
+    /// <inheritdoc/>
+    protected override ActiveTimerType TimerType => ActiveTimerType.StopWatch;
+
+    /// <inheritdoc/>
+    protected override SessionType SessionTypeValue => SessionType.StopWatch;
+
+    /// <inheritdoc/>
+    protected override string GetStopNotes()
+    {
+        return $"Stopped at {TimerDisplay}";
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Stopwatch is always considered completed when stopped.
+    /// </remarks>
+    protected override bool IsCompletedWhenStopped() => true;
+
+    /// <inheritdoc/>
+    protected override void PauseResumeCore()
+    {
+        if (State == StopWatchState.Running)
+        {
+            Timer.Stop();
+            State = StopWatchState.Paused;
+        }
+        else if (State == StopWatchState.Paused)
+        {
+            Timer.Start();
+            State = StopWatchState.Running;
+        }
+
+        OnPropertyChanged(nameof(PauseResumeIcon));
+    }
+
+    /// <inheritdoc/>
+    protected override void ResetToSetupCore()
+    {
+        // Clear active timer when resetting to setup
+        ClearActiveTimer();
+
+        State = StopWatchState.Setup;
+        Description = string.Empty;
+        TimerDisplay = "00:00";
+        _elapsedSeconds = 0;
+        CurrentSession = null;
+
+        OnPropertyChanged(nameof(ShowCycleWarning));
+    }
 
     #endregion
 
     #region Private Methods
 
-    private async Task LoadLastSessionDataAsync()
-    {
-        try
-        {
-            var sessions = await _sessionService.GetAllSessionsAsync();
-            var lastSession = sessions
-                .Where(s => s.SessionType == SessionType.StopWatch)
-                .OrderByDescending(s => s.StartTime)
-                .FirstOrDefault();
-
-            if (lastSession?.ProjectId != null)
-            {
-                var project = await _projectService.GetProjectByIdAsync(lastSession.ProjectId.Value);
-                if (project != null)
-                {
-                    SelectedClient = Clients.FirstOrDefault(c => c.Id == project.ClientId);
-                    await Task.Delay(100);
-                    SelectedProject = Projects.FirstOrDefault(p => p.Id == project.Id);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error loading last session data: {ex.Message}");
-        }
-    }
-
-    private async Task LoadProjectsForClientAsync()
-    {
-        if (SelectedClient == null)
-        {
-            Projects.Clear();
-            SelectedProject = null;
-            return;
-        }
-
-        try
-        {
-            var projects = await _projectService.GetProjectsByClientIdAsync(SelectedClient.Id);
-            Projects = new ObservableCollection<ProjectDto>(projects);
-
-            if (SelectedProject != null && !Projects.Any(p => p.Id == SelectedProject.Id))
-            {
-                SelectedProject = null;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error loading projects: {ex.Message}");
-        }
-    }
-
     private async Task StartTimerAsync()
     {
         // Try to set this as the active timer
-        if (!_activeTimerService.TrySetActiveTimer(ActiveTimerType.StopWatch))
+        if (!TrySetActiveTimer())
         {
             return; // Another timer is active
         }
@@ -393,7 +291,7 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
         try
         {
             // Reset Pomodoro cycle when starting Stopwatch
-            _pomodoroStateService.ResetCycle();
+            PomodoroStateService.ResetCycle();
             OnPropertyChanged(nameof(ShowCycleWarning));
 
             // Create session with SessionType.StopWatch
@@ -406,7 +304,7 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
                 Objective = Description  // Using Description for the Objective field
             };
 
-            _currentSession = await _sessionService.CreateSessionAsync(createDto);
+            CurrentSession = await SessionService.CreateSessionAsync(createDto);
 
             // Initialize timer
             _elapsedSeconds = 0;
@@ -414,7 +312,7 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
             UpdateTimerDisplay();
 
             State = StopWatchState.Running;
-            _timer.Start();
+            Timer.Start();
         }
         catch (Exception ex)
         {
@@ -424,94 +322,9 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
 
     private void PauseResume()
     {
-        if (State == StopWatchState.Running)
-        {
-            _timer.Stop();
-            State = StopWatchState.Paused;
-        }
-        else if (State == StopWatchState.Paused)
-        {
-            _timer.Start();
-            State = StopWatchState.Running;
-        }
-
-        OnPropertyChanged(nameof(PauseResumeIcon));
+        PauseResumeCore();
     }
 
-    private async Task ShowStopDialogAsync()
-    {
-        bool wasRunning = State == StopWatchState.Running;
-        if (wasRunning)
-        {
-            PauseResume();
-        }
-
-        if (ShowStopDialog != null)
-        {
-            var result = await ShowStopDialog();
-
-            switch (result)
-            {
-                case StopDialogResult.Resume:
-                    if (wasRunning)
-                    {
-                        PauseResume();
-                    }
-                    break;
-
-                case StopDialogResult.Save:
-                    await SaveAndStopAsync();
-                    break;
-
-                case StopDialogResult.Discard:
-                    await DiscardAndStopAsync();
-                    break;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Saves the current session and returns to setup.
-    /// </summary>
-    public async Task SaveAndStopAsync()
-    {
-        _timer.Stop();
-
-        if (_currentSession != null)
-        {
-            var updateDto = new UpdatePomodoroSessionDto
-            {
-                Id = _currentSession.Id,
-                ProjectId = _currentSession.ProjectId,
-                StartTime = _currentSession.StartTime,
-                EndTime = DateTime.UtcNow,
-                DurationMinutes = _currentSession.DurationMinutes,
-                IsCompleted = true, // Stopwatch is always considered completed when stopped
-                SessionType = _currentSession.SessionType,
-                Objective = _currentSession.Objective,
-                Notes = $"Stopped at {_timerDisplay}"
-            };
-
-            await _sessionService.UpdateSessionAsync(updateDto);
-        }
-
-        ResetToSetup();
-    }
-
-    /// <summary>
-    /// Deletes the current session and returns to setup.
-    /// </summary>
-    public async Task DiscardAndStopAsync()
-    {
-        _timer.Stop();
-
-        if (_currentSession != null)
-        {
-            await _sessionService.DeleteSessionAsync(_currentSession.Id);
-        }
-
-        ResetToSetup();
-    }
 
     private void Timer_Tick(object? sender, EventArgs e)
     {
@@ -535,20 +348,6 @@ public sealed partial class StopWatchViewModel : ViewModelBase, ITimerWindowView
         {
             TimerDisplay = $"{minutes:D2}:{seconds:D2}";
         }
-    }
-
-    private void ResetToSetup()
-    {
-        // Clear active timer when resetting to setup
-        _activeTimerService.ClearActiveTimer();
-
-        State = StopWatchState.Setup;
-        Description = string.Empty;
-        TimerDisplay = "00:00";
-        _elapsedSeconds = 0;
-        _currentSession = null;
-
-        OnPropertyChanged(nameof(ShowCycleWarning));
     }
 
     #endregion

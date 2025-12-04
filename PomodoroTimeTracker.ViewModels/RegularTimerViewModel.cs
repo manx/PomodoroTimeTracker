@@ -45,40 +45,28 @@ public enum RegularTimerState
 /// Simplified timer without Pomodoro cycle tracking.
 /// Sessions are saved with SessionType.Regular.
 /// </summary>
-public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowViewModel
+public sealed partial class RegularTimerViewModel : TimerViewModelBase
 {
     /// <summary>
     /// Maximum length for the description text field.
     /// </summary>
     public const int DescriptionMaxLength = 90;
 
-    private readonly IPomodoroSessionService _sessionService;
     private readonly IPomodoroSettingsService _settingsService;
-    private readonly IClientService _clientService;
-    private readonly IProjectService _projectService;
     private readonly IAudioService _audioService;
-    private readonly IActiveTimerService _activeTimerService;
-    private readonly IPomodoroStateService _pomodoroStateService;
-    private readonly IDispatcherTimer _timer;
 
     private RegularTimerState _state = RegularTimerState.Setup;
     private int _elapsedSeconds;
     private int _remainingSeconds;
     private int _totalSeconds;
     private int _workDurationSeconds;
-    private PomodoroSessionDto? _currentSession;
     private PomodoroSettingsDto? _settings;
 
     // Setup screen properties
-    private ObservableCollection<ClientDto> _clients = new();
-    private ObservableCollection<ProjectDto> _projects = new();
-    private ClientDto? _selectedClient;
-    private ProjectDto? _selectedProject;
     private string _description = string.Empty;
     private int _durationMinutes;
 
     // Timer display properties
-    private string _timerDisplay = "00:00";
     private double _progressPercentage;
 
     /// <summary>
@@ -101,22 +89,16 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
         IActiveTimerService activeTimerService,
         IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
+        : base(sessionService, clientService, projectService, activeTimerService, pomodoroStateService, timer)
     {
-        _sessionService = sessionService;
         _settingsService = settingsService;
-        _clientService = clientService;
-        _projectService = projectService;
         _audioService = audioService;
-        _activeTimerService = activeTimerService;
-        _pomodoroStateService = pomodoroStateService;
-        _timer = timer;
 
-        _timer.Interval = TimeSpan.FromSeconds(1);
-        _timer.Tick += Timer_Tick;
+        Timer.Tick += Timer_Tick;
 
         StartTimerCommand = new AsyncRelayCommand(StartTimerAsync, CanStartTimer);
         PauseResumeCommand = new RelayCommand(PauseResume, CanPauseResume);
-        StopCommand = new AsyncRelayCommand(ShowStopDialogAsync, CanStop);
+        StopCommand = new AsyncRelayCommand(ShowStopDialogInternalAsync, CanStop);
     }
 
     #region Properties
@@ -145,25 +127,17 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
         }
     }
 
-    /// <summary>
-    /// Gets a value indicating whether the timer is in Setup state.
-    /// </summary>
-    public bool IsSetupState => State == RegularTimerState.Setup;
+    /// <inheritdoc/>
+    public override bool IsSetupState => State == RegularTimerState.Setup;
 
-    /// <summary>
-    /// Gets a value indicating whether the timer is actively running.
-    /// </summary>
-    public bool IsRunningState => State == RegularTimerState.Running;
+    /// <inheritdoc/>
+    public override bool IsRunningState => State == RegularTimerState.Running;
 
-    /// <summary>
-    /// Gets a value indicating whether the timer is paused.
-    /// </summary>
-    public bool IsPausedState => State == RegularTimerState.Paused;
+    /// <inheritdoc/>
+    public override bool IsPausedState => State == RegularTimerState.Paused;
 
-    /// <summary>
-    /// Gets a value indicating whether the timer is in wrap up period.
-    /// </summary>
-    public bool IsWrapUpState => State == RegularTimerState.WrapUp;
+    /// <inheritdoc/>
+    public override bool IsWrapUpState => State == RegularTimerState.WrapUp;
 
     /// <summary>
     /// Gets a value indicating whether the timer is active (running, paused, or wrap up).
@@ -176,60 +150,12 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
     /// Gets a value indicating whether there's an active Pomodoro cycle.
     /// Used to show warning to user.
     /// </summary>
-    public bool ShowCycleWarning => _pomodoroStateService.CurrentPomodoroCount > 0;
+    public bool ShowCycleWarning => PomodoroStateService.CurrentPomodoroCount > 0;
 
-    /// <summary>
-    /// Gets or sets the collection of available clients.
-    /// </summary>
-    public ObservableCollection<ClientDto> Clients
+    /// <inheritdoc/>
+    protected override void OnSelectedProjectChanged()
     {
-        get => _clients;
-        set => SetProperty(ref _clients, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the collection of projects for the selected client.
-    /// </summary>
-    public ObservableCollection<ProjectDto> Projects
-    {
-        get => _projects;
-        set => SetProperty(ref _projects, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the selected client.
-    /// </summary>
-    public ClientDto? SelectedClient
-    {
-        get => _selectedClient;
-        set
-        {
-            if (SetProperty(ref _selectedClient, value))
-            {
-                OnPropertyChanged(nameof(IsClientSelected));
-                _ = LoadProjectsForClientAsync();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets a value indicating whether a client is currently selected.
-    /// </summary>
-    public bool IsClientSelected => SelectedClient != null;
-
-    /// <summary>
-    /// Gets or sets the selected project for this session.
-    /// </summary>
-    public ProjectDto? SelectedProject
-    {
-        get => _selectedProject;
-        set
-        {
-            if (SetProperty(ref _selectedProject, value))
-            {
-                ((AsyncRelayCommand)StartTimerCommand).NotifyCanExecuteChanged();
-            }
-        }
+        ((AsyncRelayCommand)StartTimerCommand).NotifyCanExecuteChanged();
     }
 
     /// <summary>
@@ -254,18 +180,14 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
     /// </summary>
     public string DescriptionCharacterCount => $"{Description.Length}/{DescriptionMaxLength}";
 
-    /// <summary>
-    /// Gets the session description for TimerWindow display.
-    /// </summary>
-    public string SessionDescription => Description;
-
-    /// <summary>
-    /// Gets a value indicating whether the timer counts up. Regular Timer counts up.
-    /// </summary>
-    public bool CountsUp => true;
+    /// <inheritdoc/>
+    public override string SessionDescription => Description;
 
     /// <inheritdoc/>
-    public bool ShowProgressMeter => true;
+    public override bool CountsUp => true;
+
+    /// <inheritdoc/>
+    public override bool ShowProgressMeter => true;
 
     /// <summary>
     /// Gets or sets the session duration in minutes.
@@ -276,33 +198,20 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
         set => SetProperty(ref _durationMinutes, value);
     }
 
+    /// <inheritdoc/>
+    public override double ProgressPercentage => _progressPercentage;
+
     /// <summary>
-    /// Gets or sets the timer display string in MM:SS format.
+    /// Sets the progress percentage. Used internally by UpdateTimerDisplay.
     /// </summary>
-    public string TimerDisplay
+    private void SetProgressPercentage(double value)
     {
-        get => _timerDisplay;
-        set => SetProperty(ref _timerDisplay, value);
+        if (_progressPercentage != value)
+        {
+            _progressPercentage = value;
+            OnPropertyChanged(nameof(ProgressPercentage));
+        }
     }
-
-    /// <summary>
-    /// Gets or sets the progress percentage (0-100) for the progress ring.
-    /// </summary>
-    public double ProgressPercentage
-    {
-        get => _progressPercentage;
-        set => SetProperty(ref _progressPercentage, value);
-    }
-
-    /// <summary>
-    /// Gets the icon glyph for the pause/resume button.
-    /// </summary>
-    public string PauseResumeIcon => State == RegularTimerState.Running ? "\uE769" : "\uE768";
-
-    /// <summary>
-    /// Gets the text for the pause/resume button.
-    /// </summary>
-    public string PauseResumeText => IsPausedState ? "Resume" : "Pause";
 
     /// <summary>
     /// Gets the label describing the current session type.
@@ -326,20 +235,13 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
     /// </summary>
     public ICommand StartTimerCommand { get; }
 
-    /// <summary>
-    /// Gets the command to pause or resume the timer.
-    /// </summary>
-    public ICommand PauseResumeCommand { get; }
+    /// <inheritdoc/>
+    public override ICommand PauseResumeCommand { get; }
 
     /// <summary>
     /// Gets the command to stop the current session early.
     /// </summary>
     public ICommand StopCommand { get; }
-
-    /// <summary>
-    /// Gets or sets the callback function to show the stop confirmation dialog.
-    /// </summary>
-    public Func<Task<StopDialogResult>>? ShowStopDialog { get; set; }
 
     private bool CanStartTimer() => !string.IsNullOrWhiteSpace(Description) && State == RegularTimerState.Setup;
     private bool CanPauseResume() => State == RegularTimerState.Running ||
@@ -366,8 +268,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
             DurationMinutes = 60;
 
             // Load clients
-            var clients = await _clientService.GetAllClientsAsync();
-            Clients = new ObservableCollection<ClientDto>(clients);
+            await LoadClientsAsync();
 
             // Refresh warning state
             OnPropertyChanged(nameof(ShowCycleWarning));
@@ -381,11 +282,8 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
         }
     }
 
-    /// <summary>
-    /// Adds time to the current timer session.
-    /// </summary>
-    /// <param name="minutes">Number of minutes to add</param>
-    public void AddMinutes(int minutes)
+    /// <inheritdoc/>
+    public override void AddMinutes(int minutes)
     {
         if (State != RegularTimerState.Running &&
             State != RegularTimerState.Paused &&
@@ -400,71 +298,73 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
         UpdateTimerDisplay();
     }
 
-    /// <summary>
-    /// Gets the elapsed time in seconds for the current session.
-    /// </summary>
-    public int ElapsedSeconds => _elapsedSeconds;
+    /// <inheritdoc/>
+    public override int ElapsedSeconds => _elapsedSeconds;
+
+    #endregion
+
+    #region Abstract Member Implementations
+
+    /// <inheritdoc/>
+    protected override ActiveTimerType TimerType => ActiveTimerType.RegularTimer;
+
+    /// <inheritdoc/>
+    protected override SessionType SessionTypeValue => SessionType.Regular;
+
+    /// <inheritdoc/>
+    protected override string GetStopNotes()
+    {
+        return IsWrapUpState
+            ? $"Stopped during wrap up period with {TimerDisplay} remaining"
+            : $"Stopped early at {TimerDisplay}";
+    }
+
+    /// <inheritdoc/>
+    protected override bool IsCompletedWhenStopped() => IsWrapUpState;
+
+    /// <inheritdoc/>
+    protected override void PauseResumeCore()
+    {
+        if (State == RegularTimerState.Running || State == RegularTimerState.WrapUp)
+        {
+            Timer.Stop();
+            State = RegularTimerState.Paused;
+        }
+        else if (State == RegularTimerState.Paused)
+        {
+            Timer.Start();
+            State = _remainingSeconds > 0 ? RegularTimerState.Running : RegularTimerState.WrapUp;
+        }
+
+        OnPropertyChanged(nameof(PauseResumeIcon));
+    }
+
+    /// <inheritdoc/>
+    protected override void ResetToSetupCore()
+    {
+        // Clear active timer when resetting to setup
+        ClearActiveTimer();
+
+        State = RegularTimerState.Setup;
+        Description = string.Empty;
+        DurationMinutes = 60; // Default for Regular Timer (TODO: add separate settings later)
+        TimerDisplay = "00:00";
+        SetProgressPercentage(0);
+        _elapsedSeconds = 0;
+        CurrentSession = null;
+
+        OnPropertyChanged(nameof(SessionTypeLabel));
+        OnPropertyChanged(nameof(ShowCycleWarning));
+    }
 
     #endregion
 
     #region Private Methods
 
-    private async Task LoadLastSessionDataAsync()
-    {
-        try
-        {
-            var sessions = await _sessionService.GetAllSessionsAsync();
-            var lastSession = sessions
-                .Where(s => s.SessionType == SessionType.Regular)
-                .OrderByDescending(s => s.StartTime)
-                .FirstOrDefault();
-
-            if (lastSession?.ProjectId != null)
-            {
-                var project = await _projectService.GetProjectByIdAsync(lastSession.ProjectId.Value);
-                if (project != null)
-                {
-                    SelectedClient = Clients.FirstOrDefault(c => c.Id == project.ClientId);
-                    await Task.Delay(100);
-                    SelectedProject = Projects.FirstOrDefault(p => p.Id == project.Id);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error loading last session data: {ex.Message}");
-        }
-    }
-
-    private async Task LoadProjectsForClientAsync()
-    {
-        if (SelectedClient == null)
-        {
-            Projects.Clear();
-            SelectedProject = null;
-            return;
-        }
-
-        try
-        {
-            var projects = await _projectService.GetProjectsByClientIdAsync(SelectedClient.Id);
-            Projects = new ObservableCollection<ProjectDto>(projects);
-
-            if (SelectedProject != null && !Projects.Any(p => p.Id == SelectedProject.Id))
-            {
-                SelectedProject = null;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error loading projects: {ex.Message}");
-        }
-    }
-
     private async Task StartTimerAsync()
     {
         // Try to set this as the active timer
-        if (!_activeTimerService.TrySetActiveTimer(ActiveTimerType.RegularTimer))
+        if (!TrySetActiveTimer())
         {
             return; // Another timer is active
         }
@@ -472,7 +372,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
         try
         {
             // Reset Pomodoro cycle when starting Regular Timer
-            _pomodoroStateService.ResetCycle();
+            PomodoroStateService.ResetCycle();
             OnPropertyChanged(nameof(ShowCycleWarning));
 
             // Create session with SessionType.Regular
@@ -484,7 +384,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
                 Objective = Description  // Using Description for the Objective field
             };
 
-            _currentSession = await _sessionService.CreateSessionAsync(createDto);
+            CurrentSession = await SessionService.CreateSessionAsync(createDto);
 
             // Initialize timer
             _workDurationSeconds = DurationMinutes * 60;
@@ -496,7 +396,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
             UpdateTimerDisplay();
 
             State = RegularTimerState.Running;
-            _timer.Start();
+            Timer.Start();
         }
         catch (Exception ex)
         {
@@ -506,97 +406,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
 
     private void PauseResume()
     {
-        if (State == RegularTimerState.Running || State == RegularTimerState.WrapUp)
-        {
-            _timer.Stop();
-            State = RegularTimerState.Paused;
-        }
-        else if (State == RegularTimerState.Paused)
-        {
-            _timer.Start();
-            State = _remainingSeconds > 0 ? RegularTimerState.Running : RegularTimerState.WrapUp;
-        }
-
-        OnPropertyChanged(nameof(PauseResumeIcon));
-    }
-
-    private async Task ShowStopDialogAsync()
-    {
-        bool wasRunning = State == RegularTimerState.Running;
-        if (wasRunning)
-        {
-            PauseResume();
-        }
-
-        if (ShowStopDialog != null)
-        {
-            var result = await ShowStopDialog();
-
-            switch (result)
-            {
-                case StopDialogResult.Resume:
-                    if (wasRunning)
-                    {
-                        PauseResume();
-                    }
-                    break;
-
-                case StopDialogResult.Save:
-                    await SaveAndStopAsync();
-                    break;
-
-                case StopDialogResult.Discard:
-                    await DiscardAndStopAsync();
-                    break;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Saves the current session as a partial completion and returns to setup.
-    /// </summary>
-    public async Task SaveAndStopAsync()
-    {
-        _timer.Stop();
-
-        if (_currentSession != null)
-        {
-            string notes = IsWrapUpState
-                ? $"Stopped during wrap up period with {_timerDisplay} remaining"
-                : $"Stopped early at {_timerDisplay}";
-
-            var updateDto = new UpdatePomodoroSessionDto
-            {
-                Id = _currentSession.Id,
-                ProjectId = _currentSession.ProjectId,
-                StartTime = _currentSession.StartTime,
-                EndTime = DateTime.UtcNow,
-                DurationMinutes = _currentSession.DurationMinutes,
-                IsCompleted = IsWrapUpState,
-                SessionType = _currentSession.SessionType,
-                Objective = _currentSession.Objective,
-                Notes = notes
-            };
-
-            await _sessionService.UpdateSessionAsync(updateDto);
-        }
-
-        ResetToSetup();
-    }
-
-    /// <summary>
-    /// Deletes the current session and returns to setup.
-    /// </summary>
-    public async Task DiscardAndStopAsync()
-    {
-        _timer.Stop();
-
-        if (_currentSession != null)
-        {
-            await _sessionService.DeleteSessionAsync(_currentSession.Id);
-        }
-
-        ResetToSetup();
+        PauseResumeCore();
     }
 
     private void Timer_Tick(object? sender, object e)
@@ -635,15 +445,15 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
         if (State == RegularTimerState.WrapUp)
         {
             int wrapUpPeriodSeconds = (_settings?.WrapUpPeriodMinutes ?? 3) * 60;
-            ProgressPercentage = wrapUpPeriodSeconds > 0
+            SetProgressPercentage(wrapUpPeriodSeconds > 0
                 ? ((double)(wrapUpPeriodSeconds - _remainingSeconds) / wrapUpPeriodSeconds) * 100
-                : 100;
+                : 100);
         }
         else
         {
-            ProgressPercentage = _workDurationSeconds > 0
+            SetProgressPercentage(_workDurationSeconds > 0
                 ? ((double)(_workDurationSeconds - _remainingSeconds) / _workDurationSeconds) * 100
-                : 0;
+                : 0);
         }
     }
 
@@ -659,7 +469,7 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
 
     private async void OnTimerComplete()
     {
-        _timer.Stop();
+        Timer.Stop();
 
         System.Diagnostics.Debug.WriteLine("Regular Timer: Timer complete!");
 
@@ -669,30 +479,13 @@ public sealed partial class RegularTimerViewModel : ViewModelBase, ITimerWindowV
         }
 
         // Complete the session
-        if (_currentSession != null)
+        if (CurrentSession != null)
         {
-            await _sessionService.CompleteSessionAsync(_currentSession.Id);
+            await SessionService.CompleteSessionAsync(CurrentSession.Id);
         }
 
         // Return to setup (no break cycle like Pomodoro)
-        ResetToSetup();
-    }
-
-    private void ResetToSetup()
-    {
-        // Clear active timer when resetting to setup
-        _activeTimerService.ClearActiveTimer();
-
-        State = RegularTimerState.Setup;
-        Description = string.Empty;
-        DurationMinutes = 60; // Default for Regular Timer (TODO: add separate settings later)
-        TimerDisplay = "00:00";
-        ProgressPercentage = 0;
-        _elapsedSeconds = 0;
-        _currentSession = null;
-
-        OnPropertyChanged(nameof(SessionTypeLabel));
-        OnPropertyChanged(nameof(ShowCycleWarning));
+        ResetToSetupCore();
     }
 
     #endregion
