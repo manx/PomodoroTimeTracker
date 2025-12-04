@@ -2,6 +2,15 @@
 
 This document contains technical notes, implementation details, and development history for the Pomodoro Time Tracker application.
 
+## Shared Guidelines
+
+@~/.claude/prompts/general/behavior/critical-thinking.md
+@~/.claude/prompts/general/behavior/communication-style.md
+@~/.claude/prompts/general/code-quality/self-review-checklist.md
+@~/.claude/prompts/general/code-quality/security-fundamentals.md
+
+---
+
 ## Project Overview
 
 A WinUI 3 desktop application implementing the Pomodoro Technique with comprehensive time tracking capabilities. Built using Clean Architecture and MVVM patterns.
@@ -14,6 +23,8 @@ A WinUI 3 desktop application implementing the Pomodoro Technique with comprehen
 - **Microsoft.Extensions.Hosting** for dependency injection
 - **WinUIEx** library for borderless window support
 - **Native ARM64 support** for Windows 11
+
+---
 
 ## Development Guidelines
 
@@ -34,46 +45,12 @@ A WinUI 3 desktop application implementing the Pomodoro Technique with comprehen
 
 ### Git Commit Standards
 
-**Commit Message Format:**
-```
-<type>(<scope>): <brief description>
-
-<detailed explanation>
-
-<footer>
-```
-
-**Types:** `feat`, `fix`, `refactor`, `test`, `docs`, `style`, `chore`, `perf`
-
-**Brief Description Rules:**
-- Imperative mood: "add", not "added" or "adds"
-- Lowercase start, no period at end
-- Maximum 50 characters
+See @~/.claude/prompts/general/git/commit-conventions.md for full format.
 
 **Project Scopes:**
-- `domain` - Domain entities, enums
-- `app` - Application layer (services, DTOs)
-- `infra` - Infrastructure (repositories, EF)
-- `ui` - WinUI3 (ViewModels, Views)
-- `test` - Test project
-- `config` - Configuration files
-- `ci` - CI/CD workflows
-
-**Single vs Multiple Commits:**
-- **ONE commit:** Tightly coupled changes (service + ViewModel + tests for same feature)
-- **MULTIPLE commits:** Logically separate changes (feature + unrelated docs)
-
-**Pre-Commit Cohesion Check:**
-Before committing, verify that all staged changes belong together logically:
-1. Run `git status` and `git diff --cached` to review what will be committed
-2. Check if changes span unrelated features or concerns
-3. If changes are NOT cohesive, ask the user how to proceed:
-   - Split into separate commits/PRs?
-   - Commit only part of the changes?
-   - Proceed anyway with a broader commit message?
+`domain`, `app`, `infra`, `ui`, `test`, `config`, `ci`
 
 **Footer:**
-- Always include: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 - Always include: `Co-Authored-By: Claude <noreply@anthropic.com>`
 - Issue links when applicable: `Fixes #123`
 
@@ -111,68 +88,18 @@ Before committing, verify that all staged changes belong together logically:
 
 ## Code Quality Standards
 
-**CRITICAL:** Before delivering ANY code, Claude MUST ensure it meets these quality standards:
+See shared prompts for detailed guidelines:
+- @~/.claude/prompts/general/code-quality/security-fundamentals.md
+- @~/.claude/prompts/general/code-quality/self-review-checklist.md
+- @~/.claude/prompts/dotnet/clean-architecture/layer-separation.md
+- @~/.claude/prompts/winui/mvvm/no-value-converters.md
 
-### 1. Security Requirements
+### Project-Specific Quality Rules
 
-- ✅ **No SQL Injection vulnerabilities** - Always use parameterized queries (EF Core handles this)
-- ✅ **Input validation** - Validate all user inputs at service layer
-- ✅ **Proper error handling** - Never expose stack traces or sensitive info to UI
-- ✅ **Secure defaults** - No hardcoded credentials, use user secrets for sensitive data
-
-### 2. Architecture & Design
-
-- ✅ **Clean Architecture layers** - Strictly maintain Domain → Application → Infrastructure → UI separation
-- ✅ **Dependency inversion** - Depend on abstractions (interfaces), not concrete implementations
-- ✅ **Single Responsibility** - Each class/method has ONE clear purpose
-- ✅ **DRY principle (with pragmatism)** - Extract common logic when it genuinely reduces complexity. Don't create helper functions for simple operations where inlined code is clearer. Cognitive load matters: jumping to another file to understand a simple operation is worse than repeating a few lines
-- ✅ **MVVM pattern** - ViewModels never reference UI controls, Views never contain business logic
-- ✅ **Keep it simple** - Don't add features, error handling, fallbacks, or abstractions beyond what's needed for the current task
-
-### 3. .NET & C# Best Practices
-
-- ✅ **Async/await properly** - All I/O operations async, propagate CancellationToken where applicable
-- ✅ **IDisposable pattern** - Implement correctly for resources (DbContext, etc.)
-- ✅ **Null handling** - Use nullable reference types, check nulls appropriately
-- ✅ **LINQ usage** - Prefer LINQ over manual loops where readable
-- ✅ **Exception handling** - Catch specific exceptions, don't swallow exceptions silently
-
-### 4. WinUI 3 / XAML Specific
-
-- ✅ **No value converters** - Use explicit ViewModel boolean properties instead (project convention)
-- ✅ **Dispatcher thread** - All UI updates on correct thread (DispatcherQueue for timers)
-- ✅ **ViewModel lifecycle** - Properly dispose subscriptions, timers, event handlers
-- ✅ **Data binding** - Prefer x:Bind over Binding for performance and compile-time checking
-- ✅ **Resource management** - Properly handle XAML resources, avoid memory leaks
-
-### 5. Testing Requirements
-
-- ✅ **Unit tests for all business logic** - Service layer must have comprehensive tests
-- ✅ **AAA pattern** - All tests follow Arrange-Act-Assert structure
-- ✅ **Edge cases covered** - Test null, empty, boundary values, error conditions
-- ✅ **Meaningful test names** - Test names describe what is being tested and expected outcome
-- ✅ **No logic in tests** - Tests should be simple and obvious
-- ✅ **Mock external dependencies** - Use Moq for interfaces, InMemory for repositories
-
-### 6. Documentation
-
-- ✅ **XML documentation** - All public APIs have XML doc comments
-- ✅ **Complex logic comments** - Explain WHY, not WHAT (code shows what)
-- ✅ **Update CLAUDE.md** - Document significant architectural decisions
-- ✅ **README updates** - Keep user-facing documentation current
-
-### 7. Self-Review Checklist
-
-Before presenting ANY code, Claude must verify:
-
-- [ ] **Can this throw unhandled exceptions?** - All exception paths considered
-- [ ] **Are there race conditions?** - Async code properly coordinated
-- [ ] **Is null handling correct?** - All nullable paths handled
-- [ ] **Does this follow project patterns?** - Consistent with existing codebase
-- [ ] **Are tests comprehensive?** - All paths and edge cases tested
-- [ ] **Is documentation updated?** - CLAUDE.md, README, XML docs current
-- [ ] **Performance acceptable?** - No obvious performance issues (N+1 queries, etc.)
-- [ ] **Memory leaks prevented?** - Disposable resources properly managed
+- ✅ **No value converters** - Use explicit ViewModel boolean properties (project convention)
+- ✅ **x:Bind over Binding** - Compile-time checking preferred
+- ✅ **377+ tests required** - All tests must pass before delivery
+- ✅ **Keep it simple** - Don't over-engineer; minimum complexity for current task
 
 ## Implementation Workflow
 
