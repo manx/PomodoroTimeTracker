@@ -317,9 +317,9 @@ public sealed partial class ReportViewModel : ViewModelBase
     private void OnClientFilterChanged()
     {
         // When client changes, update project filter options to only show that client's projects
-        if (_selectedClientFilter.Id == null)
+        if (_selectedClientFilter == null || _selectedClientFilter.Id == null)
         {
-            // "All" selected - show all projects
+            // "All" selected or no selection - show all projects
             _ = LoadFilterOptionsAsync();
         }
         else
@@ -352,14 +352,14 @@ public sealed partial class ReportViewModel : ViewModelBase
         var filtered = _allProjectItems.AsEnumerable();
 
         // Apply client filter
-        if (_selectedClientFilter.Id != null)
+        if (_selectedClientFilter?.Id != null)
         {
             var clientName = _selectedClientFilter.Name;
             filtered = filtered.Where(p => p.ClientName == clientName);
         }
 
         // Apply project filter
-        if (_selectedProjectFilter.Id != null)
+        if (_selectedProjectFilter?.Id != null)
         {
             filtered = filtered.Where(p => p.ProjectId == _selectedProjectFilter.Id);
         }
