@@ -39,7 +39,7 @@ public sealed class WeekOption
         WeekNumber = GetIso8601WeekNumber(StartDate);
     }
 
-    public string Display => $"{Year}, Week {WeekNumber} ({StartDate:MMM d})";
+    public string Display => $"Week {WeekNumber} ({StartDate:MMM d})";
 
     // TODO: Handle different week number systems (ISO 8601 vs US) based on user locale/settings
     private static int GetIso8601WeekNumber(DateTime date)
@@ -77,7 +77,7 @@ public sealed class MonthOption
 
     public MonthOption(DateTime date) : this(date.Year, date.Month) { }
 
-    public string Display => $"{new DateTime(Year, Month, 1):MMMM yyyy}";
+    public string Display => $"{new DateTime(Year, Month, 1):MMMM}";
 
     public DateTime StartDate => new(Year, Month, 1);
     public DateTime EndDate => StartDate.AddMonths(1).AddDays(-1);
@@ -169,6 +169,12 @@ public sealed partial class ReportViewModel : ViewModelBase
     private MonthOption? _selectedMonth;
     private ObservableCollection<WeekOption> _weekOptions = new();
     private ObservableCollection<MonthOption> _monthOptions = new();
+
+    // Year selection for Weekly/Monthly
+    private ObservableCollection<int> _weekYearOptions = new();
+    private ObservableCollection<int> _monthYearOptions = new();
+    private int _selectedWeekYear;
+    private int _selectedMonthYear;
 
     // Client/Project filters
     private ObservableCollection<FilterOption> _clientFilterOptions = new();
@@ -465,6 +471,25 @@ public sealed partial class ReportViewModel : ViewModelBase
 
     #region Week/Month Selection
 
+    // Weekly year selection
+    public ObservableCollection<int> WeekYearOptions
+    {
+        get => _weekYearOptions;
+        set => SetProperty(ref _weekYearOptions, value);
+    }
+
+    public int SelectedWeekYear
+    {
+        get => _selectedWeekYear;
+        set
+        {
+            if (SetProperty(ref _selectedWeekYear, value))
+            {
+                UpdateWeekOptionsForYear(value);
+            }
+        }
+    }
+
     public ObservableCollection<WeekOption> WeekOptions
     {
         get => _weekOptions;
@@ -483,6 +508,25 @@ public sealed partial class ReportViewModel : ViewModelBase
                 OnPropertyChanged(nameof(SelectedDate));
                 OnPropertyChanged(nameof(DateRangeDisplay));
                 _ = LoadReportAsync();
+            }
+        }
+    }
+
+    // Monthly year selection
+    public ObservableCollection<int> MonthYearOptions
+    {
+        get => _monthYearOptions;
+        set => SetProperty(ref _monthYearOptions, value);
+    }
+
+    public int SelectedMonthYear
+    {
+        get => _selectedMonthYear;
+        set
+        {
+            if (SetProperty(ref _selectedMonthYear, value))
+            {
+                UpdateMonthOptionsForYear(value);
             }
         }
     }
@@ -511,39 +555,112 @@ public sealed partial class ReportViewModel : ViewModelBase
 
     private void InitializeWeekOptions()
     {
+        var today = DateTime.Today;
+
+        // Generate year options: 2 years back + current year
+        var years = Enumerable.Range(today.Year - 2, 3).Reverse().ToList();
+        WeekYearOptions = new ObservableCollection<int>(years);
+
+        // Select current year (this will trigger UpdateWeekOptionsForYear)
+        _selectedWeekYear = today.Year;
+        OnPropertyChanged(nameof(SelectedWeekYear));
+        UpdateWeekOptionsForYear(today.Year, selectCurrentWeek: true);
+    }
+
+    private void UpdateWeekOptionsForYear(int year, bool selectCurrentWeek = false)
+    {
         var options = new List<WeekOption>();
         var today = DateTime.Today;
 
-        // Generate weeks: 52 weeks back + current week (no future weeks)
-        for (int i = -52; i <= 0; i++)
+        // Generate all weeks for the selected year
+        var startOfYear = new DateTime(year, 1, 1);
+        var endOfYear = new DateTime(year, 12, 31);
+
+        // Start from first week containing days in this year
+        var firstWeek = new WeekOption(startOfYear);
+        var currentDate = firstWeek.StartDate;
+
+        while (currentDate <= endOfYear)
         {
-            options.Add(new WeekOption(today.AddDays(i * 7)));
+            var week = new WeekOption(currentDate);
+            // Only add weeks that haven't ended yet if current year, or all weeks for past years
+            if (year < today.Year || week.EndDate <= today)
+            {
+                options.Add(week);
+            }
+            currentDate = currentDate.AddDays(7);
         }
 
         WeekOptions = new ObservableCollection<WeekOption>(options);
 
-        // Select current week
-        var currentWeek = new WeekOption(today);
-        SelectedWeek = WeekOptions.FirstOrDefault(w => w.Equals(currentWeek));
+        // Select appropriate week
+        if (selectCurrentWeek && year == today.Year)
+        {
+            var currentWeek = new WeekOption(today);
+            SelectedWeek = WeekOptions.FirstOrDefault(w => w.Equals(currentWeek)) ?? WeekOptions.LastOrDefault();
+        }
+        else
+        {
+            // Select last week of the year
+            _selectedWeek = WeekOptions.LastOrDefault();
+            OnPropertyChanged(nameof(SelectedWeek));
+            if (_selectedWeek != null)
+            {
+                _selectedDate = new DateTimeOffset(_selectedWeek.StartDate);
+                OnPropertyChanged(nameof(SelectedDate));
+                OnPropertyChanged(nameof(DateRangeDisplay));
+                _ = LoadReportAsync();
+            }
+        }
     }
 
     private void InitializeMonthOptions()
     {
+        var today = DateTime.Today;
+
+        // Generate year options: 2 years back + current year
+        var years = Enumerable.Range(today.Year - 2, 3).Reverse().ToList();
+        MonthYearOptions = new ObservableCollection<int>(years);
+
+        // Select current year (this will trigger UpdateMonthOptionsForYear)
+        _selectedMonthYear = today.Year;
+        OnPropertyChanged(nameof(SelectedMonthYear));
+        UpdateMonthOptionsForYear(today.Year, selectCurrentMonth: true);
+    }
+
+    private void UpdateMonthOptionsForYear(int year, bool selectCurrentMonth = false)
+    {
         var options = new List<MonthOption>();
         var today = DateTime.Today;
 
-        // Generate months: 24 months back + current month (no future months)
-        for (int i = -24; i <= 0; i++)
+        // Generate months for the selected year
+        var maxMonth = year == today.Year ? today.Month : 12;
+        for (int month = 1; month <= maxMonth; month++)
         {
-            var date = today.AddMonths(i);
-            options.Add(new MonthOption(date));
+            options.Add(new MonthOption(year, month));
         }
 
         MonthOptions = new ObservableCollection<MonthOption>(options);
 
-        // Select current month
-        var currentMonth = new MonthOption(today);
-        SelectedMonth = MonthOptions.FirstOrDefault(m => m.Equals(currentMonth));
+        // Select appropriate month
+        if (selectCurrentMonth && year == today.Year)
+        {
+            var currentMonth = new MonthOption(today);
+            SelectedMonth = MonthOptions.FirstOrDefault(m => m.Equals(currentMonth)) ?? MonthOptions.LastOrDefault();
+        }
+        else
+        {
+            // Select last month of the year
+            _selectedMonth = MonthOptions.LastOrDefault();
+            OnPropertyChanged(nameof(SelectedMonth));
+            if (_selectedMonth != null)
+            {
+                _selectedDate = new DateTimeOffset(_selectedMonth.StartDate);
+                OnPropertyChanged(nameof(SelectedDate));
+                OnPropertyChanged(nameof(DateRangeDisplay));
+                _ = LoadReportAsync();
+            }
+        }
     }
 
     #endregion
