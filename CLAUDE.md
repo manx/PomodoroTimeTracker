@@ -226,7 +226,7 @@ This section should be updated when:
   - `IClientService` - Client management
   - `IProjectService` - Project management with client filtering
   - `ITimeEntryService` - Manual time entry
-  - `IStatisticsService` - Reporting (structure in place)
+  - `IStatisticsService` - Report statistics (daily/weekly/monthly/custom date ranges)
 - `IDispatcherTimer` - Timer abstraction for testability
 - References: Domain only
 
@@ -239,9 +239,10 @@ This section should be updated when:
 - References: Domain, Application
 
 **PomodoroTimeTracker.ViewModels** (ViewModel Layer - WinUI Class Library)
-- All ViewModels extracted for testability (377 tests)
+- All ViewModels extracted for testability (413 tests)
 - Timer ViewModels: `PomodoroViewModel`, `RegularTimerViewModel`, `StopWatchViewModel`
 - CRUD ViewModels: `ClientListViewModel`, `ClientDetailViewModel`, `ProjectListViewModel`, etc.
+- Report ViewModel: `ReportViewModel` with period selection and filtering
 - Service interfaces for UI abstraction:
   - `INavigationService` - Page navigation
   - `IDialogService` - Dialog display
@@ -632,12 +633,13 @@ private async Task<StopDialogResult> ShowStopConfirmationDialogAsync()
 - **ClientDetailPage**: Client create/edit form
 - **ProjectListPage**: Project management list
 - **ProjectDetailPage**: Project create/edit form
+- **TimeEntryListPage**: Time entry management list
+- **TimeEntryDetailPage**: Time entry create/edit form
+- **ReportPage**: Statistics with daily/weekly/monthly/custom periods
 - **MainWindow**: Application shell with NavigationView
 
 **Planned** (structure exists but not implemented)
 - Dashboard view
-- Time Entry view
-- Statistics view
 
 ## Technical Challenges & Solutions
 
@@ -774,12 +776,25 @@ public PomodoroState State
 
 **UI Pages Not Implemented** (LOW PRIORITY)
 - Dashboard view (structure exists)
-- Statistics view (structure exists)
 
 **Known Issues**
 - WinUI 3 borderless window white bar (framework limitation, using WinUIEx workaround)
 
 ## Recent Development History
+
+### Report View Implementation (2025-12-04)
+- Added Report view with combined Pomodoro and Time Entry statistics
+- Time period options: Daily, Weekly, Monthly, Custom date range
+- Weekly/Monthly use separate Year + Period dropdowns for easy navigation
+- Client and Project filter dropdowns (cascading: client selection filters projects)
+- Summary cards: Total Time, Pomodoro Sessions (with completion percentage), Time Entries
+- Project breakdown list with progress bars showing percentage of total
+- 36 new ReportViewModel tests (total now 413 tests)
+- Files changed across all layers:
+  - Application: `DateRangeStatisticsDto`, `IStatisticsService.GetDateRangeStatisticsAsync`
+  - ViewModels: `ReportViewModel`, `ProjectReportItem`, `WeekOption`, `MonthOption`, `FilterOption`
+  - UI: `ReportPage.xaml`, navigation updates
+- PR #20: Report view feature
 
 ### ViewModels Extraction for Testability (2025-12-04)
 - Extracted all ViewModels from WinUI3 project to new `PomodoroTimeTracker.ViewModels` WinUI Class Library
@@ -990,7 +1005,7 @@ dotnet ef migrations list --project PomodoroTimeTracker.Infrastructure --startup
 2. ~~**Implement sound alarms**~~ - ✅ Done (Sound Selection feature, 2025-12-01)
 3. **Implement Dashboard view** - Home page with overview/summary
 4. ~~**Implement Time Entry view**~~ - ✅ Done (PR #11, 2025-12-01)
-5. **Implement Statistics view** - Reporting and analytics page
+5. ~~**Implement Report view**~~ - ✅ Done (PR #20, 2025-12-04)
 
 ### Short Term (Next Sprint)
 1. **Add unit tests** - Start with PomodoroViewModel
