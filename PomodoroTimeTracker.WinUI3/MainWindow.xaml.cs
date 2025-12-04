@@ -32,8 +32,12 @@ namespace PomodoroTimeTracker.WinUI3
             // Subscribe to active timer changes to update navigation menu
             _activeTimerService.PropertyChanged += ActiveTimerService_PropertyChanged;
 
-            // Set the navigation frame
-            _navigationService.NavigationFrame = ContentFrame;
+            // Set the navigation frame on the concrete service
+            // (NavigationFrame is not exposed on INavigationService to keep it UI-agnostic)
+            if (_navigationService is Services.NavigationService navService)
+            {
+                navService.NavigationFrame = ContentFrame;
+            }
 
             // Set window title
             Title = "Pomodoro Time Tracker";

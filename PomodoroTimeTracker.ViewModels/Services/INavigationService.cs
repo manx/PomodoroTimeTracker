@@ -1,5 +1,3 @@
-using Microsoft.UI.Xaml.Controls;
-
 namespace PomodoroTimeTracker.ViewModels.Services;
 
 /// <summary>
@@ -20,15 +18,14 @@ public static class PageNames
 }
 
 /// <summary>
-/// Service for handling navigation between views
+/// Service for handling navigation between views.
 /// </summary>
+/// <remarks>
+/// This interface abstracts navigation so ViewModels can navigate without
+/// depending on WinUI 3 Frame type. The implementation handles frame management.
+/// </remarks>
 public interface INavigationService
 {
-    /// <summary>
-    /// Gets or sets the current navigation frame
-    /// </summary>
-    Frame? NavigationFrame { get; set; }
-
     /// <summary>
     /// Navigate to a view by type
     /// </summary>
