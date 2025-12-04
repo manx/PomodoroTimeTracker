@@ -37,7 +37,7 @@ public sealed partial class ClientDetailPage : Page
 ```xml
 <Page
     x:Class="PomodoroTimeTracker.WinUI3.Views.ClientDetailPage"
-    xmlns:viewmodels="using:PomodoroTimeTracker.WinUI3.ViewModels"
+    xmlns:viewmodels="using:PomodoroTimeTracker.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewmodels:ClientDetailViewModel}"
     mc:Ignorable="d">
 

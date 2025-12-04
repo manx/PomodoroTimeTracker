@@ -126,7 +126,7 @@ JOB 2: Build and Test (körs om JOB 1 lyckas)
 ├─ Restore dependencies
 ├─ Build solution (Release)
 ├─ Run tests with coverage
-│  └─ 144 tests måste passera, annars ❌ FAIL
+│  └─ 377 tests måste passera, annars ❌ FAIL
 ├─ Upload coverage to Codecov
 └─ Upload build artifacts
    └─ ✅ PASS eller ❌ FAIL
@@ -530,17 +530,17 @@ jobs:
 **Test Execution:**
 
 ```bash
-# 144 tests körs:
-# ├─ Application layer: 82 tests
-# │  ├─ PomodoroSessionServiceTests: 20
-# │  ├─ PomodoroSettingsServiceTests: 22
-# │  ├─ ClientServiceTests: 18
-# │  └─ ProjectServiceTests: 22
-# └─ Infrastructure layer: 62 tests
-#    ├─ PomodoroSessionRepositoryTests: 22
-#    ├─ PomodoroSettingsRepositoryTests: 11
-#    ├─ ClientRepositoryTests: 15
-#    └─ ProjectRepositoryTests: 14
+# 377 tests körs:
+# ├─ ViewModel layer: 158 tests
+# │  ├─ PomodoroViewModelTests: ~60
+# │  ├─ RegularTimerViewModelTests: ~40
+# │  ├─ StopWatchViewModelTests: ~30
+# │  └─ Other ViewModel tests: ~28
+# ├─ Application layer: 148 tests
+# │  ├─ Service tests: ~110
+# │  └─ AudioService, TimeEntry, etc.
+# └─ Infrastructure layer: 71 tests
+#    └─ Repository tests
 
 # Om NÅGON test failar → ❌ Pipeline failar → ⛔ Merge blockeras
 ```

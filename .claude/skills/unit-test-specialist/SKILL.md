@@ -28,33 +28,38 @@ allowed-tools:
 ### Project Structure (Current)
 ```
 PomodoroTimeTracker.Tests/
+├── ViewModels/
+│   ├── PomodoroViewModelTests.cs             (60 tests) ✅
+│   ├── RegularTimerViewModelTests.cs         (40 tests) ✅
+│   ├── StopWatchViewModelTests.cs            (30 tests) ✅
+│   ├── ClientListViewModelTests.cs           (12 tests) ✅
+│   ├── ProjectListViewModelTests.cs          (8 tests) ✅
+│   └── TimeEntryListViewModelTests.cs        (8 tests) ✅
 ├── Application/
 │   ├── Services/
 │   │   ├── PomodoroSessionServiceTests.cs    (20 tests) ✅
 │   │   ├── PomodoroSettingsServiceTests.cs   (22 tests) ✅
 │   │   ├── ClientServiceTests.cs             (18 tests) ✅
 │   │   ├── ProjectServiceTests.cs            (22 tests) ✅
-│   │   └── TimeEntryServiceTests.cs          (31 tests) ✅
+│   │   ├── TimeEntryServiceTests.cs          (31 tests) ✅
+│   │   └── AudioServiceTests.cs              (35 tests) ✅
 │   └── TestUtilities/
 │       └── (reserved for shared helpers)
-├── Infrastructure/
-│   └── Repositories/
-│       ├── PomodoroSessionRepositoryTests.cs  (22 tests) ✅
-│       ├── PomodoroSettingsRepositoryTests.cs (11 tests) ✅
-│       ├── ClientRepositoryTests.cs           (15 tests) ✅
-│       └── ProjectRepositoryTests.cs          (14 tests) ✅
-└── WinUI3/
-    └── Services/
-        └── AudioServiceTests.cs               (35 tests) ✅
+└── Infrastructure/
+    └── Repositories/
+        ├── PomodoroSessionRepositoryTests.cs  (22 tests) ✅
+        ├── PomodoroSettingsRepositoryTests.cs (11 tests) ✅
+        ├── ClientRepositoryTests.cs           (15 tests) ✅
+        ├── ProjectRepositoryTests.cs          (14 tests) ✅
+        └── TimeEntryRepositoryTests.cs        (9 tests) ✅
 
-Total: 210 tests, 100% pass rate
+Total: 377 tests, 100% pass rate
 ```
 
 **Coverage Status:**
-- ✅ Application Services - Complete (113 tests)
-- ✅ Infrastructure Repositories - Complete (62 tests)
-- ✅ UI Services - AudioService (35 tests)
-- ⚠️ ViewModels - Partial (IDispatcherTimer enables testing)
+- ✅ ViewModel Layer - Complete (158 tests)
+- ✅ Application Services - Complete (148 tests)
+- ✅ Infrastructure Repositories - Complete (71 tests)
 - ⚠️ Domain Entities - Not needed (POCOs only)
 
 ---
@@ -1171,6 +1176,6 @@ Application Layer Tests (85)  <-- Update counts
 
 ---
 
-**Last Updated:** 2025-12-02
-**Current Test Count:** 210 tests (113 service, 62 repository, 35 UI services)
+**Last Updated:** 2025-12-04
+**Current Test Count:** 377 tests (158 viewmodel, 148 service, 71 repository)
 **Maintained By:** Development Team
