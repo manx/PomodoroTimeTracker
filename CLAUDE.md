@@ -986,7 +986,7 @@ dotnet ef migrations list --project PomodoroTimeTracker.Infrastructure --startup
 ## Future Roadmap
 
 ### Immediate TODOs (Active)
-1. **Move TimerWindow to top-left corner** - Reposition with minimal margins from screen borders
+1. ~~**TimerWindow position**~~ - ✅ Done (defaults to top-left, persists position between sessions)
 2. ~~**Implement sound alarms**~~ - ✅ Done (Sound Selection feature, 2025-12-01)
 3. **Implement Dashboard view** - Home page with overview/summary
 4. ~~**Implement Time Entry view**~~ - ✅ Done (PR #11, 2025-12-01)

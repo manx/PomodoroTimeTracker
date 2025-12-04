@@ -65,6 +65,47 @@ public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
         };
     }
 
+    public async Task<DateRangeStatisticsDto> GetDateRangeStatisticsAsync(DateTime startDate, DateTime endDate)
+    {
+        var start = startDate.Date;
+        var end = endDate.Date.AddDays(1);
+
+        var sessions = await unitOfWork.PomodoroSessions.GetByDateRangeAsync(start, end);
+        var entries = await unitOfWork.TimeEntries.GetByDateRangeAsync(start, end);
+
+        var pomodoroStats = BuildPomodoroStats(sessions.ToList());
+        pomodoroStats.ByDay = sessions
+            .GroupBy(s => s.StartTime.Date)
+            .Select(g => new DayStatsDto
+            {
+                Date = g.Key.ToString("yyyy-MM-dd"),
+                Count = g.Count(),
+                Minutes = g.Sum(s => s.DurationMinutes)
+            })
+            .OrderBy(d => d.Date)
+            .ToList();
+
+        var timeEntryStats = BuildTimeEntryStats(entries.ToList());
+        timeEntryStats.ByDay = entries
+            .GroupBy(e => e.StartTime.Date)
+            .Select(g => new DayStatsDto
+            {
+                Date = g.Key.ToString("yyyy-MM-dd"),
+                Count = g.Count(),
+                Minutes = g.Sum(e => e.DurationMinutes ?? 0)
+            })
+            .OrderBy(d => d.Date)
+            .ToList();
+
+        return new DateRangeStatisticsDto
+        {
+            StartDate = start.ToString("yyyy-MM-dd"),
+            EndDate = endDate.Date.ToString("yyyy-MM-dd"),
+            PomodoroSessions = pomodoroStats,
+            TimeEntries = timeEntryStats
+        };
+    }
+
     public async Task<ProjectStatisticsDto> GetProjectStatisticsAsync(int projectId)
     {
         var project = await unitOfWork.Projects.GetByIdAsync(projectId);

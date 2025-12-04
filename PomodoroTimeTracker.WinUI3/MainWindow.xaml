@@ -29,17 +29,17 @@
                         <FontIcon Glyph="&#xE91B;"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Icon="Calendar" Content="Time Entry" Tag="TimeEntry"/>
 
                 <NavigationViewItemSeparator/>
 
                 <NavigationViewItemHeader Content="Management" />
                 <NavigationViewItem Icon="Contact" Content="Clients" Tag="Clients"/>
                 <NavigationViewItem Icon="Folder" Content="Projects" Tag="Projects"/>
+                <NavigationViewItem Icon="Calendar" Content="Time Entries" Tag="TimeEntry"/>
 
                 <NavigationViewItemSeparator/>
 
-                <NavigationViewItem Icon="PreviewLink" Content="Statistics" Tag="Statistics"/>
+                <NavigationViewItem Icon="ReportDocument" Content="Report" Tag="Report"/>
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>

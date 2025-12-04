@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="PomodoroTimeTracker.WinUI3.Views.ReportPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodels="using:PomodoroTimeTracker.ViewModels"
+    d:DataContext="{d:DesignInstance Type=viewmodels:ReportViewModel}"
+    mc:Ignorable="d">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Row 0: Header and Time Period Selector -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0"
+                       Text="Report"
+                       Style="{StaticResource TitleTextBlockStyle}"/>
+
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        Spacing="4">
+                <RadioButton Content="Daily"
+                             IsChecked="{x:Bind ViewModel.IsDailySelected, Mode=OneWay}"
+                             Command="{x:Bind ViewModel.SelectDailyCommand}"
+                             GroupName="TimePeriod"
+                             Style="{StaticResource DefaultRadioButtonStyle}"/>
+                <RadioButton Content="Weekly"
+                             IsChecked="{x:Bind ViewModel.IsWeeklySelected, Mode=OneWay}"
+                             Command="{x:Bind ViewModel.SelectWeeklyCommand}"
+                             GroupName="TimePeriod"
+                             Style="{StaticResource DefaultRadioButtonStyle}"/>
+                <RadioButton Content="Custom"
+                             IsChecked="{x:Bind ViewModel.IsCustomSelected, Mode=OneWay}"
+                             Command="{x:Bind ViewModel.SelectCustomCommand}"
+                             GroupName="TimePeriod"
+                             Style="{StaticResource DefaultRadioButtonStyle}"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Row 1: Date Navigation -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Daily/Weekly: Single date picker with prev/next buttons -->
+            <StackPanel Grid.Column="0"
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        Visibility="{x:Bind ViewModel.IsNotCustomSelected, Mode=OneWay}">
+                <Button Command="{x:Bind ViewModel.PreviousPeriodCommand}"
+                        ToolTipService.ToolTip="Previous"
+                        Padding="8">
+                    <FontIcon Glyph="&#xE76B;" FontSize="14"/>
+                </Button>
+                <CalendarDatePicker Date="{x:Bind ViewModel.SelectedDate, Mode=TwoWay}"
+                                    MinWidth="150"/>
+                <Button Command="{x:Bind ViewModel.NextPeriodCommand}"
+                        ToolTipService.ToolTip="Next"
+                        Padding="8">
+                    <FontIcon Glyph="&#xE76C;" FontSize="14"/>
+                </Button>
+                <Button Content="Today"
+                        Command="{x:Bind ViewModel.GoToTodayCommand}"/>
+            </StackPanel>
+
+            <!-- Custom: Date range pickers -->
+            <StackPanel Grid.Column="0"
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        Visibility="{x:Bind ViewModel.IsCustomSelected, Mode=OneWay}">
+                <CalendarDatePicker Header="From"
+                                    Date="{x:Bind ViewModel.CustomStartDate, Mode=TwoWay}"
+                                    MinWidth="150"/>
+                <CalendarDatePicker Header="To"
+                                    Date="{x:Bind ViewModel.CustomEndDate, Mode=TwoWay}"
+                                    MinWidth="150"/>
+                <Button Content="Apply"
+                        Command="{x:Bind ViewModel.LoadReportCommand}"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,0,0"/>
+            </StackPanel>
+
+            <!-- Date Range Display -->
+            <TextBlock Grid.Column="1"
+                       Text="{x:Bind ViewModel.DateRangeDisplay, Mode=OneWay}"
+                       Style="{StaticResource SubtitleTextBlockStyle}"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"/>
+        </Grid>
+
+        <!-- Row 2: Summary Cards -->
+        <Grid Grid.Row="2" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Total Time Card -->
+            <Border Grid.Column="0"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="16"
+                    Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="Total Time"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="{x:Bind ViewModel.CombinedTotalTimeDisplay, Mode=OneWay}"
+                               Style="{StaticResource TitleLargeTextBlockStyle}"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Pomodoro Sessions Card -->
+            <Border Grid.Column="1"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="16"
+                    Margin="4,0,4,0">
+                <StackPanel>
+                    <TextBlock Text="Pomodoro Sessions"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+                        <TextBlock Text="{x:Bind ViewModel.CompletedPomodoros, Mode=OneWay}"
+                                   Style="{StaticResource TitleLargeTextBlockStyle}"/>
+                        <TextBlock Text="/"
+                                   Style="{StaticResource TitleLargeTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <TextBlock Text="{x:Bind ViewModel.TotalPomodoros, Mode=OneWay}"
+                                   Style="{StaticResource TitleLargeTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    <TextBlock Text="{x:Bind ViewModel.TotalPomodoroTimeDisplay, Mode=OneWay}"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Margin="0,4,0,0"/>
+                    <ProgressBar Value="{x:Bind ViewModel.CompletionPercentage, Mode=OneWay}"
+                                 Maximum="100"
+                                 Height="4"
+                                 Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Time Entries Card -->
+            <Border Grid.Column="2"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="16"
+                    Margin="8,0,0,0">
+                <StackPanel>
+                    <TextBlock Text="Time Entries"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="{x:Bind ViewModel.TotalTimeEntries, Mode=OneWay}"
+                               Style="{StaticResource TitleLargeTextBlockStyle}"
+                               Margin="0,4,0,0"/>
+                    <TextBlock Text="{x:Bind ViewModel.TotalTimeEntryTimeDisplay, Mode=OneWay}"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Row 3: Project Breakdown -->
+        <Grid Grid.Row="3">
+            <!-- Loading Indicator -->
+            <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+                          Width="50"
+                          Height="50"/>
+
+            <!-- Project List -->
+            <ListView ItemsSource="{x:Bind ViewModel.ProjectBreakdown, Mode=OneWay}"
+                      SelectionMode="None"
+                      Visibility="{x:Bind ViewModel.HasData, Mode=OneWay}">
+                <ListView.Header>
+                    <TextBlock Text="By Project"
+                               Style="{StaticResource SubtitleTextBlockStyle}"
+                               Margin="0,0,0,8"/>
+                </ListView.Header>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Padding" Value="0"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="viewmodels:ProjectReportItem">
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                CornerRadius="4"
+                                Padding="12"
+                                Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Project Name -->
+                                <TextBlock Grid.Row="0"
+                                           Grid.Column="0"
+                                           Text="{x:Bind ProjectName}"
+                                           Style="{StaticResource BodyStrongTextBlockStyle}"/>
+
+                                <!-- Total Time -->
+                                <TextBlock Grid.Row="0"
+                                           Grid.Column="1"
+                                           Text="{x:Bind TotalTimeDisplay}"
+                                           Style="{StaticResource BodyStrongTextBlockStyle}"/>
+
+                                <!-- Client Name and Breakdown -->
+                                <TextBlock Grid.Row="1"
+                                           Grid.Column="0"
+                                           Text="{x:Bind ClientName}"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+
+                                <StackPanel Grid.Row="1"
+                                            Grid.Column="1"
+                                            Orientation="Horizontal">
+                                    <TextBlock Text="{x:Bind PomodoroDisplay}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock Text=" | "
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                    <TextBlock Text="{x:Bind TimeEntryDisplay}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+
+                                <!-- Progress Bar -->
+                                <ProgressBar Grid.Row="2"
+                                             Grid.ColumnSpan="2"
+                                             Value="{x:Bind PercentageOfTotal}"
+                                             Maximum="100"
+                                             Height="4"
+                                             Margin="0,8,0,0"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <!-- Empty State -->
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
+                <FontIcon Glyph="&#xE9D9;"
+                          FontSize="48"
+                          Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                <TextBlock Text="No data for this period"
+                           Style="{StaticResource SubtitleTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           Margin="0,16,0,0"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="Start tracking time to see your report"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>
