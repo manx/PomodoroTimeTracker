@@ -14,6 +14,7 @@ public enum ReportTimePeriod
 {
     Daily,
     Weekly,
+    Monthly,
     Custom
 }
 
@@ -85,6 +86,7 @@ public sealed partial class ReportViewModel : ViewModelBase
         RefreshCommand = new AsyncRelayCommand(LoadReportAsync);
         SelectDailyCommand = new RelayCommand(() => SelectedTimePeriod = ReportTimePeriod.Daily);
         SelectWeeklyCommand = new RelayCommand(() => SelectedTimePeriod = ReportTimePeriod.Weekly);
+        SelectMonthlyCommand = new RelayCommand(() => SelectedTimePeriod = ReportTimePeriod.Monthly);
         SelectCustomCommand = new RelayCommand(() => SelectedTimePeriod = ReportTimePeriod.Custom);
         PreviousPeriodCommand = new RelayCommand(GoToPreviousPeriod);
         NextPeriodCommand = new RelayCommand(GoToNextPeriod);
@@ -104,6 +106,7 @@ public sealed partial class ReportViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(IsDailySelected));
                 OnPropertyChanged(nameof(IsWeeklySelected));
+                OnPropertyChanged(nameof(IsMonthlySelected));
                 OnPropertyChanged(nameof(IsCustomSelected));
                 OnPropertyChanged(nameof(IsNotCustomSelected));
                 _ = LoadReportAsync();
@@ -113,6 +116,7 @@ public sealed partial class ReportViewModel : ViewModelBase
 
     public bool IsDailySelected => SelectedTimePeriod == ReportTimePeriod.Daily;
     public bool IsWeeklySelected => SelectedTimePeriod == ReportTimePeriod.Weekly;
+    public bool IsMonthlySelected => SelectedTimePeriod == ReportTimePeriod.Monthly;
     public bool IsCustomSelected => SelectedTimePeriod == ReportTimePeriod.Custom;
     public bool IsNotCustomSelected => !IsCustomSelected;
 
@@ -176,6 +180,8 @@ public sealed partial class ReportViewModel : ViewModelBase
                     SelectedDate.ToString("ddd, MMM d, yyyy"),
                 ReportTimePeriod.Weekly =>
                     $"{GetWeekStart(SelectedDate.DateTime):MMM d} - {GetWeekEnd(SelectedDate.DateTime):MMM d, yyyy}",
+                ReportTimePeriod.Monthly =>
+                    SelectedDate.ToString("MMMM yyyy"),
                 ReportTimePeriod.Custom =>
                     $"{CustomStartDate:MMM d} - {CustomEndDate:MMM d, yyyy}",
                 _ => string.Empty
@@ -191,6 +197,16 @@ public sealed partial class ReportViewModel : ViewModelBase
     private static DateTime GetWeekEnd(DateTime date)
     {
         return GetWeekStart(date).AddDays(6);
+    }
+
+    private static DateTime GetMonthStart(DateTime date)
+    {
+        return new DateTime(date.Year, date.Month, 1);
+    }
+
+    private static DateTime GetMonthEnd(DateTime date)
+    {
+        return GetMonthStart(date).AddMonths(1).AddDays(-1);
     }
 
     #endregion
@@ -319,6 +335,7 @@ public sealed partial class ReportViewModel : ViewModelBase
     public ICommand RefreshCommand { get; }
     public ICommand SelectDailyCommand { get; }
     public ICommand SelectWeeklyCommand { get; }
+    public ICommand SelectMonthlyCommand { get; }
     public ICommand SelectCustomCommand { get; }
     public ICommand PreviousPeriodCommand { get; }
     public ICommand NextPeriodCommand { get; }
@@ -330,16 +347,22 @@ public sealed partial class ReportViewModel : ViewModelBase
 
     private void GoToPreviousPeriod()
     {
-        SelectedDate = SelectedTimePeriod == ReportTimePeriod.Weekly
-            ? SelectedDate.AddDays(-7)
-            : SelectedDate.AddDays(-1);
+        SelectedDate = SelectedTimePeriod switch
+        {
+            ReportTimePeriod.Weekly => SelectedDate.AddDays(-7),
+            ReportTimePeriod.Monthly => SelectedDate.AddMonths(-1),
+            _ => SelectedDate.AddDays(-1)
+        };
     }
 
     private void GoToNextPeriod()
     {
-        SelectedDate = SelectedTimePeriod == ReportTimePeriod.Weekly
-            ? SelectedDate.AddDays(7)
-            : SelectedDate.AddDays(1);
+        SelectedDate = SelectedTimePeriod switch
+        {
+            ReportTimePeriod.Weekly => SelectedDate.AddDays(7),
+            ReportTimePeriod.Monthly => SelectedDate.AddMonths(1),
+            _ => SelectedDate.AddDays(1)
+        };
     }
 
     private void GoToToday()
@@ -372,6 +395,13 @@ public sealed partial class ReportViewModel : ViewModelBase
                     var weekly = await _statisticsService.GetWeeklyStatisticsAsync(SelectedDate.DateTime);
                     pomodoroStats = weekly.PomodoroSessions;
                     timeEntryStats = weekly.TimeEntries;
+                    break;
+
+                case ReportTimePeriod.Monthly:
+                    var monthly = await _statisticsService.GetDateRangeStatisticsAsync(
+                        GetMonthStart(SelectedDate.DateTime), GetMonthEnd(SelectedDate.DateTime));
+                    pomodoroStats = monthly.PomodoroSessions;
+                    timeEntryStats = monthly.TimeEntries;
                     break;
 
                 case ReportTimePeriod.Custom:

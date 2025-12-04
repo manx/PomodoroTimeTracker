@@ -73,6 +73,7 @@ public class ReportViewModelTests
         viewModel.SelectedTimePeriod.Should().Be(ReportTimePeriod.Daily);
         viewModel.IsDailySelected.Should().BeTrue();
         viewModel.IsWeeklySelected.Should().BeFalse();
+        viewModel.IsMonthlySelected.Should().BeFalse();
         viewModel.IsCustomSelected.Should().BeFalse();
     }
 
@@ -87,6 +88,7 @@ public class ReportViewModelTests
         viewModel.RefreshCommand.Should().NotBeNull();
         viewModel.SelectDailyCommand.Should().NotBeNull();
         viewModel.SelectWeeklyCommand.Should().NotBeNull();
+        viewModel.SelectMonthlyCommand.Should().NotBeNull();
         viewModel.SelectCustomCommand.Should().NotBeNull();
         viewModel.PreviousPeriodCommand.Should().NotBeNull();
         viewModel.NextPeriodCommand.Should().NotBeNull();
@@ -152,6 +154,23 @@ public class ReportViewModelTests
     }
 
     [Fact]
+    public async Task SelectMonthlyCommand_SetsIsMonthlySelectedTrue()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+
+        // Act
+        viewModel.SelectMonthlyCommand.Execute(null);
+        await Task.Delay(50);
+
+        // Assert
+        viewModel.IsDailySelected.Should().BeFalse();
+        viewModel.IsWeeklySelected.Should().BeFalse();
+        viewModel.IsMonthlySelected.Should().BeTrue();
+        viewModel.IsCustomSelected.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task SelectCustomCommand_SetsIsCustomSelectedTrue()
     {
         // Arrange
@@ -164,6 +183,7 @@ public class ReportViewModelTests
         // Assert
         viewModel.IsDailySelected.Should().BeFalse();
         viewModel.IsWeeklySelected.Should().BeFalse();
+        viewModel.IsMonthlySelected.Should().BeFalse();
         viewModel.IsCustomSelected.Should().BeTrue();
     }
 
@@ -246,6 +266,36 @@ public class ReportViewModelTests
     }
 
     [Fact]
+    public void PreviousPeriodCommand_Monthly_DecrementsByOneMonth()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+        viewModel.SelectedTimePeriod = ReportTimePeriod.Monthly;
+        var originalDate = viewModel.SelectedDate;
+
+        // Act
+        viewModel.PreviousPeriodCommand.Execute(null);
+
+        // Assert
+        viewModel.SelectedDate.Date.Should().Be(originalDate.Date.AddMonths(-1));
+    }
+
+    [Fact]
+    public void NextPeriodCommand_Monthly_IncrementsByOneMonth()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+        viewModel.SelectedTimePeriod = ReportTimePeriod.Monthly;
+        var originalDate = viewModel.SelectedDate;
+
+        // Act
+        viewModel.NextPeriodCommand.Execute(null);
+
+        // Assert
+        viewModel.SelectedDate.Date.Should().Be(originalDate.Date.AddMonths(1));
+    }
+
+    [Fact]
     public void GoToTodayCommand_SetsDateToToday()
     {
         // Arrange
@@ -310,6 +360,24 @@ public class ReportViewModelTests
 
         // Assert
         _statisticsServiceMock.Verify(s => s.GetWeeklyStatisticsAsync(It.IsAny<DateTime?>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoadReportAsync_Monthly_CallsGetDateRangeStatisticsAsync()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+        viewModel.SelectedTimePeriod = ReportTimePeriod.Monthly;
+        await Task.Delay(50);
+        _statisticsServiceMock.Invocations.Clear();
+
+        // Act
+        viewModel.LoadReportCommand.Execute(null);
+        await Task.Delay(50);
+
+        // Assert
+        _statisticsServiceMock.Verify(s => s.GetDateRangeStatisticsAsync(
+            It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Once);
     }
 
     [Fact]
@@ -625,6 +693,7 @@ public class ReportViewModelTests
         // Assert
         changedProperties.Should().Contain("IsDailySelected");
         changedProperties.Should().Contain("IsWeeklySelected");
+        changedProperties.Should().Contain("IsMonthlySelected");
         changedProperties.Should().Contain("IsCustomSelected");
         changedProperties.Should().Contain("IsNotCustomSelected");
     }

@@ -41,6 +41,11 @@
                              Command="{x:Bind ViewModel.SelectWeeklyCommand}"
                              GroupName="TimePeriod"
                              Style="{StaticResource DefaultRadioButtonStyle}"/>
+                <RadioButton Content="Monthly"
+                             IsChecked="{x:Bind ViewModel.IsMonthlySelected, Mode=OneWay}"
+                             Command="{x:Bind ViewModel.SelectMonthlyCommand}"
+                             GroupName="TimePeriod"
+                             Style="{StaticResource DefaultRadioButtonStyle}"/>
                 <RadioButton Content="Custom"
                              IsChecked="{x:Bind ViewModel.IsCustomSelected, Mode=OneWay}"
                              Command="{x:Bind ViewModel.SelectCustomCommand}"

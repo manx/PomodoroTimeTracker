@@ -39,7 +39,11 @@
 
                 <NavigationViewItemSeparator/>
 
-                <NavigationViewItem Icon="ReportDocument" Content="Report" Tag="Report"/>
+                <NavigationViewItem Content="Report" Tag="Report">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE9F9;"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
