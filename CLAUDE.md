@@ -11,6 +11,81 @@ This document contains technical notes, implementation details, and development 
 
 ---
 
+## Centralized Prompt Library
+
+This project uses a centralized prompt library located at `~/.claude/prompts/` to share reusable guidelines across multiple projects.
+
+### Purpose
+- **Single source of truth** for cross-project prompts
+- **Reduces duplication** - common patterns defined once
+- **Prevents contradictions** - all projects use same definitions
+- **Easy maintenance** - update once, applies everywhere
+
+### Usage Syntax
+Reference prompts using the `@` syntax in CLAUDE.md or agent files:
+```markdown
+@~/.claude/prompts/general/git/commit-conventions.md
+@~/.claude/prompts/dotnet/clean-architecture/layer-separation.md
+```
+
+### Directory Structure
+```
+~/.claude/prompts/
+├── general/                    # Universal patterns (any language/framework)
+│   ├── behavior/               # AI behavior and communication style
+│   │   ├── critical-thinking.md
+│   │   ├── communication-style.md
+│   │   └── explain-concepts.md
+│   ├── code-quality/           # Security, error handling, checklists
+│   │   ├── security-fundamentals.md
+│   │   ├── error-handling.md
+│   │   └── self-review-checklist.md
+│   └── git/                    # Commit conventions, branch naming, PRs
+│       ├── commit-conventions.md
+│       ├── commit-templates.md
+│       ├── pr-workflow.md
+│       └── safety-rules.md
+│
+├── dotnet/                     # .NET-specific patterns
+│   ├── fundamentals/           # Async, nullable, LINQ, disposal
+│   ├── clean-architecture/     # Layer separation, DI
+│   ├── ef-core/                # Entity Framework patterns
+│   └── testing/                # xUnit, Moq, FluentAssertions
+│
+├── winui/                      # WinUI 3-specific patterns
+│   ├── fundamentals/           # Binding, navigation, pages
+│   ├── mvvm/                   # ViewModel patterns, dialogs
+│   └── advanced/               # Borderless windows, DI
+│
+└── agents/                     # Agent orchestration templates
+    ├── orchestration/          # Shared agent workflow rules
+    └── templates/              # Agent-specific templates
+```
+
+### Key Prompts Used in This Project
+| Prompt | Purpose |
+|--------|---------|
+| `general/behavior/critical-thinking.md` | Analyze assumptions, offer alternatives |
+| `general/behavior/communication-style.md` | Concise responses, clarifying questions |
+| `general/code-quality/self-review-checklist.md` | Pre-delivery verification |
+| `general/code-quality/security-fundamentals.md` | Input validation, no SQL injection |
+| `general/git/commit-conventions.md` | Conventional commit format |
+| `dotnet/clean-architecture/layer-separation.md` | Domain → App → Infra → UI |
+| `winui/mvvm/no-value-converters.md` | Explicit bool properties |
+
+### Conflict Resolution
+1. **Shared prompts are canonical** - If conflict exists, update the shared prompt
+2. **Project files add, don't contradict** - Projects can add context but not override
+3. **Verify with `/memory`** - Use Claude Code command to check loaded prompts
+
+### Adding New Prompts
+1. Place in appropriate category folder in `~/.claude/prompts/`
+2. Follow existing format and style
+3. Add entry to `~/.claude/prompts/index.md`
+4. Reference in project CLAUDE.md files as needed
+
+---
+
 ## Project Overview
 
 A WinUI 3 desktop application implementing the Pomodoro Technique with comprehensive time tracking capabilities. Built using Clean Architecture and MVVM patterns.
