@@ -49,7 +49,7 @@ dotnet ef migrations remove \
 ### Current Schema
 
 **SessionTypes** (Lookup - seeded)
-- Work, ShortBreak, LongBreak, Regular, StopWatch, Manual
+- Pomodoro, ShortBreak, LongBreak, Regular, StopWatch, Manual
 
 **TimeEntries** (Unified)
 - SessionTypeId FK → SessionTypes

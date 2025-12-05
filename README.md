@@ -75,7 +75,7 @@ PomodoroTimeTracker/
 │   │   ├── PomodoroSession.cs           # Pomodoro session with objective
 │   │   ├── PomodoroSettings.cs          # User preferences & timer config
 │   │   ├── TimeEntry.cs                 # Manual time tracking
-│   │   └── SessionType.cs               # Enum: Work, ShortBreak, LongBreak
+│   │   └── SessionType.cs               # Lookup: Pomodoro, ShortBreak, LongBreak, Regular, StopWatch, Manual
 │   └── Interfaces/                      # Repository interfaces
 │
 ├── PomodoroTimeTracker.Application/     # Business logic & use cases

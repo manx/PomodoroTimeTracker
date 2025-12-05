@@ -36,7 +36,7 @@ WinUI3        → XAML, UI Services (depends on ViewModels)
 | Entity | Purpose |
 |--------|---------|
 | `TimeEntry` | Unified time tracking (all session types) |
-| `SessionType` | Lookup: Work, ShortBreak, LongBreak, Regular, StopWatch, Manual |
+| `SessionType` | Lookup: Pomodoro, ShortBreak, LongBreak, Regular, StopWatch, Manual |
 | `Client` | Client management |
 | `Project` | Project with optional client FK |
 | `PomodoroSettings` | Singleton settings |
