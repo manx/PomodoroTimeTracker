@@ -19,12 +19,12 @@ You are the **orchestrator**. This workflow runs autonomously with no user appro
 
 ### Default Workflow
 ```
-[Analyze] → [Backend + UI] parallel → Migration → Tests → Validate → PR
+[Analyze] → [Backend + UI] parallel → Migration → [Tests] parallel → Validate → PR
 ```
 
 - **backend-agent:** All backend layers (Domain + Application + Infrastructure)
 - **ui-agent:** ViewModels + Views together
-- **test-agent:** After implementation completes
+- **test-agents:** Parallel agents for Service, ViewModel, Repository tests
 
 ### --fast Workflow (Maximum Parallelism)
 ```
@@ -139,15 +139,33 @@ dotnet ef database update \
 
 ### Step 4: Tests (Default workflow only)
 
-After implementation, spawn test-agent:
+After implementation, spawn test-agents IN PARALLEL for each layer:
 
 ```
+# Agent 1: Service Tests
 Use Task tool with subagent_type="test-agent"
-Prompt: Create unit tests for [feature]:
-- Test services, repositories, ViewModels
+Prompt: Create unit tests for [Feature]Service:
+- Test in Tests\Application\ folder
+- Mock repository and other dependencies
+- Follow existing service test patterns
+
+# Agent 2: ViewModel Tests
+Use Task tool with subagent_type="test-agent"
+Prompt: Create unit tests for [Feature]ViewModel:
+- Test in Tests\ViewModels\ folder
 - Mock IDispatcherTimer for timer tests
-- Follow existing patterns in Tests\ folder
+- Mock services and navigation
+- Follow existing ViewModel test patterns
+
+# Agent 3: Repository Tests (if new repository created)
+Use Task tool with subagent_type="test-agent"
+Prompt: Create unit tests for [Feature]Repository:
+- Test in Tests\Infrastructure\ folder
+- Use in-memory database
+- Follow existing repository test patterns
 ```
+
+**Note:** Only spawn repository test-agent if a new repository was created.
 
 ### Step 5: Build & Validate
 
@@ -237,7 +255,9 @@ User: `/implement-feature Add notification service`
    - backend-agent → INotificationService, NotificationService, all layers
    - ui-agent → ViewModels + Views integration
 3. Migration (if needed)
-4. Tests: test-agent → unit tests
+4. Tests parallel (2-3 agents):
+   - test-agent → NotificationServiceTests
+   - test-agent → ViewModelNotificationTests
 5. Validate: build + test
 6. PR: https://github.com/manx/PomodoroTimeTracker/pull/XX
 ```
