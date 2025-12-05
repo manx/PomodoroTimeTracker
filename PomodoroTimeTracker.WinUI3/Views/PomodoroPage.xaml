@@ -183,6 +183,14 @@
                             TextAlignment="Center"
                             TextWrapping="Wrap"
                             Visibility="{x:Bind ViewModel.IsNotBreakState, Mode=OneWay}" />
+
+                        <!--  Billable Toggle during break  -->
+                        <ToggleSwitch
+                            HorizontalAlignment="Center"
+                            IsOn="{x:Bind ViewModel.IsBreakBillable, Mode=TwoWay}"
+                            OffContent="Not billable"
+                            OnContent="Billable"
+                            Visibility="{x:Bind ViewModel.IsBreakState, Mode=OneWay}" />
                     </StackPanel>
                 </Grid>
 

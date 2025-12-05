@@ -28,6 +28,7 @@ public class TimeEntryService : ITimeEntryService
         EndTime = entry.EndTime,
         DurationMinutes = entry.DurationMinutes,
         IsCompleted = entry.IsCompleted,
+        IsBillable = entry.IsBillable,
         Notes = entry.Notes,
         CreatedAt = entry.CreatedAt
     };
@@ -81,6 +82,7 @@ public class TimeEntryService : ITimeEntryService
                 ? (int)(endTime.Value - startTime.Value).TotalMinutes
                 : dto.PlannedDurationMinutes,
             IsCompleted = dto.SessionTypeId == SessionType.Ids.Manual ? null : false,
+            IsBillable = dto.IsBillable,
             Notes = dto.Notes,
             CreatedAt = DateTime.UtcNow
         };
@@ -104,6 +106,7 @@ public class TimeEntryService : ITimeEntryService
             EndTime = null,
             DurationMinutes = dto.PlannedDurationMinutes,
             IsCompleted = false,
+            IsBillable = dto.IsBillable,
             Notes = dto.Notes,
             CreatedAt = DateTime.UtcNow
         };
@@ -163,6 +166,7 @@ public class TimeEntryService : ITimeEntryService
             ? (int)(dto.EndTime.Value - dto.StartTime).TotalMinutes
             : null);
         entry.IsCompleted = dto.IsCompleted;
+        entry.IsBillable = dto.IsBillable;
         entry.Notes = dto.Notes;
 
         _unitOfWork.TimeEntries.Update(entry);

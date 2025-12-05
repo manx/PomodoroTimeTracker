@@ -403,6 +403,129 @@ public class PomodoroSettingsServiceTests
 
     #endregion
 
+    #region Billable Breaks Settings Tests
+
+    [Fact]
+    public async Task GetSettingsAsync_ReturnsBillableBreakSettings()
+    {
+        // Arrange
+        var settings = new PomodoroSettings
+        {
+            Id = 1,
+            WorkDurationMinutes = 25,
+            ShortBreakDurationMinutes = 5,
+            LongBreakDurationMinutes = 15,
+            LongBreakInterval = 4,
+            ShowNotification = true,
+            PlaySound = true,
+            FlashWindow = false,
+            WrapUpPeriodMinutes = 3,
+            WrapUpNotificationVolume = 50,
+            UseAlarm = true,
+            AlarmVolume = 50,
+            ShortBreaksAreBillable = true,
+            LongBreaksAreBillable = false,
+            LastModified = DateTime.UtcNow
+        };
+
+        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(settings);
+
+        // Act
+        var result = await _service.GetSettingsAsync();
+
+        // Assert
+        result.ShortBreaksAreBillable.Should().BeTrue();
+        result.LongBreaksAreBillable.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UpdateSettingsAsync_UpdatesBillableBreakSettings()
+    {
+        // Arrange
+        var existingSettings = new PomodoroSettings
+        {
+            Id = 1,
+            WorkDurationMinutes = 25,
+            ShortBreakDurationMinutes = 5,
+            LongBreakDurationMinutes = 15,
+            LongBreakInterval = 4,
+            ShowNotification = true,
+            PlaySound = true,
+            FlashWindow = false,
+            WrapUpPeriodMinutes = 3,
+            WrapUpNotificationVolume = 50,
+            UseAlarm = true,
+            AlarmVolume = 50,
+            ShortBreaksAreBillable = false,
+            LongBreaksAreBillable = false,
+            LastModified = DateTime.UtcNow
+        };
+
+        var updateDto = new UpdatePomodoroSettingsDto
+        {
+            WorkDurationMinutes = 25,
+            ShortBreakDurationMinutes = 5,
+            LongBreakDurationMinutes = 15,
+            LongBreakInterval = 4,
+            ShowNotification = true,
+            PlaySound = true,
+            FlashWindow = false,
+            WrapUpPeriodMinutes = 3,
+            WrapUpNotificationVolume = 50,
+            UseAlarm = true,
+            AlarmVolume = 50,
+            ShortBreaksAreBillable = true,
+            LongBreaksAreBillable = true
+        };
+
+        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingSettings);
+
+        // Act
+        var result = await _service.UpdateSettingsAsync(updateDto);
+
+        // Assert
+        result.ShortBreaksAreBillable.Should().BeTrue();
+        result.LongBreaksAreBillable.Should().BeTrue();
+        _settingsRepositoryMock.Verify(r => r.Update(existingSettings), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetSettingsAsync_DefaultsBillableBreaksToFalse()
+    {
+        // Arrange
+        var settings = new PomodoroSettings
+        {
+            Id = 1,
+            WorkDurationMinutes = 25,
+            ShortBreakDurationMinutes = 5,
+            LongBreakDurationMinutes = 15,
+            LongBreakInterval = 4,
+            ShowNotification = true,
+            PlaySound = true,
+            FlashWindow = false,
+            WrapUpPeriodMinutes = 3,
+            WrapUpNotificationVolume = 50,
+            UseAlarm = true,
+            AlarmVolume = 50,
+            // Default values - not explicitly set
+            LastModified = DateTime.UtcNow
+        };
+
+        _settingsRepositoryMock.Setup(r => r.GetSettingsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(settings);
+
+        // Act
+        var result = await _service.GetSettingsAsync();
+
+        // Assert
+        result.ShortBreaksAreBillable.Should().BeFalse();
+        result.LongBreaksAreBillable.Should().BeFalse();
+    }
+
+    #endregion
+
     #region Settings Singleton Behavior Tests
 
     [Fact]

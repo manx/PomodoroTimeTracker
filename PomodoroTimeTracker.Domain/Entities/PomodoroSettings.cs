@@ -87,6 +87,16 @@ public class PomodoroSettings
     public string AlarmSound { get; set; } = "Alarm01.wav";
 
     /// <summary>
+    /// Gets or sets whether short breaks should be marked as billable by default.
+    /// </summary>
+    public bool ShortBreaksAreBillable { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets whether long breaks should be marked as billable by default.
+    /// </summary>
+    public bool LongBreaksAreBillable { get; set; } = false;
+
+    /// <summary>
     /// Gets or sets when the settings were last modified (UTC).
     /// </summary>
     public DateTime LastModified { get; set; } = DateTime.UtcNow;

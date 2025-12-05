@@ -129,6 +129,26 @@
                             TextWrapping="Wrap" />
                     </StackPanel>
 
+                    <!--  Billable Breaks  -->
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Billable Breaks" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Set default billable status for breaks (can be toggled per session)"
+                            TextWrapping="Wrap" />
+                        <ToggleSwitch
+                            IsOn="{x:Bind ViewModel.ShortBreaksAreBillable, Mode=TwoWay}"
+                            OffContent="Short breaks are not billable"
+                            OnContent="Short breaks are billable" />
+                        <ToggleSwitch
+                            IsOn="{x:Bind ViewModel.LongBreaksAreBillable, Mode=TwoWay}"
+                            OffContent="Long breaks are not billable"
+                            OnContent="Long breaks are billable" />
+                    </StackPanel>
+
                 </StackPanel>
             </Border>
 

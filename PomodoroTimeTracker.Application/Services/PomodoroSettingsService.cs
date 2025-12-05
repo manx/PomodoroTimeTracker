@@ -30,6 +30,8 @@ public class PomodoroSettingsService(IUnitOfWork unitOfWork) : IPomodoroSettings
         settings.UseAlarm = dto.UseAlarm;
         settings.AlarmVolume = dto.AlarmVolume;
         settings.AlarmSound = dto.AlarmSound;
+        settings.ShortBreaksAreBillable = dto.ShortBreaksAreBillable;
+        settings.LongBreaksAreBillable = dto.LongBreaksAreBillable;
         settings.LastModified = DateTime.UtcNow;
 
         unitOfWork.PomodoroSettings.Update(settings);
@@ -66,6 +68,8 @@ public class PomodoroSettingsService(IUnitOfWork unitOfWork) : IPomodoroSettings
             UseAlarm = settings.UseAlarm,
             AlarmVolume = settings.AlarmVolume,
             AlarmSound = settings.AlarmSound,
+            ShortBreaksAreBillable = settings.ShortBreaksAreBillable,
+            LongBreaksAreBillable = settings.LongBreaksAreBillable,
             LastModified = settings.LastModified
         };
     }
