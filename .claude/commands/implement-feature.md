@@ -5,6 +5,7 @@ Implement a feature using specialized agents. This command orchestrates backend-
 ## Usage
 ```
 /implement-feature <feature description>
+/implement-feature --plan <plan-name>
 ```
 
 ## Zero-Interaction Workflow
@@ -12,12 +13,20 @@ Implement a feature using specialized agents. This command orchestrates backend-
 You are the **orchestrator**. This workflow runs autonomously with no user approval needed:
 
 ```
-Analyze → Backend → ViewModels → Views+Tests (parallel) → Validate → PR
+[Plan file or Analyze] → Backend → ViewModels → Views+Tests (parallel) → Validate → PR
 ```
 
 **Output:** PR URL (user reviews via GitHub)
 
-### Step 1: Analyze & Plan (Auto-proceed)
+### Step 1: Load Plan or Analyze
+
+**If `--plan <name>` is provided:**
+1. Read the plan file from `docs/plans/<name>.md`
+2. Display: `## Implementing from plan: <name>`
+3. Use the plan's phases/tasks as the implementation guide
+4. **Skip analysis** - proceed directly to Step 2
+
+**Otherwise (no --plan flag):**
 Analyze the feature request and display a brief plan, then **proceed immediately**:
 
 1. **Identify affected layers:**
@@ -182,16 +191,28 @@ public class MyViewModel : ViewModelBase
 - Maximum 3 retries per agent before escalating to user
 - Only escalate if truly blocked (e.g., ambiguous requirements, external dependencies)
 
-## Example
+## Examples
 
+### Example 1: Direct feature request
 User: `/implement-feature Add time entry tracking`
 
 Orchestrator:
-1. **Plan (auto-proceed):** Display "Implementing: time entry tracking" with layer breakdown
+1. **Analyze (auto-proceed):** Display "Implementing: time entry tracking" with layer breakdown
 2. **ViewModels first:** Spawn ui-agent for TimeEntryListViewModel, TimeEntryDetailViewModel
 3. **Parallel execution:**
    - Spawn ui-agent: Create TimeEntryListPage.xaml, TimeEntryDetailPage.xaml
    - Spawn test-agent: Create TimeEntryService tests (in same message!)
 4. **Validate:** Build and run tests (auto-retry up to 3x if failures)
 5. **Auto-PR:** Create branch `feat/time-entry-tracking`, commit, push, create PR
+6. **Output:** `https://github.com/manx/PomodoroTimeTracker/pull/XX`
+
+### Example 2: From existing plan (after plan mode)
+User: `/implement-feature --plan settings-rebuild`
+
+Orchestrator:
+1. **Load plan:** Read `docs/plans/settings-rebuild.md`, display "Implementing from plan: settings-rebuild"
+2. **Follow plan phases:** Execute Phase 1 (Domain), Phase 2 (Infrastructure), etc.
+3. **Parallel execution:** Where plan allows parallel work
+4. **Validate:** Build and run tests
+5. **Auto-PR:** Create branch, commit, push, create PR
 6. **Output:** `https://github.com/manx/PomodoroTimeTracker/pull/XX`
