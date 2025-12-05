@@ -76,6 +76,17 @@ When Stop is pressed during a running session:
 
 ## Settings
 
+Tabbed interface with 4 sections:
+
+### General Settings
+- **Language**: Use system default or override (English US/UK)
+- **Date Format**: Use system default or override (MM/dd/yyyy, dd/MM/yyyy, yyyy-MM-dd)
+- **Week Start Day**: Sunday, Monday, or Saturday
+- **Week Year Standard**: ISO 8601 (international) or US Standard
+- **Tab Memory**: Remembers last opened tab
+
+### Pomodoro Timer Settings
+
 **Timer Durations**
 - Work duration: 1-120 minutes (default: 25)
 - Short break: manual or auto-calculated (default: 5)
@@ -92,6 +103,12 @@ When Stop is pressed during a running session:
 - Short break = work duration ÷ 5
 - Long break = (work duration ÷ 5) × 3
 - Example: 25 min work → 5 min short, 15 min long
+
+### Regular Timer Settings
+*Coming soon*
+
+### Stop Watch Settings
+*Coming soon*
 
 ---
 

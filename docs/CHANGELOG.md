@@ -1,5 +1,29 @@
 # Changelog - Pomodoro Time Tracker
 
+## 2025-12-05
+
+### Settings Window Rebuild
+- Rebuilt settings as tabbed interface with TabView
+- Added General Settings tab with:
+  - Language override (English US/UK or system default)
+  - Date format override (MM/dd/yyyy, dd/MM/yyyy, yyyy-MM-dd or system default)
+  - Week start day (Sunday, Monday, Saturday)
+  - Week year standard (ISO 8601, US Standard)
+- Extracted Pomodoro Timer settings to separate tab
+- Added placeholder tabs for Regular Timer and Stop Watch
+- Implemented tab memory (remembers last opened tab)
+- Created new AppSettings entity and repository (singleton pattern)
+- Added week calculation methods supporting both ISO 8601 and US standards
+- Updated ReportViewModel to use configurable week settings
+- 82 new tests (repository, service, ViewModel, week calculation)
+- PR #29
+
+### Zero-Interaction Workflow
+- Enhanced `/implement-feature` command for autonomous execution
+- Added `--plan <name>` flag to load existing plans from `docs/plans/`
+- Auto-creates branch, commits, and PR on completion
+- PR #27, PR #28
+
 ## 2025-12-04
 
 ### Report View Implementation
