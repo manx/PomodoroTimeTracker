@@ -15,6 +15,7 @@ public static class PageNames
     public const string RegularTimer = "RegularTimerPage";
     public const string StopWatch = "StopWatchPage";
     public const string Settings = "PomodoroSettingsPage";
+    public const string Report = "ReportPage";
 }
 
 /// <summary>

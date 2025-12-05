@@ -21,6 +21,7 @@ internal sealed class NavigationService : INavigationService
         { PageNames.RegularTimer, typeof(RegularTimerPage) },
         { PageNames.StopWatch, typeof(StopWatchPage) },
         { PageNames.Settings, typeof(PomodoroSettingsPage) },
+        { PageNames.Report, typeof(ReportPage) },
     };
 
     public Frame? NavigationFrame { get; set; }

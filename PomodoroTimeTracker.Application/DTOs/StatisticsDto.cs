@@ -15,6 +15,14 @@ public class WeeklyStatisticsDto
     public TimeEntryStatsDto TimeEntries { get; set; } = new();
 }
 
+public class DateRangeStatisticsDto
+{
+    public string StartDate { get; set; } = string.Empty;
+    public string EndDate { get; set; } = string.Empty;
+    public PomodoroStatsDto PomodoroSessions { get; set; } = new();
+    public TimeEntryStatsDto TimeEntries { get; set; } = new();
+}
+
 public class ProjectStatisticsDto
 {
     public ProjectInfoDto Project { get; set; } = new();
