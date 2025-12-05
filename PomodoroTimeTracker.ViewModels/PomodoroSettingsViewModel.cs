@@ -28,6 +28,8 @@ public sealed partial class PomodoroSettingsViewModel : ViewModelBase
     private bool _useAlarm;
     private int _alarmVolume;
     private string _alarmSound = "Alarm01.wav";
+    private bool _shortBreaksAreBillable;
+    private bool _longBreaksAreBillable;
     private bool _isSaving;
 
     public PomodoroSettingsViewModel(IPomodoroSettingsService settingsService, IAudioService audioService)
@@ -127,6 +129,18 @@ public sealed partial class PomodoroSettingsViewModel : ViewModelBase
         set => SetProperty(ref _alarmSound, value);
     }
 
+    public bool ShortBreaksAreBillable
+    {
+        get => _shortBreaksAreBillable;
+        set => SetProperty(ref _shortBreaksAreBillable, value);
+    }
+
+    public bool LongBreaksAreBillable
+    {
+        get => _longBreaksAreBillable;
+        set => SetProperty(ref _longBreaksAreBillable, value);
+    }
+
     public bool IsSaving
     {
         get => _isSaving;
@@ -164,6 +178,8 @@ public sealed partial class PomodoroSettingsViewModel : ViewModelBase
             UseAlarm = _settings.UseAlarm;
             AlarmVolume = _settings.AlarmVolume;
             AlarmSound = _settings.AlarmSound;
+            ShortBreaksAreBillable = _settings.ShortBreaksAreBillable;
+            LongBreaksAreBillable = _settings.LongBreaksAreBillable;
         }
         catch (Exception ex)
         {
@@ -191,7 +207,9 @@ public sealed partial class PomodoroSettingsViewModel : ViewModelBase
                 WrapUpNotificationSound = WrapUpNotificationSound,
                 UseAlarm = UseAlarm,
                 AlarmVolume = AlarmVolume,
-                AlarmSound = AlarmSound
+                AlarmSound = AlarmSound,
+                ShortBreaksAreBillable = ShortBreaksAreBillable,
+                LongBreaksAreBillable = LongBreaksAreBillable
             };
 
             _settings = await _settingsService.UpdateSettingsAsync(dto);
@@ -224,6 +242,8 @@ public sealed partial class PomodoroSettingsViewModel : ViewModelBase
         UseAlarm = true;
         AlarmVolume = 50;
         AlarmSound = "Alarm01.wav";
+        ShortBreaksAreBillable = false;
+        LongBreaksAreBillable = false;
     }
 
     private async Task CalculateDefaultBreaksAsync()

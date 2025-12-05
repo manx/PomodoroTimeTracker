@@ -90,6 +90,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
 
     // Timer display properties
     private double _progressPercentage;
+    private bool _isBreakBillable;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PomodoroViewModel"/> class.
@@ -180,6 +181,51 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
     /// Used to show/hide pause/stop buttons during breaks.
     /// </summary>
     public bool IsNotBreakState => !IsBreakState;
+
+    /// <summary>
+    /// Gets or sets whether the current break session is billable.
+    /// Allows user to toggle during breaks. Defaults to setting value.
+    /// </summary>
+    public bool IsBreakBillable
+    {
+        get => _isBreakBillable;
+        set
+        {
+            if (SetProperty(ref _isBreakBillable, value))
+            {
+                // Update the break entry in the database when toggled during a break
+                _ = UpdateBreakEntryBillableAsync();
+            }
+        }
+    }
+
+    private async Task UpdateBreakEntryBillableAsync()
+    {
+        if (CurrentEntry != null && IsBreakState)
+        {
+            try
+            {
+                var updateDto = new UpdateTimeEntryDto
+                {
+                    Id = CurrentEntry.Id,
+                    ProjectId = CurrentEntry.ProjectId,
+                    SessionTypeId = CurrentEntry.SessionTypeId,
+                    Description = CurrentEntry.Description,
+                    StartTime = CurrentEntry.StartTime,
+                    EndTime = CurrentEntry.EndTime,
+                    DurationMinutes = CurrentEntry.DurationMinutes,
+                    IsCompleted = CurrentEntry.IsCompleted,
+                    IsBillable = IsBreakBillable,
+                    Notes = CurrentEntry.Notes
+                };
+                await EntryService.UpdateEntryAsync(updateDto);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating break billable status: {ex.Message}");
+            }
+        }
+    }
 
     /// <inheritdoc/>
     protected override void OnSelectedProjectChanged()
@@ -525,8 +571,8 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
             await _audioService.PlayAlarmAsync(_settings.AlarmVolume, _settings.AlarmSound);
         }
 
-        // Complete current entry if it's a work session (including wrap up)
-        if (CurrentEntry != null && (State == PomodoroState.WrapUp || State == PomodoroState.Running))
+        // Complete current entry if it's a work session (including wrap up) or break
+        if (CurrentEntry != null)
         {
             await EntryService.CompleteEntryAsync(CurrentEntry.Id);
         }
@@ -555,11 +601,29 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
             ? _settings.LongBreakDurationMinutes
             : _settings.ShortBreakDurationMinutes;
 
+        // Set billable default based on settings
+        IsBreakBillable = isLongBreak
+            ? _settings.LongBreaksAreBillable
+            : _settings.ShortBreaksAreBillable;
+
         if (isLongBreak)
         {
             _pomodoroCount = 0; // Reset cycle
             PomodoroStateService.ResetCycle();
         }
+
+        // Create a time entry for the break session
+        var breakSessionType = isLongBreak ? SessionType.Ids.LongBreak : SessionType.Ids.ShortBreak;
+        var createDto = new CreateTimeEntryDto
+        {
+            ProjectId = SelectedProject?.Id,
+            SessionTypeId = breakSessionType,
+            Description = isLongBreak ? "Long Break" : "Short Break",
+            PlannedDurationMinutes = breakDuration,
+            IsBillable = IsBreakBillable
+        };
+
+        CurrentEntry = await EntryService.StartTimerEntryAsync(createDto);
 
         _totalSeconds = breakDuration * 60;
         _remainingSeconds = _totalSeconds;
@@ -569,8 +633,6 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
 
         State = PomodoroState.Break;
         Timer.Start();
-
-        await Task.CompletedTask;
     }
 
     #endregion

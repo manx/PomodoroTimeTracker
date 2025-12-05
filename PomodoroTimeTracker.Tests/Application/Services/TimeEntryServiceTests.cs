@@ -801,6 +801,195 @@ public class TimeEntryServiceTests
 
     #endregion
 
+    #region IsBillable Tests
+
+    [Fact]
+    public async Task StartTimerEntryAsync_WithBillableTrue_CreatesBillableEntry()
+    {
+        // Arrange
+        var createDto = new CreateTimeEntryDto
+        {
+            ProjectId = 1,
+            Description = "Break session",
+            IsBillable = true
+        };
+
+        TimeEntry? capturedEntry = null;
+        _timeEntryRepositoryMock.Setup(r => r.AddAsync(It.IsAny<TimeEntry>(), It.IsAny<CancellationToken>()))
+            .Callback<TimeEntry, CancellationToken>((e, ct) =>
+            {
+                e.Id = 1;
+                capturedEntry = e;
+            })
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _service.StartTimerEntryAsync(createDto);
+
+        // Assert
+        capturedEntry.Should().NotBeNull();
+        capturedEntry!.IsBillable.Should().BeTrue();
+        result.IsBillable.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task StartTimerEntryAsync_WithBillableFalse_CreatesNonBillableEntry()
+    {
+        // Arrange
+        var createDto = new CreateTimeEntryDto
+        {
+            ProjectId = 1,
+            Description = "Break session",
+            IsBillable = false
+        };
+
+        TimeEntry? capturedEntry = null;
+        _timeEntryRepositoryMock.Setup(r => r.AddAsync(It.IsAny<TimeEntry>(), It.IsAny<CancellationToken>()))
+            .Callback<TimeEntry, CancellationToken>((e, ct) =>
+            {
+                e.Id = 1;
+                capturedEntry = e;
+            })
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _service.StartTimerEntryAsync(createDto);
+
+        // Assert
+        capturedEntry.Should().NotBeNull();
+        capturedEntry!.IsBillable.Should().BeFalse();
+        result.IsBillable.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task StartTimerEntryAsync_WithBillableNull_CreatesEntryWithNullBillable()
+    {
+        // Arrange
+        var createDto = new CreateTimeEntryDto
+        {
+            ProjectId = 1,
+            Description = "Work session",
+            IsBillable = null
+        };
+
+        TimeEntry? capturedEntry = null;
+        _timeEntryRepositoryMock.Setup(r => r.AddAsync(It.IsAny<TimeEntry>(), It.IsAny<CancellationToken>()))
+            .Callback<TimeEntry, CancellationToken>((e, ct) =>
+            {
+                e.Id = 1;
+                capturedEntry = e;
+            })
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _service.StartTimerEntryAsync(createDto);
+
+        // Assert
+        capturedEntry.Should().NotBeNull();
+        capturedEntry!.IsBillable.Should().BeNull();
+        result.IsBillable.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateEntryAsync_WithBillable_SetsIsBillable()
+    {
+        // Arrange
+        var createDto = new CreateTimeEntryDto
+        {
+            ProjectId = 1,
+            Description = "Billable work",
+            IsBillable = true
+        };
+
+        TimeEntry? capturedEntry = null;
+        _timeEntryRepositoryMock.Setup(r => r.AddAsync(It.IsAny<TimeEntry>(), It.IsAny<CancellationToken>()))
+            .Callback<TimeEntry, CancellationToken>((e, ct) =>
+            {
+                e.Id = 1;
+                capturedEntry = e;
+            })
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _service.CreateEntryAsync(createDto);
+
+        // Assert
+        capturedEntry.Should().NotBeNull();
+        capturedEntry!.IsBillable.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UpdateEntryAsync_UpdatesIsBillable()
+    {
+        // Arrange
+        var existingEntry = new TimeEntry
+        {
+            Id = 1,
+            Description = "Break",
+            StartTime = DateTime.UtcNow.AddHours(-1),
+            IsBillable = false,
+            CreatedAt = DateTime.UtcNow.AddHours(-1)
+        };
+
+        var updateDto = new UpdateTimeEntryDto
+        {
+            Id = 1,
+            ProjectId = 1,
+            Description = "Break",
+            StartTime = DateTime.UtcNow.AddHours(-1),
+            EndTime = null,
+            IsBillable = true
+        };
+
+        _timeEntryRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingEntry);
+
+        // Act
+        await _service.UpdateEntryAsync(updateDto);
+
+        // Assert
+        existingEntry.IsBillable.Should().BeTrue();
+        _timeEntryRepositoryMock.Verify(r => r.Update(existingEntry), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAllEntriesAsync_MapsIsBillableCorrectly()
+    {
+        // Arrange
+        var entries = new List<TimeEntry>
+        {
+            new()
+            {
+                Id = 1,
+                Description = "Billable task",
+                StartTime = DateTime.UtcNow.AddHours(-2),
+                IsBillable = true,
+                CreatedAt = DateTime.UtcNow.AddHours(-2)
+            },
+            new()
+            {
+                Id = 2,
+                Description = "Non-billable task",
+                StartTime = DateTime.UtcNow.AddHours(-1),
+                IsBillable = false,
+                CreatedAt = DateTime.UtcNow.AddHours(-1)
+            }
+        };
+
+        _timeEntryRepositoryMock.Setup(r => r.GetAllWithProjectAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entries);
+
+        // Act
+        var result = await _service.GetAllEntriesAsync();
+
+        // Assert
+        var resultList = result.ToList();
+        resultList[0].IsBillable.Should().BeTrue();
+        resultList[1].IsBillable.Should().BeFalse();
+    }
+
+    #endregion
+
     #region Edge Cases and Business Rules
 
     [Fact]

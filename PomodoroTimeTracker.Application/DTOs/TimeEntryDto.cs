@@ -13,6 +13,7 @@ public class TimeEntryDto
     public DateTime? EndTime { get; set; }
     public int? DurationMinutes { get; set; }
     public bool? IsCompleted { get; set; }
+    public bool? IsBillable { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
 }
@@ -23,6 +24,7 @@ public class CreateTimeEntryDto
     public int SessionTypeId { get; set; }
     public string Description { get; set; } = string.Empty;
     public int? PlannedDurationMinutes { get; set; }
+    public bool? IsBillable { get; set; }
     public string? Notes { get; set; }
 }
 
@@ -36,5 +38,6 @@ public class UpdateTimeEntryDto
     public DateTime? EndTime { get; set; }
     public int? DurationMinutes { get; set; }
     public bool? IsCompleted { get; set; }
+    public bool? IsBillable { get; set; }
     public string? Notes { get; set; }
 }

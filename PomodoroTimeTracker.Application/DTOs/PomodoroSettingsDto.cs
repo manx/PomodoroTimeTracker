@@ -16,6 +16,8 @@ public class PomodoroSettingsDto
     public bool UseAlarm { get; set; }
     public int AlarmVolume { get; set; }
     public string AlarmSound { get; set; } = "Alarm01.wav";
+    public bool ShortBreaksAreBillable { get; set; }
+    public bool LongBreaksAreBillable { get; set; }
     public DateTime LastModified { get; set; }
 }
 
@@ -34,4 +36,6 @@ public class UpdatePomodoroSettingsDto
     public bool UseAlarm { get; set; }
     public int AlarmVolume { get; set; }
     public string AlarmSound { get; set; } = "Alarm01.wav";
+    public bool ShortBreaksAreBillable { get; set; }
+    public bool LongBreaksAreBillable { get; set; }
 }

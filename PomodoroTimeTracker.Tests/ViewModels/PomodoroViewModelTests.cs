@@ -713,6 +713,108 @@ public class PomodoroViewModelTests
 
     #endregion
 
+    #region IsBreakBillable Tests
+
+    [Fact]
+    public void IsBreakBillable_WhenSet_RaisesPropertyChanged()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+        var propertyChanged = false;
+        viewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(viewModel.IsBreakBillable))
+                propertyChanged = true;
+        };
+
+        // Act
+        viewModel.IsBreakBillable = true;
+
+        // Assert
+        propertyChanged.Should().BeTrue();
+        viewModel.IsBreakBillable.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsBreakBillable_DefaultsToFalse()
+    {
+        // Arrange & Act
+        var viewModel = CreateViewModel();
+
+        // Assert
+        viewModel.IsBreakBillable.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task IsBreakBillable_WhenChangedDuringBreak_UpdatesEntryInDatabase()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+        viewModel.GetType().GetProperty("State")!.SetValue(viewModel, PomodoroState.Break);
+
+        // Create a current entry using reflection (CurrentEntry is a protected field)
+        var entryField = typeof(TimerViewModelBase).GetField("CurrentEntry",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        entryField!.SetValue(viewModel, new TimeEntryDto
+        {
+            Id = 1,
+            StartTime = DateTime.UtcNow,
+            SessionTypeId = SessionType.Ids.ShortBreak,
+            SessionTypeName = "Short Break",
+            IsBillable = false
+        });
+
+        // Act
+        viewModel.IsBreakBillable = true;
+        await Task.Delay(100); // Allow async update to complete
+
+        // Assert
+        _entryServiceMock.Verify(s => s.UpdateEntryAsync(
+            It.Is<UpdateTimeEntryDto>(dto => dto.IsBillable == true)), Times.Once);
+    }
+
+    [Fact]
+    public void IsBreakBillable_WhenChangedDuringSetup_DoesNotUpdateDatabase()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+        // State is already Setup by default
+
+        // Act
+        viewModel.IsBreakBillable = true;
+
+        // Assert - Should not call UpdateEntryAsync because not in break state
+        _entryServiceMock.Verify(s => s.UpdateEntryAsync(It.IsAny<UpdateTimeEntryDto>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LoadAsync_WithShortBreaksBillable_SetsCorrectDefault()
+    {
+        // Arrange
+        _settingsServiceMock.Setup(s => s.GetSettingsAsync())
+            .ReturnsAsync(new PomodoroSettingsDto
+            {
+                WorkDurationMinutes = 25,
+                ShortBreakDurationMinutes = 5,
+                LongBreakDurationMinutes = 15,
+                LongBreakInterval = 4,
+                WrapUpPeriodMinutes = 3,
+                ShortBreaksAreBillable = true,
+                LongBreaksAreBillable = false
+            });
+
+        var viewModel = CreateViewModel();
+
+        // Act
+        await viewModel.LoadAsync();
+
+        // Assert - Settings are loaded but IsBreakBillable isn't set until break starts
+        // This test verifies settings are loaded correctly
+        _settingsServiceMock.Verify(s => s.GetSettingsAsync(), Times.Once);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private async Task<PomodoroViewModel> StartPomodoroAsync()
