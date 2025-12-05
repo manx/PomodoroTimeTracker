@@ -49,13 +49,13 @@ public sealed partial class StopWatchViewModel : TimerViewModelBase
     /// Initializes a new instance of the <see cref="StopWatchViewModel"/> class.
     /// </summary>
     public StopWatchViewModel(
-        IPomodoroSessionService sessionService,
+        ITimeEntryService entryService,
         IClientService clientService,
         IProjectService projectService,
         IActiveTimerService activeTimerService,
         IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
-        : base(sessionService, clientService, projectService, activeTimerService, pomodoroStateService, timer)
+        : base(entryService, clientService, projectService, activeTimerService, pomodoroStateService, timer)
     {
         Timer.Tick += Timer_Tick;
 
@@ -230,7 +230,7 @@ public sealed partial class StopWatchViewModel : TimerViewModelBase
     protected override ActiveTimerType TimerType => ActiveTimerType.StopWatch;
 
     /// <inheritdoc/>
-    protected override SessionType SessionTypeValue => SessionType.StopWatch;
+    protected override int SessionTypeId => SessionType.Ids.StopWatch;
 
     /// <inheritdoc/>
     protected override string GetStopNotes()
@@ -271,7 +271,7 @@ public sealed partial class StopWatchViewModel : TimerViewModelBase
         Description = string.Empty;
         TimerDisplay = "00:00";
         _elapsedSeconds = 0;
-        CurrentSession = null;
+        CurrentEntry = null;
 
         OnPropertyChanged(nameof(ShowCycleWarning));
     }
@@ -294,17 +294,17 @@ public sealed partial class StopWatchViewModel : TimerViewModelBase
             PomodoroStateService.ResetCycle();
             OnPropertyChanged(nameof(ShowCycleWarning));
 
-            // Create session with SessionType.StopWatch
+            // Create time entry with SessionType.StopWatch
             // Duration is 0 for stopwatch (no predefined duration)
-            var createDto = new CreatePomodoroSessionDto
+            var createDto = new CreateTimeEntryDto
             {
                 ProjectId = SelectedProject?.Id,
-                DurationMinutes = 0, // Stopwatch has no duration limit
-                SessionType = SessionType.StopWatch,
-                Objective = Description  // Using Description for the Objective field
+                SessionTypeId = SessionType.Ids.StopWatch,
+                Description = Description,
+                PlannedDurationMinutes = 0 // Stopwatch has no duration limit
             };
 
-            CurrentSession = await SessionService.CreateSessionAsync(createDto);
+            CurrentEntry = await EntryService.StartTimerEntryAsync(createDto);
 
             // Initialize timer
             _elapsedSeconds = 0;

@@ -16,9 +16,9 @@ public abstract class TimerViewModelBase : ViewModelBase, ITimerWindowViewModel
     #region Protected Services
 
     /// <summary>
-    /// Service for managing Pomodoro sessions.
+    /// Service for managing time entries.
     /// </summary>
-    protected readonly IPomodoroSessionService SessionService;
+    protected readonly ITimeEntryService EntryService;
 
     /// <summary>
     /// Service for managing clients.
@@ -46,9 +46,9 @@ public abstract class TimerViewModelBase : ViewModelBase, ITimerWindowViewModel
     protected readonly IDispatcherTimer Timer;
 
     /// <summary>
-    /// The current session being tracked.
+    /// The current time entry being tracked.
     /// </summary>
-    protected PomodoroSessionDto? CurrentSession;
+    protected TimeEntryDto? CurrentEntry;
 
     #endregion
 
@@ -66,14 +66,14 @@ public abstract class TimerViewModelBase : ViewModelBase, ITimerWindowViewModel
     /// Initializes a new instance of the <see cref="TimerViewModelBase"/> class.
     /// </summary>
     protected TimerViewModelBase(
-        IPomodoroSessionService sessionService,
+        ITimeEntryService entryService,
         IClientService clientService,
         IProjectService projectService,
         IActiveTimerService activeTimerService,
         IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
     {
-        SessionService = sessionService;
+        EntryService = entryService;
         ClientService = clientService;
         ProjectService = projectService;
         ActiveTimerService = activeTimerService;
@@ -91,9 +91,10 @@ public abstract class TimerViewModelBase : ViewModelBase, ITimerWindowViewModel
     protected abstract ActiveTimerType TimerType { get; }
 
     /// <summary>
-    /// Gets the session type value for loading last session data.
+    /// Gets the session type ID for loading last session data.
+    /// Use SessionType.Ids.Work, SessionType.Ids.Regular, SessionType.Ids.StopWatch, etc.
     /// </summary>
-    protected abstract SessionType SessionTypeValue { get; }
+    protected abstract int SessionTypeId { get; }
 
     /// <summary>
     /// Gets the session description for TimerWindow display.
@@ -319,21 +320,20 @@ public abstract class TimerViewModelBase : ViewModelBase, ITimerWindowViewModel
     }
 
     /// <summary>
-    /// Loads the last session's client/project for the current timer type.
+    /// Loads the last entry's client/project for the current timer type.
     /// </summary>
     protected async Task LoadLastSessionDataAsync()
     {
         try
         {
-            var sessions = await SessionService.GetAllSessionsAsync();
-            var lastSession = sessions
-                .Where(s => s.SessionType == SessionTypeValue)
-                .OrderByDescending(s => s.StartTime)
+            var entries = await EntryService.GetEntriesBySessionTypeAsync(SessionTypeId);
+            var lastEntry = entries
+                .OrderByDescending(e => e.StartTime)
                 .FirstOrDefault();
 
-            if (lastSession?.ProjectId != null)
+            if (lastEntry?.ProjectId != null)
             {
-                var project = await ProjectService.GetProjectByIdAsync(lastSession.ProjectId.Value);
+                var project = await ProjectService.GetProjectByIdAsync(lastEntry.ProjectId.Value);
                 if (project != null)
                 {
                     // Set client first
@@ -391,43 +391,43 @@ public abstract class TimerViewModelBase : ViewModelBase, ITimerWindowViewModel
     }
 
     /// <summary>
-    /// Saves the current session as a partial completion and returns to setup.
+    /// Saves the current entry as a partial completion and returns to setup.
     /// </summary>
     public async Task SaveAndStopAsync()
     {
         Timer.Stop();
 
-        if (CurrentSession != null)
+        if (CurrentEntry != null)
         {
-            var updateDto = new UpdatePomodoroSessionDto
+            var updateDto = new UpdateTimeEntryDto
             {
-                Id = CurrentSession.Id,
-                ProjectId = CurrentSession.ProjectId,
-                StartTime = CurrentSession.StartTime,
+                Id = CurrentEntry.Id,
+                ProjectId = CurrentEntry.ProjectId,
+                SessionTypeId = CurrentEntry.SessionTypeId,
+                Description = CurrentEntry.Description,
+                StartTime = CurrentEntry.StartTime,
                 EndTime = DateTime.UtcNow,
-                DurationMinutes = CurrentSession.DurationMinutes,
+                DurationMinutes = (int)(DateTime.UtcNow - CurrentEntry.StartTime).TotalMinutes,
                 IsCompleted = IsCompletedWhenStopped(),
-                SessionType = CurrentSession.SessionType,
-                Objective = CurrentSession.Objective,
                 Notes = GetStopNotes()
             };
 
-            await SessionService.UpdateSessionAsync(updateDto);
+            await EntryService.UpdateEntryAsync(updateDto);
         }
 
         ResetToSetupCore();
     }
 
     /// <summary>
-    /// Deletes the current session and returns to setup.
+    /// Deletes the current entry and returns to setup.
     /// </summary>
     public async Task DiscardAndStopAsync()
     {
         Timer.Stop();
 
-        if (CurrentSession != null)
+        if (CurrentEntry != null)
         {
-            await SessionService.DeleteSessionAsync(CurrentSession.Id);
+            await EntryService.DeleteEntryAsync(CurrentEntry.Id);
         }
 
         ResetToSetupCore();

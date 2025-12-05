@@ -11,7 +11,6 @@ public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
 
     public IClientRepository Clients { get; } = new ClientRepository(context);
     public IProjectRepository Projects { get; } = new ProjectRepository(context);
-    public IPomodoroSessionRepository PomodoroSessions { get; } = new PomodoroSessionRepository(context);
     public ITimeEntryRepository TimeEntries { get; } = new TimeEntryRepository(context);
     public IPomodoroSettingsRepository PomodoroSettings { get; } = new PomodoroSettingsRepository(context);
 

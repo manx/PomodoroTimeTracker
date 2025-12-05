@@ -15,7 +15,7 @@ namespace PomodoroTimeTracker.Tests.ViewModels;
 /// </summary>
 public class RegularTimerViewModelTests
 {
-    private readonly Mock<IPomodoroSessionService> _sessionServiceMock;
+    private readonly Mock<ITimeEntryService> _entryServiceMock;
     private readonly Mock<IPomodoroSettingsService> _settingsServiceMock;
     private readonly Mock<IClientService> _clientServiceMock;
     private readonly Mock<IProjectService> _projectServiceMock;
@@ -26,7 +26,7 @@ public class RegularTimerViewModelTests
 
     public RegularTimerViewModelTests()
     {
-        _sessionServiceMock = new Mock<IPomodoroSessionService>();
+        _entryServiceMock = new Mock<ITimeEntryService>();
         _settingsServiceMock = new Mock<IPomodoroSettingsService>();
         _clientServiceMock = new Mock<IClientService>();
         _projectServiceMock = new Mock<IProjectService>();
@@ -47,8 +47,8 @@ public class RegularTimerViewModelTests
             });
         _clientServiceMock.Setup(s => s.GetAllClientsAsync())
             .ReturnsAsync(new List<ClientDto>());
-        _sessionServiceMock.Setup(s => s.GetAllSessionsAsync())
-            .ReturnsAsync(new List<PomodoroSessionDto>());
+        _entryServiceMock.Setup(s => s.GetEntriesBySessionTypeAsync(It.IsAny<int>()))
+            .ReturnsAsync(new List<TimeEntryDto>());
         _activeTimerServiceMock.Setup(a => a.TrySetActiveTimer(It.IsAny<ActiveTimerType>()))
             .Returns(true);
     }
@@ -56,7 +56,7 @@ public class RegularTimerViewModelTests
     private RegularTimerViewModel CreateViewModel()
     {
         return new RegularTimerViewModel(
-            _sessionServiceMock.Object,
+            _entryServiceMock.Object,
             _settingsServiceMock.Object,
             _clientServiceMock.Object,
             _projectServiceMock.Object,
@@ -175,15 +175,16 @@ public class RegularTimerViewModelTests
     public async Task StartTimerCommand_CreatesSessionAndStartsTimer()
     {
         // Arrange
-        var createdSession = new PomodoroSessionDto
+        var createdEntry = new TimeEntryDto
         {
             Id = 1,
             StartTime = DateTime.UtcNow,
-            SessionType = SessionType.Regular
+            SessionTypeId = SessionType.Ids.Regular,
+            SessionTypeName = "Regular"
         };
-        _sessionServiceMock.Setup(s => s.CreateSessionAsync(
-            It.IsAny<CreatePomodoroSessionDto>()))
-            .ReturnsAsync(createdSession);
+        _entryServiceMock.Setup(s => s.StartTimerEntryAsync(
+            It.IsAny<CreateTimeEntryDto>()))
+            .ReturnsAsync(createdEntry);
 
         var viewModel = CreateViewModel();
         await viewModel.LoadAsync();
@@ -194,10 +195,10 @@ public class RegularTimerViewModelTests
 
         // Assert
         viewModel.State.Should().Be(RegularTimerState.Running);
-        _sessionServiceMock.Verify(s => s.CreateSessionAsync(
-            It.Is<CreatePomodoroSessionDto>(dto =>
-                dto.SessionType == SessionType.Regular &&
-                dto.Objective == "Test Task")), Times.Once);
+        _entryServiceMock.Verify(s => s.StartTimerEntryAsync(
+            It.Is<CreateTimeEntryDto>(dto =>
+                dto.SessionTypeId == SessionType.Ids.Regular &&
+                dto.Description == "Test Task")), Times.Once);
         _timerMock.Verify(t => t.Start(), Times.Once);
     }
 
@@ -331,8 +332,8 @@ public class RegularTimerViewModelTests
 
         // Assert
         _timerMock.Verify(t => t.Stop(), Times.Once);
-        _sessionServiceMock.Verify(s => s.UpdateSessionAsync(
-            It.IsAny<UpdatePomodoroSessionDto>()), Times.Once);
+        _entryServiceMock.Verify(s => s.UpdateEntryAsync(
+            It.IsAny<UpdateTimeEntryDto>()), Times.Once);
         viewModel.State.Should().Be(RegularTimerState.Setup);
     }
 
@@ -380,7 +381,7 @@ public class RegularTimerViewModelTests
 
         // Assert
         _timerMock.Verify(t => t.Stop(), Times.Once);
-        _sessionServiceMock.Verify(s => s.DeleteSessionAsync(
+        _entryServiceMock.Verify(s => s.DeleteEntryAsync(
             It.IsAny<int>()), Times.Once);
         viewModel.State.Should().Be(RegularTimerState.Setup);
     }
@@ -547,16 +548,17 @@ public class RegularTimerViewModelTests
 
     private async Task<RegularTimerViewModel> StartTimerAsync()
     {
-        var createdSession = new PomodoroSessionDto
+        var createdEntry = new TimeEntryDto
         {
             Id = 1,
             StartTime = DateTime.UtcNow,
-            SessionType = SessionType.Regular,
+            SessionTypeId = SessionType.Ids.Regular,
+            SessionTypeName = "Regular",
             DurationMinutes = 60
         };
-        _sessionServiceMock.Setup(s => s.CreateSessionAsync(
-            It.IsAny<CreatePomodoroSessionDto>()))
-            .ReturnsAsync(createdSession);
+        _entryServiceMock.Setup(s => s.StartTimerEntryAsync(
+            It.IsAny<CreateTimeEntryDto>()))
+            .ReturnsAsync(createdEntry);
 
         var viewModel = CreateViewModel();
         await viewModel.LoadAsync();

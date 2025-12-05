@@ -3,6 +3,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
+using PomodoroTimeTracker.Domain.Entities;
 using PomodoroTimeTracker.ViewModels.Services;
 
 namespace PomodoroTimeTracker.ViewModels;
@@ -129,8 +130,8 @@ public sealed partial class TimeEntryListViewModel : ViewModelBase
             IsLoading = true;
 
             // Load all entries and the active entry
-            var allEntries = await _timeEntryService.GetAllTimeEntriesAsync();
-            var activeEntry = await _timeEntryService.GetActiveTimeEntryAsync();
+            var allEntries = await _timeEntryService.GetAllEntriesAsync();
+            var activeEntry = await _timeEntryService.GetActiveEntryAsync();
 
             ActiveTimeEntry = activeEntry;
 
@@ -236,8 +237,12 @@ public sealed partial class TimeEntryListViewModel : ViewModelBase
                 return; // User cancelled
 
             // Start new entry
-            var createDto = new CreateTimeEntryDto { Description = description };
-            var newEntry = await _timeEntryService.StartTimeEntryAsync(createDto);
+            var createDto = new CreateTimeEntryDto
+            {
+                Description = description,
+                SessionTypeId = SessionType.Ids.Manual  // Manual entry
+            };
+            var newEntry = await _timeEntryService.StartTimerEntryAsync(createDto);
 
             ActiveTimeEntry = newEntry;
             await LoadEntriesAsync();
@@ -255,7 +260,7 @@ public sealed partial class TimeEntryListViewModel : ViewModelBase
 
         try
         {
-            await _timeEntryService.StopTimeEntryAsync(ActiveTimeEntry.Id);
+            await _timeEntryService.StopEntryAsync(ActiveTimeEntry.Id);
             await _dialogService.ShowInformationAsync("Time entry stopped successfully.", "Success");
             await LoadEntriesAsync();
         }
@@ -291,7 +296,7 @@ public sealed partial class TimeEntryListViewModel : ViewModelBase
         {
             try
             {
-                await _timeEntryService.DeleteTimeEntryAsync(SelectedEntry.Id);
+                await _timeEntryService.DeleteEntryAsync(SelectedEntry.Id);
                 await _dialogService.ShowInformationAsync("Time entry deleted successfully.", "Success");
                 await LoadEntriesAsync();
             }
@@ -340,7 +345,7 @@ public sealed partial class TimeEntryListViewModel : ViewModelBase
         {
             try
             {
-                await _timeEntryService.DeleteTimeEntryAsync(id);
+                await _timeEntryService.DeleteEntryAsync(id);
                 await _dialogService.ShowInformationAsync("Time entry deleted successfully.", "Success");
                 await LoadEntriesAsync();
             }

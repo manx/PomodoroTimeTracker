@@ -11,7 +11,7 @@ using PomodoroTimeTracker.Infrastructure.Data;
 namespace PomodoroTimeTracker.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251119194358_InitialCreate")]
+    [Migration("20251205090531_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -46,51 +46,15 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                     b.ToTable("Clients");
                 });
 
-            modelBuilder.Entity("PomodoroTimeTracker.Domain.Entities.PomodoroSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("DurationMinutes")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("EndTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Objective")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("ProjectId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SessionType")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId");
-
-                    b.HasIndex("StartTime");
-
-                    b.ToTable("PomodoroSessions");
-                });
-
             modelBuilder.Entity("PomodoroTimeTracker.Domain.Entities.PomodoroSettings", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("AlarmSound")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("AlarmVolume")
                         .HasColumnType("INTEGER");
@@ -116,16 +80,20 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                     b.Property<bool>("ShowNotification")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("SoftStopAlarmVolume")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SoftStopDurationMinutes")
-                        .HasColumnType("INTEGER");
-
                     b.Property<bool>("UseAlarm")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("WorkDurationMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("WrapUpNotificationSound")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("WrapUpNotificationVolume")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("WrapUpPeriodMinutes")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -164,6 +132,75 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                     b.ToTable("Projects");
                 });
 
+            modelBuilder.Entity("PomodoroTimeTracker.Domain.Entities.SessionType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsTimerType")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SessionTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Description = "Pomodoro work session",
+                            IsTimerType = true,
+                            Name = "Work"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Description = "Short break between pomodoros",
+                            IsTimerType = true,
+                            Name = "ShortBreak"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Description = "Long break after 4 pomodoros",
+                            IsTimerType = true,
+                            Name = "LongBreak"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "Regular countdown timer session",
+                            IsTimerType = true,
+                            Name = "Regular"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Description = "Stopwatch timer session",
+                            IsTimerType = true,
+                            Name = "StopWatch"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Description = "Manually entered time entry",
+                            IsTimerType = false,
+                            Name = "Manual"
+                        });
+                });
+
             modelBuilder.Entity("PomodoroTimeTracker.Domain.Entities.TimeEntry", b =>
                 {
                     b.Property<int>("Id")
@@ -184,7 +221,17 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool?>("IsCompleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SessionTypeId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("StartTime")
@@ -194,19 +241,11 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
 
                     b.HasIndex("ProjectId");
 
+                    b.HasIndex("SessionTypeId");
+
                     b.HasIndex("StartTime");
 
                     b.ToTable("TimeEntries");
-                });
-
-            modelBuilder.Entity("PomodoroTimeTracker.Domain.Entities.PomodoroSession", b =>
-                {
-                    b.HasOne("PomodoroTimeTracker.Domain.Entities.Project", "Project")
-                        .WithMany("PomodoroSessions")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("PomodoroTimeTracker.Domain.Entities.Project", b =>
@@ -226,7 +265,15 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("PomodoroTimeTracker.Domain.Entities.SessionType", "SessionType")
+                        .WithMany("TimeEntries")
+                        .HasForeignKey("SessionTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Project");
+
+                    b.Navigation("SessionType");
                 });
 
             modelBuilder.Entity("PomodoroTimeTracker.Domain.Entities.Client", b =>
@@ -236,8 +283,11 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
 
             modelBuilder.Entity("PomodoroTimeTracker.Domain.Entities.Project", b =>
                 {
-                    b.Navigation("PomodoroSessions");
+                    b.Navigation("TimeEntries");
+                });
 
+            modelBuilder.Entity("PomodoroTimeTracker.Domain.Entities.SessionType", b =>
+                {
                     b.Navigation("TimeEntries");
                 });
 #pragma warning restore 612, 618

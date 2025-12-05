@@ -25,11 +25,6 @@ public class ProjectConfiguration : IEntityTypeConfiguration<Project>
 
         builder.HasIndex(p => p.ClientId);
 
-        builder.HasMany(p => p.PomodoroSessions)
-            .WithOne(ps => ps.Project)
-            .HasForeignKey(ps => ps.ProjectId)
-            .OnDelete(DeleteBehavior.SetNull);
-
         builder.HasMany(p => p.TimeEntries)
             .WithOne(te => te.Project)
             .HasForeignKey(te => te.ProjectId)

@@ -72,7 +72,7 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
     /// <summary>
     /// Initializes a new instance of the <see cref="RegularTimerViewModel"/> class.
     /// </summary>
-    /// <param name="sessionService">Service for managing Pomodoro sessions.</param>
+    /// <param name="entryService">Service for managing time entries.</param>
     /// <param name="settingsService">Service for managing Pomodoro settings.</param>
     /// <param name="clientService">Service for managing clients.</param>
     /// <param name="projectService">Service for managing projects.</param>
@@ -81,7 +81,7 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
     /// <param name="pomodoroStateService">Service for managing Pomodoro cycle state.</param>
     /// <param name="timer">Timer for updating UI every second.</param>
     public RegularTimerViewModel(
-        IPomodoroSessionService sessionService,
+        ITimeEntryService entryService,
         IPomodoroSettingsService settingsService,
         IClientService clientService,
         IProjectService projectService,
@@ -89,7 +89,7 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
         IActiveTimerService activeTimerService,
         IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
-        : base(sessionService, clientService, projectService, activeTimerService, pomodoroStateService, timer)
+        : base(entryService, clientService, projectService, activeTimerService, pomodoroStateService, timer)
     {
         _settingsService = settingsService;
         _audioService = audioService;
@@ -309,7 +309,7 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
     protected override ActiveTimerType TimerType => ActiveTimerType.RegularTimer;
 
     /// <inheritdoc/>
-    protected override SessionType SessionTypeValue => SessionType.Regular;
+    protected override int SessionTypeId => SessionType.Ids.Regular;
 
     /// <inheritdoc/>
     protected override string GetStopNotes()
@@ -351,7 +351,7 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
         TimerDisplay = "00:00";
         SetProgressPercentage(0);
         _elapsedSeconds = 0;
-        CurrentSession = null;
+        CurrentEntry = null;
 
         OnPropertyChanged(nameof(SessionTypeLabel));
         OnPropertyChanged(nameof(ShowCycleWarning));
@@ -375,16 +375,16 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
             PomodoroStateService.ResetCycle();
             OnPropertyChanged(nameof(ShowCycleWarning));
 
-            // Create session with SessionType.Regular
-            var createDto = new CreatePomodoroSessionDto
+            // Create time entry with SessionType.Regular
+            var createDto = new CreateTimeEntryDto
             {
                 ProjectId = SelectedProject?.Id,
-                DurationMinutes = DurationMinutes,
-                SessionType = SessionType.Regular,
-                Objective = Description  // Using Description for the Objective field
+                SessionTypeId = SessionType.Ids.Regular,
+                Description = Description,
+                PlannedDurationMinutes = DurationMinutes
             };
 
-            CurrentSession = await SessionService.CreateSessionAsync(createDto);
+            CurrentEntry = await EntryService.StartTimerEntryAsync(createDto);
 
             // Initialize timer
             _workDurationSeconds = DurationMinutes * 60;
@@ -478,10 +478,10 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
             await _audioService.PlayAlarmAsync(_settings.AlarmVolume, _settings.AlarmSound);
         }
 
-        // Complete the session
-        if (CurrentSession != null)
+        // Complete the entry
+        if (CurrentEntry != null)
         {
-            await SessionService.CompleteSessionAsync(CurrentSession.Id);
+            await EntryService.CompleteEntryAsync(CurrentEntry.Id);
         }
 
         // Return to setup (no break cycle like Pomodoro)

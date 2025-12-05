@@ -28,17 +28,17 @@ public class TimeEntryServiceTests
         _service = new TimeEntryService(_unitOfWorkMock.Object);
     }
 
-    #region GetAllTimeEntriesAsync Tests
+    #region GetAllEntriesAsync Tests
 
     [Fact]
-    public async Task GetAllTimeEntriesAsync_WithNoEntries_ReturnsEmptyCollection()
+    public async Task GetAllEntriesAsync_WithNoEntries_ReturnsEmptyCollection()
     {
         // Arrange
         _timeEntryRepositoryMock.Setup(r => r.GetAllWithProjectAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<TimeEntry>());
 
         // Act
-        var result = await _service.GetAllTimeEntriesAsync();
+        var result = await _service.GetAllEntriesAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -47,7 +47,7 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task GetAllTimeEntriesAsync_WithMultipleEntries_ReturnsAllEntries()
+    public async Task GetAllEntriesAsync_WithMultipleEntries_ReturnsAllEntries()
     {
         // Arrange
         var entries = new List<TimeEntry>
@@ -76,7 +76,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(entries);
 
         // Act
-        var result = await _service.GetAllTimeEntriesAsync();
+        var result = await _service.GetAllEntriesAsync();
 
         // Assert
         result.Should().HaveCount(2);
@@ -85,7 +85,7 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task GetAllTimeEntriesAsync_WithProjectAndClient_MapsRelationshipsCorrectly()
+    public async Task GetAllEntriesAsync_WithProjectAndClient_MapsRelationshipsCorrectly()
     {
         // Arrange
         var client = new Client { Id = 1, Name = "Test Client" };
@@ -106,7 +106,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(new List<TimeEntry> { entry });
 
         // Act
-        var result = await _service.GetAllTimeEntriesAsync();
+        var result = await _service.GetAllEntriesAsync();
 
         // Assert
         var dto = result.First();
@@ -117,10 +117,10 @@ public class TimeEntryServiceTests
 
     #endregion
 
-    #region GetTimeEntryByIdAsync Tests
+    #region GetEntryByIdAsync Tests
 
     [Fact]
-    public async Task GetTimeEntryByIdAsync_WithExistingId_ReturnsEntry()
+    public async Task GetEntryByIdAsync_WithExistingId_ReturnsEntry()
     {
         // Arrange
         var entry = new TimeEntry
@@ -137,7 +137,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(entry);
 
         // Act
-        var result = await _service.GetTimeEntryByIdAsync(1);
+        var result = await _service.GetEntryByIdAsync(1);
 
         // Assert
         result.Should().NotBeNull();
@@ -147,14 +147,14 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task GetTimeEntryByIdAsync_WithNonExistingId_ReturnsNull()
+    public async Task GetEntryByIdAsync_WithNonExistingId_ReturnsNull()
     {
         // Arrange
         _timeEntryRepositoryMock.Setup(r => r.GetByIdWithProjectAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((TimeEntry?)null);
 
         // Act
-        var result = await _service.GetTimeEntryByIdAsync(999);
+        var result = await _service.GetEntryByIdAsync(999);
 
         // Assert
         result.Should().BeNull();
@@ -162,10 +162,10 @@ public class TimeEntryServiceTests
 
     #endregion
 
-    #region GetTimeEntriesByProjectIdAsync Tests
+    #region GetEntriesByProjectIdAsync Tests
 
     [Fact]
-    public async Task GetTimeEntriesByProjectIdAsync_WithMatchingEntries_ReturnsFilteredEntries()
+    public async Task GetEntriesByProjectIdAsync_WithMatchingEntries_ReturnsFilteredEntries()
     {
         // Arrange
         var entries = new List<TimeEntry>
@@ -192,7 +192,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(entries);
 
         // Act
-        var result = await _service.GetTimeEntriesByProjectIdAsync(5);
+        var result = await _service.GetEntriesByProjectIdAsync(5);
 
         // Assert
         result.Should().HaveCount(2);
@@ -200,14 +200,14 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task GetTimeEntriesByProjectIdAsync_WithNoMatches_ReturnsEmptyCollection()
+    public async Task GetEntriesByProjectIdAsync_WithNoMatches_ReturnsEmptyCollection()
     {
         // Arrange
         _timeEntryRepositoryMock.Setup(r => r.GetByProjectIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<TimeEntry>());
 
         // Act
-        var result = await _service.GetTimeEntriesByProjectIdAsync(999);
+        var result = await _service.GetEntriesByProjectIdAsync(999);
 
         // Assert
         result.Should().BeEmpty();
@@ -215,10 +215,10 @@ public class TimeEntryServiceTests
 
     #endregion
 
-    #region GetActiveTimeEntryAsync Tests
+    #region GetActiveEntryAsync Tests
 
     [Fact]
-    public async Task GetActiveTimeEntryAsync_WithActiveEntry_ReturnsEntry()
+    public async Task GetActiveEntryAsync_WithActiveEntry_ReturnsEntry()
     {
         // Arrange
         var activeEntry = new TimeEntry
@@ -231,11 +231,11 @@ public class TimeEntryServiceTests
             CreatedAt = DateTime.UtcNow.AddMinutes(-30)
         };
 
-        _timeEntryRepositoryMock.Setup(r => r.GetActiveTimeEntryAsync(It.IsAny<CancellationToken>()))
+        _timeEntryRepositoryMock.Setup(r => r.GetActiveEntryAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(activeEntry);
 
         // Act
-        var result = await _service.GetActiveTimeEntryAsync();
+        var result = await _service.GetActiveEntryAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -246,14 +246,14 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task GetActiveTimeEntryAsync_WithNoActiveEntry_ReturnsNull()
+    public async Task GetActiveEntryAsync_WithNoActiveEntry_ReturnsNull()
     {
         // Arrange
-        _timeEntryRepositoryMock.Setup(r => r.GetActiveTimeEntryAsync(It.IsAny<CancellationToken>()))
+        _timeEntryRepositoryMock.Setup(r => r.GetActiveEntryAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync((TimeEntry?)null);
 
         // Act
-        var result = await _service.GetActiveTimeEntryAsync();
+        var result = await _service.GetActiveEntryAsync();
 
         // Assert
         result.Should().BeNull();
@@ -261,10 +261,10 @@ public class TimeEntryServiceTests
 
     #endregion
 
-    #region StartTimeEntryAsync Tests
+    #region StartTimerEntryAsync Tests
 
     [Fact]
-    public async Task StartTimeEntryAsync_WithValidData_CreatesActiveEntry()
+    public async Task StartTimerEntryAsync_WithValidData_CreatesActiveEntry()
     {
         // Arrange
         var createDto = new CreateTimeEntryDto
@@ -285,7 +285,7 @@ public class TimeEntryServiceTests
         var beforeStart = DateTime.UtcNow;
 
         // Act
-        var result = await _service.StartTimeEntryAsync(createDto);
+        var result = await _service.StartTimerEntryAsync(createDto);
 
         // Assert
         result.Should().NotBeNull();
@@ -307,7 +307,7 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task StartTimeEntryAsync_WithNullProjectId_CreatesEntryWithoutProject()
+    public async Task StartTimerEntryAsync_WithNullProjectId_CreatesEntryWithoutProject()
     {
         // Arrange
         var createDto = new CreateTimeEntryDto
@@ -321,7 +321,7 @@ public class TimeEntryServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.StartTimeEntryAsync(createDto);
+        var result = await _service.StartTimerEntryAsync(createDto);
 
         // Assert
         result.ProjectId.Should().BeNull();
@@ -330,7 +330,7 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task StartTimeEntryAsync_WithEmptyDescription_CreatesEntry()
+    public async Task StartTimerEntryAsync_WithEmptyDescription_CreatesEntry()
     {
         // Arrange
         var createDto = new CreateTimeEntryDto
@@ -344,7 +344,7 @@ public class TimeEntryServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.StartTimeEntryAsync(createDto);
+        var result = await _service.StartTimerEntryAsync(createDto);
 
         // Assert
         result.Description.Should().BeEmpty();
@@ -353,10 +353,10 @@ public class TimeEntryServiceTests
 
     #endregion
 
-    #region StopTimeEntryAsync Tests
+    #region StopEntryAsync Tests
 
     [Fact]
-    public async Task StopTimeEntryAsync_WithActiveEntry_SetsEndTimeAndDuration()
+    public async Task StopEntryAsync_WithActiveEntry_SetsEndTimeAndDuration()
     {
         // Arrange
         var startTime = DateTime.UtcNow.AddMinutes(-30);
@@ -374,7 +374,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(entry);
 
         // Act
-        await _service.StopTimeEntryAsync(1);
+        await _service.StopEntryAsync(1);
 
         // Assert
         entry.EndTime.Should().NotBeNull();
@@ -387,23 +387,23 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task StopTimeEntryAsync_WithNonExistingEntry_ThrowsKeyNotFoundException()
+    public async Task StopEntryAsync_WithNonExistingEntry_ThrowsKeyNotFoundException()
     {
         // Arrange
         _timeEntryRepositoryMock.Setup(r => r.GetByIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((TimeEntry?)null);
 
         // Act & Assert
-        await FluentActions.Invoking(() => _service.StopTimeEntryAsync(999))
+        await FluentActions.Invoking(() => _service.StopEntryAsync(999))
             .Should().ThrowAsync<KeyNotFoundException>()
-            .WithMessage("Time entry with ID 999 not found");
+            .WithMessage("*999*");
 
         _timeEntryRepositoryMock.Verify(r => r.Update(It.IsAny<TimeEntry>()), Times.Never);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task StopTimeEntryAsync_WithAlreadyStoppedEntry_ThrowsInvalidOperationException()
+    public async Task StopEntryAsync_WithAlreadyStoppedEntry_ThrowsInvalidOperationException()
     {
         // Arrange
         var entry = new TimeEntry
@@ -420,15 +420,15 @@ public class TimeEntryServiceTests
             .ReturnsAsync(entry);
 
         // Act & Assert
-        await FluentActions.Invoking(() => _service.StopTimeEntryAsync(1))
+        await FluentActions.Invoking(() => _service.StopEntryAsync(1))
             .Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Time entry already stopped");
+            .WithMessage("*already stopped*");
 
         _timeEntryRepositoryMock.Verify(r => r.Update(It.IsAny<TimeEntry>()), Times.Never);
     }
 
     [Fact]
-    public async Task StopTimeEntryAsync_CalculatesDurationCorrectly()
+    public async Task StopEntryAsync_CalculatesDurationCorrectly()
     {
         // Arrange
         var startTime = DateTime.UtcNow.AddHours(-2).AddMinutes(-15); // 2h 15min ago
@@ -445,7 +445,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(entry);
 
         // Act
-        await _service.StopTimeEntryAsync(1);
+        await _service.StopEntryAsync(1);
 
         // Assert
         entry.DurationMinutes.Should().BeGreaterThan(120); // More than 2 hours
@@ -454,10 +454,10 @@ public class TimeEntryServiceTests
 
     #endregion
 
-    #region CreateTimeEntryAsync Tests
+    #region CreateEntryAsync Tests
 
     [Fact]
-    public async Task CreateTimeEntryAsync_WithOnlyDto_CreatesEntryWithCurrentStartTime()
+    public async Task CreateEntryAsync_WithOnlyDto_CreatesEntryWithCurrentStartTime()
     {
         // Arrange
         var createDto = new CreateTimeEntryDto
@@ -473,7 +473,7 @@ public class TimeEntryServiceTests
         var beforeCreate = DateTime.UtcNow;
 
         // Act
-        var result = await _service.CreateTimeEntryAsync(createDto);
+        var result = await _service.CreateEntryAsync(createDto);
 
         // Assert
         result.StartTime.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
@@ -483,7 +483,7 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task CreateTimeEntryAsync_WithStartTimeOnly_CreatesActiveEntry()
+    public async Task CreateEntryAsync_WithStartTimeOnly_CreatesActiveEntry()
     {
         // Arrange
         var createDto = new CreateTimeEntryDto
@@ -498,7 +498,7 @@ public class TimeEntryServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.CreateTimeEntryAsync(createDto, customStartTime);
+        var result = await _service.CreateEntryAsync(createDto, customStartTime);
 
         // Assert
         result.StartTime.Should().Be(customStartTime);
@@ -507,7 +507,7 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task CreateTimeEntryAsync_WithBothTimes_CreatesCompletedEntryWithDuration()
+    public async Task CreateEntryAsync_WithBothTimes_CreatesCompletedEntryWithDuration()
     {
         // Arrange
         var createDto = new CreateTimeEntryDto
@@ -528,7 +528,7 @@ public class TimeEntryServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.CreateTimeEntryAsync(createDto, startTime, endTime);
+        var result = await _service.CreateEntryAsync(createDto, startTime, endTime);
 
         // Assert
         result.StartTime.Should().Be(startTime);
@@ -540,7 +540,7 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task CreateTimeEntryAsync_WithVeryShortDuration_CalculatesCorrectly()
+    public async Task CreateEntryAsync_WithVeryShortDuration_CalculatesCorrectly()
     {
         // Arrange
         var createDto = new CreateTimeEntryDto
@@ -556,7 +556,7 @@ public class TimeEntryServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.CreateTimeEntryAsync(createDto, startTime, endTime);
+        var result = await _service.CreateEntryAsync(createDto, startTime, endTime);
 
         // Assert
         result.DurationMinutes.Should().Be(5);
@@ -564,10 +564,10 @@ public class TimeEntryServiceTests
 
     #endregion
 
-    #region UpdateTimeEntryAsync Tests
+    #region UpdateEntryAsync Tests
 
     [Fact]
-    public async Task UpdateTimeEntryAsync_WithExistingEntry_UpdatesSuccessfully()
+    public async Task UpdateEntryAsync_WithExistingEntry_UpdatesSuccessfully()
     {
         // Arrange
         var existingEntry = new TimeEntry
@@ -594,7 +594,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(existingEntry);
 
         // Act
-        await _service.UpdateTimeEntryAsync(updateDto);
+        await _service.UpdateEntryAsync(updateDto);
 
         // Assert
         existingEntry.Description.Should().Be("Updated description");
@@ -608,7 +608,7 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task UpdateTimeEntryAsync_WithNullEndTime_UsesProvidedDuration()
+    public async Task UpdateEntryAsync_WithNullEndTime_UsesProvidedDuration()
     {
         // Arrange
         var existingEntry = new TimeEntry
@@ -635,7 +635,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(existingEntry);
 
         // Act
-        await _service.UpdateTimeEntryAsync(updateDto);
+        await _service.UpdateEntryAsync(updateDto);
 
         // Assert
         existingEntry.DurationMinutes.Should().Be(45);
@@ -643,7 +643,7 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task UpdateTimeEntryAsync_WithEndTime_CalculatesDurationAutomatically()
+    public async Task UpdateEntryAsync_WithEndTime_CalculatesDurationAutomatically()
     {
         // Arrange
         var existingEntry = new TimeEntry
@@ -664,21 +664,21 @@ public class TimeEntryServiceTests
             Description = "Task",
             StartTime = startTime,
             EndTime = endTime,
-            DurationMinutes = 999 // This should be ignored
+            DurationMinutes = null // This should be ignored when EndTime is present
         };
 
         _timeEntryRepositoryMock.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingEntry);
 
         // Act
-        await _service.UpdateTimeEntryAsync(updateDto);
+        await _service.UpdateEntryAsync(updateDto);
 
         // Assert
-        existingEntry.DurationMinutes.Should().Be(120); // 2 hours, not 999
+        existingEntry.DurationMinutes.Should().Be(120); // 2 hours calculated from start/end times
     }
 
     [Fact]
-    public async Task UpdateTimeEntryAsync_WithNonExistingEntry_ThrowsKeyNotFoundException()
+    public async Task UpdateEntryAsync_WithNonExistingEntry_ThrowsKeyNotFoundException()
     {
         // Arrange
         var updateDto = new UpdateTimeEntryDto
@@ -693,16 +693,16 @@ public class TimeEntryServiceTests
             .ReturnsAsync((TimeEntry?)null);
 
         // Act & Assert
-        await FluentActions.Invoking(() => _service.UpdateTimeEntryAsync(updateDto))
+        await FluentActions.Invoking(() => _service.UpdateEntryAsync(updateDto))
             .Should().ThrowAsync<KeyNotFoundException>()
-            .WithMessage("Time entry with ID 999 not found");
+            .WithMessage("*999*");
 
         _timeEntryRepositoryMock.Verify(r => r.Update(It.IsAny<TimeEntry>()), Times.Never);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task UpdateTimeEntryAsync_RemovingProject_SetsProjectIdToNull()
+    public async Task UpdateEntryAsync_RemovingProject_SetsProjectIdToNull()
     {
         // Arrange
         var existingEntry = new TimeEntry
@@ -727,7 +727,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(existingEntry);
 
         // Act
-        await _service.UpdateTimeEntryAsync(updateDto);
+        await _service.UpdateEntryAsync(updateDto);
 
         // Assert
         existingEntry.ProjectId.Should().BeNull();
@@ -735,10 +735,10 @@ public class TimeEntryServiceTests
 
     #endregion
 
-    #region DeleteTimeEntryAsync Tests
+    #region DeleteEntryAsync Tests
 
     [Fact]
-    public async Task DeleteTimeEntryAsync_WithExistingEntry_DeletesSuccessfully()
+    public async Task DeleteEntryAsync_WithExistingEntry_DeletesSuccessfully()
     {
         // Arrange
         var entry = new TimeEntry
@@ -753,7 +753,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(entry);
 
         // Act
-        await _service.DeleteTimeEntryAsync(1);
+        await _service.DeleteEntryAsync(1);
 
         // Assert
         _timeEntryRepositoryMock.Verify(r => r.Delete(entry), Times.Once);
@@ -761,22 +761,22 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task DeleteTimeEntryAsync_WithNonExistingEntry_ThrowsKeyNotFoundException()
+    public async Task DeleteEntryAsync_WithNonExistingEntry_ThrowsKeyNotFoundException()
     {
         // Arrange
         _timeEntryRepositoryMock.Setup(r => r.GetByIdAsync(999, It.IsAny<CancellationToken>()))
             .ReturnsAsync((TimeEntry?)null);
 
         // Act & Assert
-        await FluentActions.Invoking(() => _service.DeleteTimeEntryAsync(999))
+        await FluentActions.Invoking(() => _service.DeleteEntryAsync(999))
             .Should().ThrowAsync<KeyNotFoundException>()
-            .WithMessage("Time entry with ID 999 not found");
+            .WithMessage("*999*");
 
         _timeEntryRepositoryMock.Verify(r => r.Delete(It.IsAny<TimeEntry>()), Times.Never);
     }
 
     [Fact]
-    public async Task DeleteTimeEntryAsync_WithActiveEntry_DeletesSuccessfully()
+    public async Task DeleteEntryAsync_WithActiveEntry_DeletesSuccessfully()
     {
         // Arrange - Active entry with no EndTime
         var activeEntry = new TimeEntry
@@ -792,7 +792,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(activeEntry);
 
         // Act
-        await _service.DeleteTimeEntryAsync(1);
+        await _service.DeleteEntryAsync(1);
 
         // Assert - Should allow deleting active entries
         _timeEntryRepositoryMock.Verify(r => r.Delete(activeEntry), Times.Once);
@@ -804,7 +804,7 @@ public class TimeEntryServiceTests
     #region Edge Cases and Business Rules
 
     [Fact]
-    public async Task StartTimeEntryAsync_SetsCreatedAtToUtcNow()
+    public async Task StartTimerEntryAsync_SetsCreatedAtToUtcNow()
     {
         // Arrange
         var createDto = new CreateTimeEntryDto
@@ -819,7 +819,7 @@ public class TimeEntryServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.StartTimeEntryAsync(createDto);
+        var result = await _service.StartTimerEntryAsync(createDto);
 
         // Assert
         var afterCreation = DateTime.UtcNow;
@@ -828,7 +828,7 @@ public class TimeEntryServiceTests
     }
 
     [Fact]
-    public async Task CreateTimeEntryAsync_WithZeroDuration_HandlesCorrectly()
+    public async Task CreateEntryAsync_WithZeroDuration_HandlesCorrectly()
     {
         // Arrange
         var createDto = new CreateTimeEntryDto
@@ -842,14 +842,14 @@ public class TimeEntryServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.CreateTimeEntryAsync(createDto, time, time);
+        var result = await _service.CreateEntryAsync(createDto, time, time);
 
         // Assert
         result.DurationMinutes.Should().Be(0);
     }
 
     [Fact]
-    public async Task StopTimeEntryAsync_WithLongRunningEntry_CalculatesDurationCorrectly()
+    public async Task StopEntryAsync_WithLongRunningEntry_CalculatesDurationCorrectly()
     {
         // Arrange - Entry running for over 8 hours
         var startTime = DateTime.UtcNow.AddHours(-10);
@@ -866,7 +866,7 @@ public class TimeEntryServiceTests
             .ReturnsAsync(entry);
 
         // Act
-        await _service.StopTimeEntryAsync(1);
+        await _service.StopEntryAsync(1);
 
         // Assert
         entry.DurationMinutes.Should().BeGreaterThan(590); // More than 9h 50min

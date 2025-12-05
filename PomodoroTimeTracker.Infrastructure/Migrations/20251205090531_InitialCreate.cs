@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace PomodoroTimeTracker.Infrastructure.Migrations
 {
     /// <inheritdoc />
@@ -39,15 +41,32 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                     ShowNotification = table.Column<bool>(type: "INTEGER", nullable: false),
                     PlaySound = table.Column<bool>(type: "INTEGER", nullable: false),
                     FlashWindow = table.Column<bool>(type: "INTEGER", nullable: false),
-                    SoftStopDurationMinutes = table.Column<int>(type: "INTEGER", nullable: false),
-                    SoftStopAlarmVolume = table.Column<int>(type: "INTEGER", nullable: false),
+                    WrapUpPeriodMinutes = table.Column<int>(type: "INTEGER", nullable: false),
+                    WrapUpNotificationVolume = table.Column<int>(type: "INTEGER", nullable: false),
+                    WrapUpNotificationSound = table.Column<string>(type: "TEXT", nullable: false),
                     UseAlarm = table.Column<bool>(type: "INTEGER", nullable: false),
                     AlarmVolume = table.Column<int>(type: "INTEGER", nullable: false),
+                    AlarmSound = table.Column<string>(type: "TEXT", nullable: false),
                     LastModified = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PomodoroSettings", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SessionTypes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    IsTimerType = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SessionTypes", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -73,42 +92,19 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PomodoroSessions",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ProjectId = table.Column<int>(type: "INTEGER", nullable: true),
-                    StartTime = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    EndTime = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    DurationMinutes = table.Column<int>(type: "INTEGER", nullable: false),
-                    IsCompleted = table.Column<bool>(type: "INTEGER", nullable: false),
-                    SessionType = table.Column<int>(type: "INTEGER", nullable: false),
-                    Objective = table.Column<string>(type: "TEXT", nullable: true),
-                    Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PomodoroSessions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PomodoroSessions_Projects_ProjectId",
-                        column: x => x.ProjectId,
-                        principalTable: "Projects",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "TimeEntries",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ProjectId = table.Column<int>(type: "INTEGER", nullable: true),
+                    SessionTypeId = table.Column<int>(type: "INTEGER", nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
                     StartTime = table.Column<DateTime>(type: "TEXT", nullable: false),
                     EndTime = table.Column<DateTime>(type: "TEXT", nullable: true),
                     DurationMinutes = table.Column<int>(type: "INTEGER", nullable: true),
+                    IsCompleted = table.Column<bool>(type: "INTEGER", nullable: true),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -120,23 +116,36 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                         principalTable: "Projects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_TimeEntries_SessionTypes_SessionTypeId",
+                        column: x => x.SessionTypeId,
+                        principalTable: "SessionTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
+
+            migrationBuilder.InsertData(
+                table: "SessionTypes",
+                columns: new[] { "Id", "Description", "IsTimerType", "Name" },
+                values: new object[,]
+                {
+                    { 1, "Pomodoro work session", true, "Work" },
+                    { 2, "Short break between pomodoros", true, "ShortBreak" },
+                    { 3, "Long break after 4 pomodoros", true, "LongBreak" },
+                    { 4, "Regular countdown timer session", true, "Regular" },
+                    { 5, "Stopwatch timer session", true, "StopWatch" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "SessionTypes",
+                columns: new[] { "Id", "Description", "Name" },
+                values: new object[] { 6, "Manually entered time entry", "Manual" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Clients_Name",
                 table: "Clients",
                 column: "Name",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PomodoroSessions_ProjectId",
-                table: "PomodoroSessions",
-                column: "ProjectId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PomodoroSessions_StartTime",
-                table: "PomodoroSessions",
-                column: "StartTime");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Projects_ClientId",
@@ -155,6 +164,11 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                 column: "ProjectId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TimeEntries_SessionTypeId",
+                table: "TimeEntries",
+                column: "SessionTypeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TimeEntries_StartTime",
                 table: "TimeEntries",
                 column: "StartTime");
@@ -164,9 +178,6 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "PomodoroSessions");
-
-            migrationBuilder.DropTable(
                 name: "PomodoroSettings");
 
             migrationBuilder.DropTable(
@@ -174,6 +185,9 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Projects");
+
+            migrationBuilder.DropTable(
+                name: "SessionTypes");
 
             migrationBuilder.DropTable(
                 name: "Clients");

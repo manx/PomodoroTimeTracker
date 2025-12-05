@@ -38,13 +38,10 @@ public class ProjectRepositoryTests : IDisposable
             Description = "Description",
             Client = client,
             CreatedAt = DateTime.UtcNow,
-            PomodoroSessions = new List<PomodoroSession>
-            {
-                new() { Objective = "Session 1", StartTime = DateTime.UtcNow, DurationMinutes = 25, SessionType = SessionType.Work }
-            },
             TimeEntries = new List<TimeEntry>
             {
-                new() { Description = "Entry 1", StartTime = DateTime.UtcNow, CreatedAt = DateTime.UtcNow }
+                new() { Description = "Session 1", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Work, DurationMinutes = 25, CreatedAt = DateTime.UtcNow },
+                new() { Description = "Entry 1", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Manual, CreatedAt = DateTime.UtcNow }
             }
         };
 
@@ -63,8 +60,7 @@ public class ProjectRepositoryTests : IDisposable
         result.Name.Should().Be("Test Project");
         result.Client.Should().NotBeNull();
         result.Client!.Name.Should().Be("Test Client");
-        result.PomodoroSessions.Should().HaveCount(1);
-        result.TimeEntries.Should().HaveCount(1);
+        result.TimeEntries.Should().HaveCount(2);
     }
 
     [Fact]
@@ -429,26 +425,26 @@ public class ProjectRepositoryTests : IDisposable
         {
             Name = "Project",
             CreatedAt = DateTime.UtcNow,
-            PomodoroSessions = new List<PomodoroSession>
+            TimeEntries = new List<TimeEntry>
             {
-                new() { Objective = "Session 1", StartTime = DateTime.UtcNow, DurationMinutes = 25, SessionType = SessionType.Work },
-                new() { Objective = "Session 2", StartTime = DateTime.UtcNow, DurationMinutes = 25, SessionType = SessionType.Work }
+                new() { Description = "Session 1", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Work, DurationMinutes = 25, CreatedAt = DateTime.UtcNow },
+                new() { Description = "Session 2", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Work, DurationMinutes = 25, CreatedAt = DateTime.UtcNow }
             }
         };
 
         await _context.Projects.AddAsync(project);
         await _context.SaveChangesAsync();
 
-        var sessionIds = project.PomodoroSessions.Select(s => s.Id).ToList();
+        var entryIds = project.TimeEntries.Select(e => e.Id).ToList();
 
         // Act
         _repository.Delete(project);
         await _context.SaveChangesAsync();
 
-        // Assert - Sessions should still exist but with null ProjectId
-        var sessions = await _context.PomodoroSessions.Where(s => sessionIds.Contains(s.Id)).ToListAsync();
-        sessions.Should().HaveCount(2);
-        sessions.Should().OnlyContain(s => s.ProjectId == null);
+        // Assert - Entries should still exist but with null ProjectId
+        var entries = await _context.TimeEntries.Where(e => entryIds.Contains(e.Id)).ToListAsync();
+        entries.Should().HaveCount(2);
+        entries.Should().OnlyContain(e => e.ProjectId == null);
     }
 
     [Fact]
@@ -461,7 +457,7 @@ public class ProjectRepositoryTests : IDisposable
             CreatedAt = DateTime.UtcNow,
             TimeEntries = new List<TimeEntry>
             {
-                new() { Description = "Entry 1", StartTime = DateTime.UtcNow, CreatedAt = DateTime.UtcNow },
+                new() { Description = "Entry 1", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Manual, CreatedAt = DateTime.UtcNow },
                 new() { Description = "Entry 2", StartTime = DateTime.UtcNow, CreatedAt = DateTime.UtcNow }
             }
         };
