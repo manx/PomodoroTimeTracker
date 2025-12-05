@@ -75,6 +75,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
 
     private readonly IPomodoroSettingsService _settingsService;
     private readonly IAudioService _audioService;
+    private readonly INotificationService _notificationService;
 
     private PomodoroState _state = PomodoroState.Setup;
     private int _remainingSeconds;
@@ -100,6 +101,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
     /// <param name="clientService">Service for managing clients.</param>
     /// <param name="projectService">Service for managing projects.</param>
     /// <param name="audioService">Service for playing audio notifications.</param>
+    /// <param name="notificationService">Service for displaying toast notifications.</param>
     /// <param name="activeTimerService">Service for coordinating active timer state.</param>
     /// <param name="pomodoroStateService">Service for managing Pomodoro cycle state.</param>
     /// <param name="timer">Timer for updating UI every second.</param>
@@ -109,6 +111,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
         IClientService clientService,
         IProjectService projectService,
         IAudioService audioService,
+        INotificationService notificationService,
         IActiveTimerService activeTimerService,
         IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
@@ -116,6 +119,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
     {
         _settingsService = settingsService;
         _audioService = audioService;
+        _notificationService = notificationService;
 
         Timer.Tick += Timer_Tick;
 
@@ -558,6 +562,11 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
         {
             await _audioService.PlayWrapUpNotificationAsync(_settings.WrapUpNotificationVolume, _settings.WrapUpNotificationSound);
         }
+
+        if (_settings?.ShowNotification == true && _notificationService.IsSupported)
+        {
+            await _notificationService.ShowWorkCompleteAsync(Objective);
+        }
     }
 
     private async void OnTimerComplete()
@@ -580,6 +589,10 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
         if (State == PomodoroState.Break)
         {
             // Break finished, return to setup for next pomodoro
+            if (_settings?.ShowNotification == true && _notificationService.IsSupported)
+            {
+                await _notificationService.ShowBreakCompleteAsync();
+            }
             ResetToSetupCore();
         }
         else
@@ -587,6 +600,13 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
             // Pomodoro finished (wrap up period ended), start appropriate break
             _pomodoroCount++;
             PomodoroStateService.CurrentPomodoroCount = _pomodoroCount;
+
+            bool isLongBreak = _pomodoroCount >= 4;
+            if (_settings?.ShowNotification == true && _notificationService.IsSupported)
+            {
+                await _notificationService.ShowBreakStartingAsync(Objective, isLongBreak);
+            }
+
             await StartBreakAsync();
         }
     }

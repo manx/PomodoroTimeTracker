@@ -44,7 +44,9 @@
       "Bash(if not exist \"docs\\plans\" mkdir \"docs\\plans\")",
       "Bash(mkdir:*)",
       "Bash(dotnet restore:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(Select-String -Pattern \"error|Tests.csproj\")"
     ],
     "deny": [],
     "ask": []
