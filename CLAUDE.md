@@ -1008,10 +1008,17 @@ dotnet ef migrations list --project PomodoroTimeTracker.Infrastructure --startup
 5. ~~**Implement Report view**~~ - ✅ Done (PR #20, 2025-12-04)
 
 ### Short Term (Next Sprint)
-1. **Add unit tests** - Start with PomodoroViewModel
-2. **Improve error handling** - User-friendly messages throughout
-3. **Windows toast notifications** - Complete notification system
-4. **FlashWindow implementation** - Visual alert on completion
+1. **Merge PomodoroSession into TimeEntry** - Unify all time tracking into single table
+   - Add `SessionType` enum (Work, ShortBreak, LongBreak, Regular, StopWatch, Manual)
+   - Add `IsBillable` column for billable time tracking
+   - Add `IsCompleted` column (nullable)
+   - Store breaks in database (currently only in-memory)
+   - Migrate existing PomodoroSession data, then drop table
+   - Simplifies reporting (no UNION of two tables)
+2. **Add unit tests** - Start with PomodoroViewModel
+3. **Improve error handling** - User-friendly messages throughout
+4. **Windows toast notifications** - Complete notification system
+5. **FlashWindow implementation** - Visual alert on completion
 
 ### Medium Term
 1. Session history view with filtering and search
