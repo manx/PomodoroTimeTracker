@@ -13,10 +13,32 @@ Implement a feature using specialized agents. This command orchestrates backend-
 You are the **orchestrator**. This workflow runs autonomously with no user approval needed:
 
 ```
-[Plan file or Analyze] → Backend → ViewModels → Views+Tests (parallel) → Validate → PR
+[Analyze] → Domain → [App + Infra + ViewModels] (parallel) → Migration → [Views + Tests] (parallel) → Validate → PR
 ```
 
 **Output:** PR URL (user reviews via GitHub)
+
+**Parallelization Strategy:**
+- **Wave 1:** After Domain, spawn Application, Infrastructure, and ViewModels agents in parallel
+- **Wave 2:** After ViewModels complete, spawn Views and Tests agents in parallel
+- **Multiple backend-agents:** Split backend work by layer (Domain, Application, Infrastructure) when viable
+
+## Agents vs Skills
+
+**Prefer agents** for implementation work - they run autonomously and handle complex tasks.
+
+**Use skills as fallback** when:
+- The orchestrator needs to perform work directly (not delegating to agent)
+- Quick fixes or small changes that don't warrant spawning an agent
+- Agent isn't available for the specific task
+
+| Skill | When to Load (if not using agent) |
+|-------|-----------------------------------|
+| `ef-core` | Migrations, entity configuration, repository work |
+| `architect` | Design decisions, refactoring, architectural questions |
+| `winui-patterns` | ViewModels, XAML pages, UI bindings |
+| `unit-test-specialist` | Writing tests, improving coverage |
+| `agent-workflow` | Complex multi-agent coordination issues |
 
 ### Step 1: Load Plan or Analyze
 
@@ -46,68 +68,98 @@ Analyze the feature request and display a brief plan, then **proceed immediately
 
 3. **Proceed immediately** - do not wait for user confirmation
 
-### Step 2: Backend Implementation
-If the feature requires backend changes, spawn **backend-agent**:
+### Step 2: Domain Layer (Foundation)
+
+Domain must complete first - it defines entities and interfaces that other layers depend on:
 
 ```
 Use Task tool with subagent_type="backend-agent"
 
-Prompt should include:
-- Specific files to modify/create
-- Properties/methods to add
-- Any test failure context if retrying
-- Reminder: Leave changes unstaged
+Prompt: Implement Domain layer for [feature]:
+- Create entities in Domain\Entities\
+- Create repository interfaces in Domain\Interfaces\
+- Update IUnitOfWork if needed
+- Leave changes unstaged
 ```
 
-**Wait for completion before proceeding.**
+**Wait for Domain completion before Step 3.**
 
-### Step 3: Database Migration
-If entity changes were made, create migration:
+### Step 3: Parallel Wave 1 - Application + Infrastructure + ViewModels
+
+Spawn THREE agents IN PARALLEL using a single message with multiple Task tool calls:
+
+```
+# Agent 1: Application Layer
+Use Task tool with subagent_type="backend-agent"
+Prompt: Implement Application layer for [feature]:
+- Create DTOs in Application\DTOs\
+- Create service interface in Application\Interfaces\
+- Create service implementation in Application\Services\
+- Domain entities are already created
+- Leave changes unstaged
+
+# Agent 2: Infrastructure Layer
+Use Task tool with subagent_type="backend-agent"
+Prompt: Implement Infrastructure layer for [feature]:
+- Create EF configuration in Infrastructure\Configurations\
+- Create repository in Infrastructure\Repositories\
+- Add DbSet to ApplicationDbContext
+- Update UnitOfWork
+- Domain entities/interfaces are already created
+- Leave changes unstaged
+
+# Agent 3: ViewModels
+Use Task tool with subagent_type="ui-agent"
+Prompt: Create ViewModels for [feature]:
+- Create ViewModels in ViewModels\ folder
+- Define all properties, commands, public interface
+- Use IDispatcherTimer for any timers
+- Service interfaces are being created in parallel - use expected interface names
+- Leave changes unstaged
+```
+
+All three agents run simultaneously.
+
+### Step 4: Database Migration
+
+After Infrastructure agent completes, create migration:
 
 ```bash
 dotnet ef migrations add <MigrationName> \
   --project PomodoroTimeTracker.Infrastructure \
-  --startup-project PomodoroTimeTracker.WinUI3
+  --startup-project PomodoroTimeTracker.Infrastructure
 
 dotnet ef database update \
   --project PomodoroTimeTracker.Infrastructure \
-  --startup-project PomodoroTimeTracker.WinUI3
+  --startup-project PomodoroTimeTracker.Infrastructure
 ```
 
-### Step 4: ViewModels First (Critical for Parallelization)
+**Note:** Use Infrastructure as startup project (has IDesignTimeDbContextFactory).
+**If doing manually:** Load `ef-core` skill for best practices.
 
-Create ViewModels BEFORE Views to enable parallel execution:
+### Step 5: Parallel Wave 2 - Views + Tests
 
-```
-Use Task tool with subagent_type="ui-agent"
-
-Prompt should include:
-- Create ONLY ViewModels (no XAML yet)
-- Define all properties, commands, and public interface
-- Use IDispatcherTimer from Application layer for any timers
-- Implement business logic
-- Reminder: Leave changes unstaged
-```
-
-**Wait for ViewModel completion before Step 5.**
-
-### Step 5: Parallel Execution - Views + Tests
-
-**IMPORTANT:** Run these TWO agents IN PARALLEL using a single message with multiple Task tool calls:
+After ViewModels complete, spawn TWO agents IN PARALLEL:
 
 ```
 # Agent 1: Views
 Use Task tool with subagent_type="ui-agent"
-Prompt: Create XAML pages and code-behind for [feature].
-ViewModels are already created. Bind to existing ViewModel properties.
+Prompt: Create XAML pages for [feature]:
+- Create pages in WinUI3\Views\
+- ViewModels are already created - bind to existing properties
+- Register in NavigationService and App.xaml.cs
+- Leave changes unstaged
 
 # Agent 2: Tests
 Use Task tool with subagent_type="test-agent"
-Prompt: Create unit tests for [feature] services and ViewModels.
-ViewModels use IDispatcherTimer which can be mocked.
+Prompt: Create unit tests for [feature]:
+- Test services, repositories, and ViewModels
+- ViewModels use IDispatcherTimer which can be mocked
+- Follow existing test patterns in Tests\ folder
+- Leave changes unstaged
 ```
 
-Both agents run simultaneously, reducing total implementation time.
+Both agents run simultaneously.
 
 ### Step 6: Build & Validate
 Run build and tests to validate:
@@ -197,22 +249,34 @@ public class MyViewModel : ViewModelBase
 User: `/implement-feature Add time entry tracking`
 
 Orchestrator:
-1. **Analyze (auto-proceed):** Display "Implementing: time entry tracking" with layer breakdown
-2. **ViewModels first:** Spawn ui-agent for TimeEntryListViewModel, TimeEntryDetailViewModel
-3. **Parallel execution:**
-   - Spawn ui-agent: Create TimeEntryListPage.xaml, TimeEntryDetailPage.xaml
-   - Spawn test-agent: Create TimeEntryService tests (in same message!)
-4. **Validate:** Build and run tests (auto-retry up to 3x if failures)
-5. **Auto-PR:** Create branch `feat/time-entry-tracking`, commit, push, create PR
-6. **Output:** `https://github.com/manx/PomodoroTimeTracker/pull/XX`
+1. **Analyze:** Display "Implementing: time entry tracking" with layer breakdown
+2. **Domain:** Spawn backend-agent → TimeEntry entity, ITimeEntryRepository
+3. **Wave 1 (parallel):** Single message with 3 Task calls:
+   - backend-agent → TimeEntryService, DTOs
+   - backend-agent → TimeEntryRepository, EF config
+   - ui-agent → TimeEntryListViewModel, TimeEntryDetailViewModel
+4. **Migration:** Create and apply migration
+5. **Wave 2 (parallel):** Single message with 2 Task calls:
+   - ui-agent → TimeEntryListPage.xaml, TimeEntryDetailPage.xaml
+   - test-agent → Service, repository, ViewModel tests
+6. **Validate:** Build and run tests (auto-retry up to 3x if failures)
+7. **Auto-PR:** Create branch, commit, push, create PR
+8. **Output:** `https://github.com/manx/PomodoroTimeTracker/pull/XX`
 
-### Example 2: From existing plan (after plan mode)
+### Example 2: From existing plan
 User: `/implement-feature --plan settings-rebuild`
 
 Orchestrator:
-1. **Load plan:** Read `docs/plans/settings-rebuild.md`, display "Implementing from plan: settings-rebuild"
-2. **Follow plan phases:** Execute Phase 1 (Domain), Phase 2 (Infrastructure), etc.
-3. **Parallel execution:** Where plan allows parallel work
-4. **Validate:** Build and run tests
-5. **Auto-PR:** Create branch, commit, push, create PR
-6. **Output:** `https://github.com/manx/PomodoroTimeTracker/pull/XX`
+1. **Load plan:** Read `docs/plans/settings-rebuild.md`
+2. **Domain:** Spawn backend-agent for Phase 1 (entities, interfaces)
+3. **Wave 1 (parallel):** Phases 2-4 in parallel where viable:
+   - backend-agent → Application layer (services, DTOs)
+   - backend-agent → Infrastructure layer (repos, EF config)
+   - ui-agent → ViewModels
+4. **Migration:** Create and apply migration
+5. **Wave 2 (parallel):** Phases 5-6 in parallel:
+   - ui-agent → Views
+   - test-agent → All tests
+6. **Validate:** Build and run tests
+7. **Auto-PR:** Create branch, commit, push, create PR
+8. **Output:** `https://github.com/manx/PomodoroTimeTracker/pull/XX`

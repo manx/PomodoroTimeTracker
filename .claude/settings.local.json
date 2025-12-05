@@ -38,8 +38,13 @@
       "Bash(gh pr edit:*)",
       "Bash(gh pr merge:*)",
       "Bash(gh pr:*)",
-      "SlashCommand(/implement-feature)"
-      "Bash(gh pr merge:*)"
+      "SlashCommand(/implement-feature)",
+      "Bash(git reset:*)",
+      "Bash(git branch:*)",
+      "Bash(if not exist \"docs\\plans\" mkdir \"docs\\plans\")",
+      "Bash(mkdir:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []
