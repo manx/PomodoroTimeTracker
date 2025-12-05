@@ -11,7 +11,6 @@ public class ProjectRepository(ApplicationDbContext context) : Repository<Projec
     {
         return await _dbSet
             .Include(p => p.Client)
-            .Include(p => p.PomodoroSessions)
             .Include(p => p.TimeEntries)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }

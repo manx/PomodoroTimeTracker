@@ -5,6 +5,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
 using PomodoroTimeTracker.Application.DTOs;
 using PomodoroTimeTracker.Application.Interfaces;
+using PomodoroTimeTracker.Domain.Entities;
 using PomodoroTimeTracker.ViewModels.Services;
 
 namespace PomodoroTimeTracker.ViewModels;
@@ -347,7 +348,7 @@ public sealed partial class TimeEntryDetailViewModel : ViewModelBase
         try
         {
             IsLoading = true;
-            var entry = await _timeEntryService.GetTimeEntryByIdAsync(timeEntryId);
+            var entry = await _timeEntryService.GetEntryByIdAsync(timeEntryId);
             if (entry == null)
             {
                 await _dialogService.ShowErrorAsync("Failed to load time entry. Entry not found.", "Error");
@@ -435,25 +436,68 @@ public sealed partial class TimeEntryDetailViewModel : ViewModelBase
                 var updateDto = new UpdateTimeEntryDto
                 {
                     Id = _timeEntryId!.Value,
+                    SessionTypeId = SessionType.Ids.Manual,  // Manual entry
                     Description = Description,
                     ProjectId = SelectedProjectId,
                     StartTime = startDateTime,
                     EndTime = endDateTime,
-                    DurationMinutes = durationMinutes
+                    DurationMinutes = durationMinutes,
+                    IsCompleted = endDateTime.HasValue
                 };
 
-                await _timeEntryService.UpdateTimeEntryAsync(updateDto);
+                await _timeEntryService.UpdateEntryAsync(updateDto);
                 _navigationService.TimeEntryIdToSelect = _timeEntryId.Value;
             }
             else
             {
                 var createDto = new CreateTimeEntryDto
                 {
+                    SessionTypeId = SessionType.Ids.Manual,  // Manual entry
                     Description = Description,
                     ProjectId = SelectedProjectId
                 };
 
-                var createdEntry = await _timeEntryService.CreateTimeEntryAsync(createDto, startDateTime, endDateTime);
+                // For manual entries, use a different method signature if needed
+                // or create the entry with specified start/end times
+                TimeEntryDto createdEntry;
+                if (endDateTime.HasValue)
+                {
+                    // Create completed entry
+                    createdEntry = await _timeEntryService.StartTimerEntryAsync(createDto);
+                    // Update it with the correct times
+                    await _timeEntryService.UpdateEntryAsync(new UpdateTimeEntryDto
+                    {
+                        Id = createdEntry.Id,
+                        SessionTypeId = SessionType.Ids.Manual,
+                        Description = Description,
+                        ProjectId = SelectedProjectId,
+                        StartTime = startDateTime,
+                        EndTime = endDateTime,
+                        DurationMinutes = durationMinutes,
+                        IsCompleted = true
+                    });
+                }
+                else
+                {
+                    // Create running entry
+                    createdEntry = await _timeEntryService.StartTimerEntryAsync(createDto);
+                    // Update start time if different from now
+                    if (startDateTime != createdEntry.StartTime)
+                    {
+                        await _timeEntryService.UpdateEntryAsync(new UpdateTimeEntryDto
+                        {
+                            Id = createdEntry.Id,
+                            SessionTypeId = SessionType.Ids.Manual,
+                            Description = Description,
+                            ProjectId = SelectedProjectId,
+                            StartTime = startDateTime,
+                            EndTime = null,
+                            DurationMinutes = null,
+                            IsCompleted = null
+                        });
+                    }
+                }
+
                 _navigationService.TimeEntryIdToSelect = createdEntry.Id;
             }
 

@@ -94,7 +94,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
     /// <summary>
     /// Initializes a new instance of the <see cref="PomodoroViewModel"/> class.
     /// </summary>
-    /// <param name="sessionService">Service for managing Pomodoro sessions.</param>
+    /// <param name="entryService">Service for managing time entries.</param>
     /// <param name="settingsService">Service for managing Pomodoro settings.</param>
     /// <param name="clientService">Service for managing clients.</param>
     /// <param name="projectService">Service for managing projects.</param>
@@ -103,7 +103,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
     /// <param name="pomodoroStateService">Service for managing Pomodoro cycle state.</param>
     /// <param name="timer">Timer for updating UI every second.</param>
     public PomodoroViewModel(
-        IPomodoroSessionService sessionService,
+        ITimeEntryService entryService,
         IPomodoroSettingsService settingsService,
         IClientService clientService,
         IProjectService projectService,
@@ -111,7 +111,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
         IActiveTimerService activeTimerService,
         IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
-        : base(sessionService, clientService, projectService, activeTimerService, pomodoroStateService, timer)
+        : base(entryService, clientService, projectService, activeTimerService, pomodoroStateService, timer)
     {
         _settingsService = settingsService;
         _audioService = audioService;
@@ -360,7 +360,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
     protected override ActiveTimerType TimerType => ActiveTimerType.Pomodoro;
 
     /// <inheritdoc/>
-    protected override SessionType SessionTypeValue => SessionType.Work;
+    protected override int SessionTypeId => SessionType.Ids.Work;
 
     /// <inheritdoc/>
     protected override string GetStopNotes()
@@ -402,7 +402,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
         DurationMinutes = _settings?.WorkDurationMinutes ?? 25;
         TimerDisplay = "00:00";
         SetProgressPercentage(0);
-        CurrentSession = null;
+        CurrentEntry = null;
 
         OnPropertyChanged(nameof(SessionTypeLabel));
     }
@@ -421,16 +421,16 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
 
         try
         {
-            // Create session
-            var createDto = new CreatePomodoroSessionDto
+            // Create time entry
+            var createDto = new CreateTimeEntryDto
             {
                 ProjectId = SelectedProject?.Id,
-                DurationMinutes = DurationMinutes,
-                SessionType = SessionType.Work,
-                Objective = Objective
+                SessionTypeId = SessionType.Ids.Work,
+                Description = Objective,
+                PlannedDurationMinutes = DurationMinutes
             };
 
-            CurrentSession = await SessionService.CreateSessionAsync(createDto);
+            CurrentEntry = await EntryService.StartTimerEntryAsync(createDto);
 
             // Initialize timer
             // Total time = work duration + wrap up period
@@ -525,10 +525,10 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
             await _audioService.PlayAlarmAsync(_settings.AlarmVolume, _settings.AlarmSound);
         }
 
-        // Complete current session if it's a work session (including wrap up)
-        if (CurrentSession != null && (State == PomodoroState.WrapUp || State == PomodoroState.Running))
+        // Complete current entry if it's a work session (including wrap up)
+        if (CurrentEntry != null && (State == PomodoroState.WrapUp || State == PomodoroState.Running))
         {
-            await SessionService.CompleteSessionAsync(CurrentSession.Id);
+            await EntryService.CompleteEntryAsync(CurrentEntry.Id);
         }
 
         if (State == PomodoroState.Break)

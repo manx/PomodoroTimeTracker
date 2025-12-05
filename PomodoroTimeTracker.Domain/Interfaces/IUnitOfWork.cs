@@ -4,7 +4,6 @@ public interface IUnitOfWork : IDisposable
 {
     IClientRepository Clients { get; }
     IProjectRepository Projects { get; }
-    IPomodoroSessionRepository PomodoroSessions { get; }
     ITimeEntryRepository TimeEntries { get; }
     IPomodoroSettingsRepository PomodoroSettings { get; }
 

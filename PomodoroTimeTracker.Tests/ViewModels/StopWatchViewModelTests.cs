@@ -15,7 +15,7 @@ namespace PomodoroTimeTracker.Tests.ViewModels;
 /// </summary>
 public class StopWatchViewModelTests
 {
-    private readonly Mock<IPomodoroSessionService> _sessionServiceMock;
+    private readonly Mock<ITimeEntryService> _entryServiceMock;
     private readonly Mock<IClientService> _clientServiceMock;
     private readonly Mock<IProjectService> _projectServiceMock;
     private readonly Mock<IActiveTimerService> _activeTimerServiceMock;
@@ -24,7 +24,7 @@ public class StopWatchViewModelTests
 
     public StopWatchViewModelTests()
     {
-        _sessionServiceMock = new Mock<IPomodoroSessionService>();
+        _entryServiceMock = new Mock<ITimeEntryService>();
         _clientServiceMock = new Mock<IClientService>();
         _projectServiceMock = new Mock<IProjectService>();
         _activeTimerServiceMock = new Mock<IActiveTimerService>();
@@ -34,8 +34,8 @@ public class StopWatchViewModelTests
         // Default setup
         _clientServiceMock.Setup(s => s.GetAllClientsAsync())
             .ReturnsAsync(new List<ClientDto>());
-        _sessionServiceMock.Setup(s => s.GetAllSessionsAsync())
-            .ReturnsAsync(new List<PomodoroSessionDto>());
+        _entryServiceMock.Setup(s => s.GetEntriesBySessionTypeAsync(It.IsAny<int>()))
+            .ReturnsAsync(new List<TimeEntryDto>());
         _activeTimerServiceMock.Setup(a => a.TrySetActiveTimer(It.IsAny<ActiveTimerType>()))
             .Returns(true);
     }
@@ -43,7 +43,7 @@ public class StopWatchViewModelTests
     private StopWatchViewModel CreateViewModel()
     {
         return new StopWatchViewModel(
-            _sessionServiceMock.Object,
+            _entryServiceMock.Object,
             _clientServiceMock.Object,
             _projectServiceMock.Object,
             _activeTimerServiceMock.Object,
@@ -178,15 +178,16 @@ public class StopWatchViewModelTests
     public async Task StartTimerCommand_CreatesSessionAndStartsTimer()
     {
         // Arrange
-        var createdSession = new PomodoroSessionDto
+        var createdEntry = new TimeEntryDto
         {
             Id = 1,
             StartTime = DateTime.UtcNow,
-            SessionType = SessionType.StopWatch
+            SessionTypeId = SessionType.Ids.StopWatch,
+            SessionTypeName = "StopWatch"
         };
-        _sessionServiceMock.Setup(s => s.CreateSessionAsync(
-            It.IsAny<CreatePomodoroSessionDto>()))
-            .ReturnsAsync(createdSession);
+        _entryServiceMock.Setup(s => s.StartTimerEntryAsync(
+            It.IsAny<CreateTimeEntryDto>()))
+            .ReturnsAsync(createdEntry);
 
         var viewModel = CreateViewModel();
         await viewModel.LoadAsync();
@@ -197,10 +198,10 @@ public class StopWatchViewModelTests
 
         // Assert
         viewModel.State.Should().Be(StopWatchState.Running);
-        _sessionServiceMock.Verify(s => s.CreateSessionAsync(
-            It.Is<CreatePomodoroSessionDto>(dto =>
-                dto.SessionType == SessionType.StopWatch &&
-                dto.DurationMinutes == 0)), Times.Once);
+        _entryServiceMock.Verify(s => s.StartTimerEntryAsync(
+            It.Is<CreateTimeEntryDto>(dto =>
+                dto.SessionTypeId == SessionType.Ids.StopWatch &&
+                dto.PlannedDurationMinutes == 0)), Times.Once);
         _timerMock.Verify(t => t.Start(), Times.Once);
     }
 
@@ -334,8 +335,8 @@ public class StopWatchViewModelTests
 
         // Assert
         _timerMock.Verify(t => t.Stop(), Times.Once);
-        _sessionServiceMock.Verify(s => s.UpdateSessionAsync(
-            It.Is<UpdatePomodoroSessionDto>(dto => dto.IsCompleted == true)), Times.Once);
+        _entryServiceMock.Verify(s => s.UpdateEntryAsync(
+            It.Is<UpdateTimeEntryDto>(dto => dto.IsCompleted == true)), Times.Once);
         viewModel.State.Should().Be(StopWatchState.Setup);
     }
 
@@ -383,7 +384,7 @@ public class StopWatchViewModelTests
 
         // Assert
         _timerMock.Verify(t => t.Stop(), Times.Once);
-        _sessionServiceMock.Verify(s => s.DeleteSessionAsync(
+        _entryServiceMock.Verify(s => s.DeleteEntryAsync(
             It.IsAny<int>()), Times.Once);
         viewModel.State.Should().Be(StopWatchState.Setup);
     }
@@ -535,16 +536,17 @@ public class StopWatchViewModelTests
 
     private async Task<StopWatchViewModel> StartTimerAsync()
     {
-        var createdSession = new PomodoroSessionDto
+        var createdEntry = new TimeEntryDto
         {
             Id = 1,
             StartTime = DateTime.UtcNow,
-            SessionType = SessionType.StopWatch,
+            SessionTypeId = SessionType.Ids.StopWatch,
+            SessionTypeName = "StopWatch",
             DurationMinutes = 0
         };
-        _sessionServiceMock.Setup(s => s.CreateSessionAsync(
-            It.IsAny<CreatePomodoroSessionDto>()))
-            .ReturnsAsync(createdSession);
+        _entryServiceMock.Setup(s => s.StartTimerEntryAsync(
+            It.IsAny<CreateTimeEntryDto>()))
+            .ReturnsAsync(createdEntry);
 
         var viewModel = CreateViewModel();
         await viewModel.LoadAsync();

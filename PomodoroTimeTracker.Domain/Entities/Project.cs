@@ -10,6 +10,5 @@ public class Project
 
     // Navigation properties
     public Client? Client { get; set; }
-    public ICollection<PomodoroSession> PomodoroSessions { get; set; } = new List<PomodoroSession>();
     public ICollection<TimeEntry> TimeEntries { get; set; } = new List<TimeEntry>();
 }

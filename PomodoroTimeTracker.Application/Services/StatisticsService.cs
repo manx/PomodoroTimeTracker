@@ -7,19 +7,25 @@ namespace PomodoroTimeTracker.Application.Services;
 
 public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
 {
+    // Helper to identify timer-based work sessions
+    private static readonly int[] TimerWorkTypes = [SessionType.Ids.Work, SessionType.Ids.Regular, SessionType.Ids.StopWatch];
+
     public async Task<DailyStatisticsDto> GetDailyStatisticsAsync(DateTime? date = null)
     {
         var targetDate = (date ?? DateTime.UtcNow).Date;
         var nextDay = targetDate.AddDays(1);
 
-        var sessions = await unitOfWork.PomodoroSessions.GetByDateRangeAsync(targetDate, nextDay);
-        var entries = await unitOfWork.TimeEntries.GetByDateRangeAsync(targetDate, nextDay);
+        var allEntries = await unitOfWork.TimeEntries.GetByDateRangeAsync(targetDate, nextDay);
+        var entriesList = allEntries.ToList();
+
+        var timerEntries = entriesList.Where(e => TimerWorkTypes.Contains(e.SessionTypeId)).ToList();
+        var manualEntries = entriesList.Where(e => e.SessionTypeId == SessionType.Ids.Manual).ToList();
 
         return new DailyStatisticsDto
         {
             Date = targetDate.ToString("yyyy-MM-dd"),
-            PomodoroSessions = BuildPomodoroStats(sessions.ToList()),
-            TimeEntries = BuildTimeEntryStats(entries.ToList())
+            PomodoroSessions = BuildTimerStats(timerEntries),
+            TimeEntries = BuildManualEntryStats(manualEntries)
         };
     }
 
@@ -29,23 +35,26 @@ public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
         var startOfWeek = targetDate.AddDays(-(int)targetDate.DayOfWeek);
         var endOfWeek = startOfWeek.AddDays(7);
 
-        var sessions = await unitOfWork.PomodoroSessions.GetByDateRangeAsync(startOfWeek, endOfWeek);
-        var entries = await unitOfWork.TimeEntries.GetByDateRangeAsync(startOfWeek, endOfWeek);
+        var allEntries = await unitOfWork.TimeEntries.GetByDateRangeAsync(startOfWeek, endOfWeek);
+        var entriesList = allEntries.ToList();
 
-        var pomodoroStats = BuildPomodoroStats(sessions.ToList());
-        pomodoroStats.ByDay = sessions
-            .GroupBy(s => s.StartTime.Date)
+        var timerEntries = entriesList.Where(e => TimerWorkTypes.Contains(e.SessionTypeId)).ToList();
+        var manualEntries = entriesList.Where(e => e.SessionTypeId == SessionType.Ids.Manual).ToList();
+
+        var pomodoroStats = BuildTimerStats(timerEntries);
+        pomodoroStats.ByDay = timerEntries
+            .GroupBy(e => e.StartTime.Date)
             .Select(g => new DayStatsDto
             {
                 Date = g.Key.ToString("yyyy-MM-dd"),
                 Count = g.Count(),
-                Minutes = g.Sum(s => s.DurationMinutes)
+                Minutes = g.Sum(e => e.DurationMinutes ?? 0)
             })
             .OrderBy(d => d.Date)
             .ToList();
 
-        var timeEntryStats = BuildTimeEntryStats(entries.ToList());
-        timeEntryStats.ByDay = entries
+        var timeEntryStats = BuildManualEntryStats(manualEntries);
+        timeEntryStats.ByDay = manualEntries
             .GroupBy(e => e.StartTime.Date)
             .Select(g => new DayStatsDto
             {
@@ -70,23 +79,26 @@ public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
         var start = startDate.Date;
         var end = endDate.Date.AddDays(1);
 
-        var sessions = await unitOfWork.PomodoroSessions.GetByDateRangeAsync(start, end);
-        var entries = await unitOfWork.TimeEntries.GetByDateRangeAsync(start, end);
+        var allEntries = await unitOfWork.TimeEntries.GetByDateRangeAsync(start, end);
+        var entriesList = allEntries.ToList();
 
-        var pomodoroStats = BuildPomodoroStats(sessions.ToList());
-        pomodoroStats.ByDay = sessions
-            .GroupBy(s => s.StartTime.Date)
+        var timerEntries = entriesList.Where(e => TimerWorkTypes.Contains(e.SessionTypeId)).ToList();
+        var manualEntries = entriesList.Where(e => e.SessionTypeId == SessionType.Ids.Manual).ToList();
+
+        var pomodoroStats = BuildTimerStats(timerEntries);
+        pomodoroStats.ByDay = timerEntries
+            .GroupBy(e => e.StartTime.Date)
             .Select(g => new DayStatsDto
             {
                 Date = g.Key.ToString("yyyy-MM-dd"),
                 Count = g.Count(),
-                Minutes = g.Sum(s => s.DurationMinutes)
+                Minutes = g.Sum(e => e.DurationMinutes ?? 0)
             })
             .OrderBy(d => d.Date)
             .ToList();
 
-        var timeEntryStats = BuildTimeEntryStats(entries.ToList());
-        timeEntryStats.ByDay = entries
+        var timeEntryStats = BuildManualEntryStats(manualEntries);
+        timeEntryStats.ByDay = manualEntries
             .GroupBy(e => e.StartTime.Date)
             .Select(g => new DayStatsDto
             {
@@ -112,14 +124,17 @@ public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
         if (project == null)
             throw new KeyNotFoundException($"Project with ID {projectId} not found");
 
-        var sessions = await unitOfWork.PomodoroSessions.GetByProjectIdAsync(projectId);
-        var entries = await unitOfWork.TimeEntries.GetByProjectIdAsync(projectId);
+        var allEntries = await unitOfWork.TimeEntries.GetByProjectIdAsync(projectId);
+        var entriesList = allEntries.ToList();
 
-        var pomodoroStats = BuildPomodoroStats(sessions.ToList());
-        pomodoroStats.LastSession = sessions.Any() ? sessions.Max(s => s.StartTime) : null;
+        var timerEntries = entriesList.Where(e => TimerWorkTypes.Contains(e.SessionTypeId)).ToList();
+        var manualEntries = entriesList.Where(e => e.SessionTypeId == SessionType.Ids.Manual).ToList();
 
-        var timeEntryStats = BuildTimeEntryStats(entries.ToList());
-        timeEntryStats.LastEntry = entries.Any() ? entries.Max(e => e.StartTime) : null;
+        var pomodoroStats = BuildTimerStats(timerEntries);
+        pomodoroStats.LastSession = timerEntries.Any() ? timerEntries.Max(e => e.StartTime) : null;
+
+        var timeEntryStats = BuildManualEntryStats(manualEntries);
+        timeEntryStats.LastEntry = manualEntries.Any() ? manualEntries.Max(e => e.StartTime) : null;
 
         return new ProjectStatisticsDto
         {
@@ -135,30 +150,33 @@ public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
         };
     }
 
-    private static PomodoroStatsDto BuildPomodoroStats(List<PomodoroSession> sessions)
+    private static PomodoroStatsDto BuildTimerStats(List<TimeEntry> entries)
     {
+        // Only count entries where IsCompleted is not null for completion percentage
+        var completableEntries = entries.Where(e => e.IsCompleted.HasValue).ToList();
+
         return new PomodoroStatsDto
         {
-            Total = sessions.Count,
-            Completed = sessions.Count(s => s.IsCompleted),
-            WorkSessions = sessions.Count(s => s.SessionType == SessionType.Work),
-            TotalMinutes = sessions.Sum(s => s.DurationMinutes),
-            ByProject = sessions
-                .Where(s => s.Project != null)
-                .GroupBy(s => new { s.Project!.Id, s.Project.Name, ClientName = s.Project.Client != null ? s.Project.Client.Name : "No Client" })
+            Total = entries.Count,
+            Completed = completableEntries.Count(e => e.IsCompleted == true),
+            WorkSessions = entries.Count(e => e.SessionTypeId == SessionType.Ids.Work),
+            TotalMinutes = entries.Sum(e => e.DurationMinutes ?? 0),
+            ByProject = entries
+                .Where(e => e.Project != null)
+                .GroupBy(e => new { e.Project!.Id, e.Project.Name, ClientName = e.Project.Client != null ? e.Project.Client.Name : "No Client" })
                 .Select(g => new ProjectStatsDto
                 {
                     ProjectId = g.Key.Id,
                     ProjectName = g.Key.Name,
                     ClientName = g.Key.ClientName,
                     Count = g.Count(),
-                    Minutes = g.Sum(s => s.DurationMinutes)
+                    Minutes = g.Sum(e => e.DurationMinutes ?? 0)
                 })
                 .ToList()
         };
     }
 
-    private static TimeEntryStatsDto BuildTimeEntryStats(List<TimeEntry> entries)
+    private static TimeEntryStatsDto BuildManualEntryStats(List<TimeEntry> entries)
     {
         return new TimeEntryStatsDto
         {

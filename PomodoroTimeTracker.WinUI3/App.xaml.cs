@@ -62,13 +62,11 @@ namespace PomodoroTimeTracker.WinUI3
                     services.AddScoped<IUnitOfWork, UnitOfWork>();
                     services.AddScoped<IClientRepository, ClientRepository>();
                     services.AddScoped<IProjectRepository, ProjectRepository>();
-                    services.AddScoped<IPomodoroSessionRepository, PomodoroSessionRepository>();
                     services.AddScoped<ITimeEntryRepository, TimeEntryRepository>();
 
                     // Register Application Services
                     services.AddScoped<IClientService, ClientService>();
                     services.AddScoped<IProjectService, ProjectService>();
-                    services.AddScoped<IPomodoroSessionService, PomodoroSessionService>();
                     services.AddScoped<ITimeEntryService, TimeEntryService>();
                     services.AddScoped<IStatisticsService, StatisticsService>();
                     services.AddScoped<IPomodoroSettingsService, PomodoroSettingsService>();
