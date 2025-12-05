@@ -7,17 +7,18 @@ Implement a feature using specialized agents. This command orchestrates backend-
 /implement-feature <feature description>
 ```
 
-## Optimized Workflow
+## Zero-Interaction Workflow
 
-You are the **orchestrator**. This workflow maximizes parallelization:
+You are the **orchestrator**. This workflow runs autonomously with no user approval needed:
 
 ```
-Backend → ViewModels → ┬─ Views (ui-agent)      ← parallel
-                       └─ Tests (test-agent)    ← parallel
+Analyze → Backend → ViewModels → Views+Tests (parallel) → Validate → PR
 ```
 
-### Step 1: Analyze & Plan
-First, analyze the feature request and create a plan:
+**Output:** PR URL (user reviews via GitHub)
+
+### Step 1: Analyze & Plan (Auto-proceed)
+Analyze the feature request and display a brief plan, then **proceed immediately**:
 
 1. **Identify affected layers:**
    - Domain (entities, enums, interfaces)
@@ -26,9 +27,15 @@ First, analyze the feature request and create a plan:
    - UI (ViewModels, XAML pages)
    - Tests
 
-2. **Break down into tasks** for each agent
-3. **Identify dependencies** between tasks (order matters!)
-4. **Present the plan** to the user for approval before proceeding
+2. **Display concise plan** (no approval needed):
+```
+## Implementing: <feature>
+- Backend: <changes>
+- UI: <changes>
+- Tests: <what will be tested>
+```
+
+3. **Proceed immediately** - do not wait for user confirmation
 
 ### Step 2: Backend Implementation
 If the feature requires backend changes, spawn **backend-agent**:
@@ -107,33 +114,31 @@ dotnet test PomodoroTimeTracker.Tests
 3. Spawn that agent with the failure context
 4. Repeat validation
 
-### Step 7: Summary & Commit (Optional)
-Present summary to user:
+### Step 7: Auto-Create PR
+**Automatically** create branch, commit, push, and PR:
 
-```markdown
-## Implementation Complete
-
-**Feature:** [description]
-
-**Changes by layer:**
-- Domain: [files]
-- Application: [files]
-- Infrastructure: [files]
-- UI: [files]
-- Tests: [files]
-
-**Test Results:** X tests passing
-
-Would you like me to commit these changes?
+1. **Create feature branch:**
+```bash
+git checkout -b feat/<feature-slug>
 ```
 
-If user wants to commit, spawn **git-agent**:
-
+2. **Stage and commit all changes:**
+```bash
+git add -A
+git commit -m "feat(<scope>): <description>"
 ```
-Use Task tool with subagent_type="git-agent"
 
-Prompt: Create a commit for the implemented feature with appropriate message.
+3. **Push and create PR:**
+```bash
+git push -u origin feat/<feature-slug>
+gh pr create --title "feat(<scope>): <description>" --body "## Summary
+- <bullet points of changes>
+
+## Test plan
+- [ ] <testing checklist>"
 ```
+
+4. **Output PR URL** as final result
 
 ## Agent Responsibilities
 
@@ -174,17 +179,19 @@ public class MyViewModel : ViewModelBase
 - If an agent reports an error, analyze and retry with more context
 - If build fails, identify which layer caused it and spawn appropriate agent
 - If tests fail, spawn test-agent first for analysis, then the appropriate fixing agent
-- Maximum 2 retries per agent before escalating to user
+- Maximum 3 retries per agent before escalating to user
+- Only escalate if truly blocked (e.g., ambiguous requirements, external dependencies)
 
 ## Example
 
 User: `/implement-feature Add time entry tracking`
 
 Orchestrator:
-1. **Plan:** Backend exists, need ViewModels, Views, Tests
+1. **Plan (auto-proceed):** Display "Implementing: time entry tracking" with layer breakdown
 2. **ViewModels first:** Spawn ui-agent for TimeEntryListViewModel, TimeEntryDetailViewModel
 3. **Parallel execution:**
    - Spawn ui-agent: Create TimeEntryListPage.xaml, TimeEntryDetailPage.xaml
    - Spawn test-agent: Create TimeEntryService tests (in same message!)
-4. **Validate:** Build and run tests
-5. **Summary:** Present results, offer to commit
+4. **Validate:** Build and run tests (auto-retry up to 3x if failures)
+5. **Auto-PR:** Create branch `feat/time-entry-tracking`, commit, push, create PR
+6. **Output:** `https://github.com/manx/PomodoroTimeTracker/pull/XX`
