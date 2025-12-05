@@ -47,6 +47,8 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                     UseAlarm = table.Column<bool>(type: "INTEGER", nullable: false),
                     AlarmVolume = table.Column<int>(type: "INTEGER", nullable: false),
                     AlarmSound = table.Column<string>(type: "TEXT", nullable: false),
+                    ShortBreaksAreBillable = table.Column<bool>(type: "INTEGER", nullable: false),
+                    LongBreaksAreBillable = table.Column<bool>(type: "INTEGER", nullable: false),
                     LastModified = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -104,6 +106,7 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                     EndTime = table.Column<DateTime>(type: "TEXT", nullable: true),
                     DurationMinutes = table.Column<int>(type: "INTEGER", nullable: true),
                     IsCompleted = table.Column<bool>(type: "INTEGER", nullable: true),
+                    IsBillable = table.Column<bool>(type: "INTEGER", nullable: true),
                     Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
