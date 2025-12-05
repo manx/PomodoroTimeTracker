@@ -67,6 +67,8 @@ PomodoroTimeTracker.Tests         → Unit tests
 - Client/Project/TimeEntry management
 - Report view with daily/weekly/monthly/custom filters
 - Unified TimeEntry + SessionTypes schema
+- Settings with TabView (General, Pomodoro Timer, + placeholders)
+- Configurable week settings (start day, ISO 8601 vs US standard)
 
 **TODO:**
 - Windows toast notifications

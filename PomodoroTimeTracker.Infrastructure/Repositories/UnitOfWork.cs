@@ -13,6 +13,7 @@ public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
     public IProjectRepository Projects { get; } = new ProjectRepository(context);
     public ITimeEntryRepository TimeEntries { get; } = new TimeEntryRepository(context);
     public IPomodoroSettingsRepository PomodoroSettings { get; } = new PomodoroSettingsRepository(context);
+    public IAppSettingsRepository AppSettings { get; } = new AppSettingsRepository(context);
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<SessionType> SessionTypes { get; set; } = null!;
     public DbSet<TimeEntry> TimeEntries { get; set; } = null!;
     public DbSet<PomodoroSettings> PomodoroSettings { get; set; } = null!;
+    public DbSet<AppSettings> AppSettings { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,5 +28,6 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SessionTypeConfiguration());
         modelBuilder.ApplyConfiguration(new TimeEntryConfiguration());
         modelBuilder.ApplyConfiguration(new PomodoroSettingsConfiguration());
+        modelBuilder.ApplyConfiguration(new AppSettingsConfiguration());
     }
 }
