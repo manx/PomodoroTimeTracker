@@ -16,16 +16,19 @@ public class ReportViewModelTests
     private readonly Mock<IStatisticsService> _statisticsServiceMock;
     private readonly Mock<IProjectService> _projectServiceMock;
     private readonly Mock<IDialogService> _dialogServiceMock;
+    private readonly Mock<IAppSettingsService> _appSettingsServiceMock;
 
     public ReportViewModelTests()
     {
         _statisticsServiceMock = new Mock<IStatisticsService>();
         _projectServiceMock = new Mock<IProjectService>();
         _dialogServiceMock = new Mock<IDialogService>();
+        _appSettingsServiceMock = new Mock<IAppSettingsService>();
 
         // Default setup for empty statistics
         SetupEmptyStatistics();
         SetupEmptyProjects();
+        SetupAppSettings();
     }
 
     private void SetupEmptyProjects()
@@ -65,12 +68,42 @@ public class ReportViewModelTests
             });
     }
 
+    private void SetupAppSettings()
+    {
+        _appSettingsServiceMock.Setup(s => s.GetSettingsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AppSettingsDto
+            {
+                Id = 1,
+                LastOpenedSettingsTab = "General",
+                LanguageOverride = null,
+                DateFormatOverride = null,
+                WeekStartDay = DayOfWeek.Sunday,
+                WeekYearStandard = 0,
+                LastModified = DateTime.Now
+            });
+
+        // Setup week calculation methods
+        _appSettingsServiceMock.Setup(s => s.GetWeekStart(It.IsAny<DateTime>()))
+            .Returns((DateTime date) => date.AddDays(-(int)date.DayOfWeek).Date);
+
+        _appSettingsServiceMock.Setup(s => s.GetWeekEnd(It.IsAny<DateTime>()))
+            .Returns((DateTime date) => date.AddDays(6 - (int)date.DayOfWeek).Date);
+
+        _appSettingsServiceMock.Setup(s => s.GetWeekNumber(It.IsAny<DateTime>()))
+            .Returns((DateTime date) =>
+            {
+                var cal = System.Globalization.CultureInfo.InvariantCulture.Calendar;
+                return cal.GetWeekOfYear(date, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            });
+    }
+
     private ReportViewModel CreateViewModel()
     {
         return new ReportViewModel(
             _statisticsServiceMock.Object,
             _projectServiceMock.Object,
-            _dialogServiceMock.Object);
+            _dialogServiceMock.Object,
+            _appSettingsServiceMock.Object);
     }
 
     #region Initial State Tests

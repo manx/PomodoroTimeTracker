@@ -23,35 +23,25 @@ public enum ReportTimePeriod
 /// </summary>
 public sealed class WeekOption
 {
+    private readonly IAppSettingsService _appSettingsService;
+
     public int Year { get; }
     public int WeekNumber { get; }
     public DateTime StartDate { get; }
     public DateTime EndDate { get; }
 
-    // TODO: Handle week start day based on user locale/settings (Sunday vs Monday)
-    // TODO: Handle week year at end of December (week 1 may belong to next year, week 52/53 may belong to previous year)
-    public WeekOption(DateTime dateInWeek)
+    public WeekOption(DateTime dateInWeek, IAppSettingsService appSettingsService)
     {
-        // Get week start (Sunday)
-        StartDate = dateInWeek.AddDays(-(int)dateInWeek.DayOfWeek);
-        EndDate = StartDate.AddDays(6);
+        _appSettingsService = appSettingsService;
+
+        // Get week start using configured week start day
+        StartDate = _appSettingsService.GetWeekStart(dateInWeek);
+        EndDate = _appSettingsService.GetWeekEnd(dateInWeek);
         Year = StartDate.Year;
-        WeekNumber = GetIso8601WeekNumber(StartDate);
+        WeekNumber = _appSettingsService.GetWeekNumber(StartDate);
     }
 
     public string Display => $"Week {WeekNumber} ({StartDate:MMM d})";
-
-    // TODO: Handle different week number systems (ISO 8601 vs US) based on user locale/settings
-    private static int GetIso8601WeekNumber(DateTime date)
-    {
-        var day = System.Globalization.CultureInfo.InvariantCulture.Calendar.GetDayOfWeek(date);
-        if (day >= DayOfWeek.Monday && day <= DayOfWeek.Wednesday)
-        {
-            date = date.AddDays(3);
-        }
-        return System.Globalization.CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(
-            date, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
-    }
 
     public override bool Equals(object? obj)
     {
@@ -157,6 +147,7 @@ public sealed partial class ReportViewModel : ViewModelBase
     private readonly IStatisticsService _statisticsService;
     private readonly IProjectService _projectService;
     private readonly IDialogService _dialogService;
+    private readonly IAppSettingsService _appSettingsService;
 
     private ReportTimePeriod _selectedTimePeriod = ReportTimePeriod.Daily;
     private DateTimeOffset _selectedDate = DateTimeOffset.Now;
@@ -194,11 +185,13 @@ public sealed partial class ReportViewModel : ViewModelBase
     public ReportViewModel(
         IStatisticsService statisticsService,
         IProjectService projectService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        IAppSettingsService appSettingsService)
     {
         _statisticsService = statisticsService;
         _projectService = projectService;
         _dialogService = dialogService;
+        _appSettingsService = appSettingsService;
 
         LoadReportCommand = new AsyncRelayCommand(LoadReportAsync);
         RefreshCommand = new AsyncRelayCommand(LoadReportAsync);
@@ -437,7 +430,7 @@ public sealed partial class ReportViewModel : ViewModelBase
                 ReportTimePeriod.Daily =>
                     SelectedDate.ToString("ddd, MMM d, yyyy"),
                 ReportTimePeriod.Weekly =>
-                    $"{GetWeekStart(SelectedDate.DateTime):MMM d} - {GetWeekEnd(SelectedDate.DateTime):MMM d, yyyy}",
+                    $"{_appSettingsService.GetWeekStart(SelectedDate.DateTime):MMM d} - {_appSettingsService.GetWeekEnd(SelectedDate.DateTime):MMM d, yyyy}",
                 ReportTimePeriod.Monthly =>
                     SelectedDate.ToString("MMMM yyyy"),
                 ReportTimePeriod.Custom =>
@@ -445,16 +438,6 @@ public sealed partial class ReportViewModel : ViewModelBase
                 _ => string.Empty
             };
         }
-    }
-
-    private static DateTime GetWeekStart(DateTime date)
-    {
-        return date.AddDays(-(int)date.DayOfWeek);
-    }
-
-    private static DateTime GetWeekEnd(DateTime date)
-    {
-        return GetWeekStart(date).AddDays(6);
     }
 
     private static DateTime GetMonthStart(DateTime date)
@@ -577,12 +560,12 @@ public sealed partial class ReportViewModel : ViewModelBase
         var endOfYear = new DateTime(year, 12, 31);
 
         // Start from first week containing days in this year
-        var firstWeek = new WeekOption(startOfYear);
+        var firstWeek = new WeekOption(startOfYear, _appSettingsService);
         var currentDate = firstWeek.StartDate;
 
         while (currentDate <= endOfYear)
         {
-            var week = new WeekOption(currentDate);
+            var week = new WeekOption(currentDate, _appSettingsService);
             // Only add weeks that haven't ended yet if current year, or all weeks for past years
             if (year < today.Year || week.EndDate <= today)
             {
@@ -596,7 +579,7 @@ public sealed partial class ReportViewModel : ViewModelBase
         // Select appropriate week
         if (selectCurrentWeek && year == today.Year)
         {
-            var currentWeek = new WeekOption(today);
+            var currentWeek = new WeekOption(today, _appSettingsService);
             SelectedWeek = WeekOptions.FirstOrDefault(w => w.Equals(currentWeek)) ?? WeekOptions.LastOrDefault();
         }
         else

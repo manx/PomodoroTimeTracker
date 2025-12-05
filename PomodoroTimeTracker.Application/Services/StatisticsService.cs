@@ -5,8 +5,16 @@ using PomodoroTimeTracker.Domain.Interfaces;
 
 namespace PomodoroTimeTracker.Application.Services;
 
-public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
+public class StatisticsService : IStatisticsService
 {
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAppSettingsService _appSettingsService;
+
+    public StatisticsService(IUnitOfWork unitOfWork, IAppSettingsService appSettingsService)
+    {
+        _unitOfWork = unitOfWork;
+        _appSettingsService = appSettingsService;
+    }
     // Helper to identify timer-based work sessions
     private static readonly int[] TimerWorkTypes = [SessionType.Ids.Pomodoro, SessionType.Ids.Regular, SessionType.Ids.StopWatch];
 
@@ -15,7 +23,7 @@ public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
         var targetDate = (date ?? DateTime.UtcNow).Date;
         var nextDay = targetDate.AddDays(1);
 
-        var allEntries = await unitOfWork.TimeEntries.GetByDateRangeAsync(targetDate, nextDay);
+        var allEntries = await _unitOfWork.TimeEntries.GetByDateRangeAsync(targetDate, nextDay);
         var entriesList = allEntries.ToList();
 
         var timerEntries = entriesList.Where(e => TimerWorkTypes.Contains(e.SessionTypeId)).ToList();
@@ -32,10 +40,10 @@ public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
     public async Task<WeeklyStatisticsDto> GetWeeklyStatisticsAsync(DateTime? date = null)
     {
         var targetDate = (date ?? DateTime.UtcNow).Date;
-        var startOfWeek = targetDate.AddDays(-(int)targetDate.DayOfWeek);
+        var startOfWeek = _appSettingsService.GetWeekStart(targetDate);
         var endOfWeek = startOfWeek.AddDays(7);
 
-        var allEntries = await unitOfWork.TimeEntries.GetByDateRangeAsync(startOfWeek, endOfWeek);
+        var allEntries = await _unitOfWork.TimeEntries.GetByDateRangeAsync(startOfWeek, endOfWeek);
         var entriesList = allEntries.ToList();
 
         var timerEntries = entriesList.Where(e => TimerWorkTypes.Contains(e.SessionTypeId)).ToList();
@@ -79,7 +87,7 @@ public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
         var start = startDate.Date;
         var end = endDate.Date.AddDays(1);
 
-        var allEntries = await unitOfWork.TimeEntries.GetByDateRangeAsync(start, end);
+        var allEntries = await _unitOfWork.TimeEntries.GetByDateRangeAsync(start, end);
         var entriesList = allEntries.ToList();
 
         var timerEntries = entriesList.Where(e => TimerWorkTypes.Contains(e.SessionTypeId)).ToList();
@@ -120,11 +128,11 @@ public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
 
     public async Task<ProjectStatisticsDto> GetProjectStatisticsAsync(int projectId)
     {
-        var project = await unitOfWork.Projects.GetByIdAsync(projectId);
+        var project = await _unitOfWork.Projects.GetByIdAsync(projectId);
         if (project == null)
             throw new KeyNotFoundException($"Project with ID {projectId} not found");
 
-        var allEntries = await unitOfWork.TimeEntries.GetByProjectIdAsync(projectId);
+        var allEntries = await _unitOfWork.TimeEntries.GetByProjectIdAsync(projectId);
         var entriesList = allEntries.ToList();
 
         var timerEntries = entriesList.Where(e => TimerWorkTypes.Contains(e.SessionTypeId)).ToList();

@@ -20,7 +20,7 @@ internal sealed class NavigationService : INavigationService
         { PageNames.Pomodoro, typeof(PomodoroPage) },
         { PageNames.RegularTimer, typeof(RegularTimerPage) },
         { PageNames.StopWatch, typeof(StopWatchPage) },
-        { PageNames.Settings, typeof(PomodoroSettingsPage) },
+        { PageNames.Settings, typeof(SettingsPage) },
         { PageNames.Report, typeof(ReportPage) },
     };
 

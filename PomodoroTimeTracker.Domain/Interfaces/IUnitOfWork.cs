@@ -6,6 +6,7 @@ public interface IUnitOfWork : IDisposable
     IProjectRepository Projects { get; }
     ITimeEntryRepository TimeEntries { get; }
     IPomodoroSettingsRepository PomodoroSettings { get; }
+    IAppSettingsRepository AppSettings { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);

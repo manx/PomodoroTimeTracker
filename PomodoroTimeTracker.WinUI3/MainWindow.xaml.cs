@@ -221,7 +221,7 @@ namespace PomodoroTimeTracker.WinUI3
                 "Clients" => typeof(Views.ClientListPage),
                 "Projects" => typeof(Views.ProjectListPage),
                 "Report" => typeof(Views.ReportPage),
-                "Settings" => typeof(Views.PomodoroSettingsPage),
+                "Settings" => typeof(Views.SettingsPage),
                 _ => null
             };
 
