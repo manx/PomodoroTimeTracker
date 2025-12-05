@@ -93,6 +93,7 @@ namespace PomodoroTimeTracker.WinUI3
                     services.AddSingleton<INavigationService, Services.NavigationService>();
                     services.AddSingleton<IDialogService, Services.DialogService>();
                     services.AddSingleton<IAudioService, Services.AudioService>();
+                    services.AddSingleton<INotificationService, Services.NotificationService>();
                     services.AddSingleton<IActiveTimerService, Services.ActiveTimerService>();
                     services.AddSingleton<IPomodoroStateService, Services.PomodoroStateService>();
                     services.AddTransient<IDispatcherTimer, Services.DispatcherTimerWrapper>();
