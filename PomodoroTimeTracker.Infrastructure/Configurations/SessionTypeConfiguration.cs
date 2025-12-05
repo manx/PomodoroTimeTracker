@@ -23,7 +23,7 @@ public class SessionTypeConfiguration : IEntityTypeConfiguration<SessionType>
 
         // Seed data
         builder.HasData(
-            new SessionType { Id = 1, Name = "Work", Description = "Pomodoro work session", IsTimerType = true },
+            new SessionType { Id = 1, Name = "Pomodoro", Description = "Pomodoro work session", IsTimerType = true },
             new SessionType { Id = 2, Name = "ShortBreak", Description = "Short break between pomodoros", IsTimerType = true },
             new SessionType { Id = 3, Name = "LongBreak", Description = "Long break after 4 pomodoros", IsTimerType = true },
             new SessionType { Id = 4, Name = "Regular", Description = "Regular countdown timer session", IsTimerType = true },

@@ -40,7 +40,7 @@ public class ProjectRepositoryTests : IDisposable
             CreatedAt = DateTime.UtcNow,
             TimeEntries = new List<TimeEntry>
             {
-                new() { Description = "Session 1", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Work, DurationMinutes = 25, CreatedAt = DateTime.UtcNow },
+                new() { Description = "Session 1", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Pomodoro, DurationMinutes = 25, CreatedAt = DateTime.UtcNow },
                 new() { Description = "Entry 1", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Manual, CreatedAt = DateTime.UtcNow }
             }
         };
@@ -427,8 +427,8 @@ public class ProjectRepositoryTests : IDisposable
             CreatedAt = DateTime.UtcNow,
             TimeEntries = new List<TimeEntry>
             {
-                new() { Description = "Session 1", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Work, DurationMinutes = 25, CreatedAt = DateTime.UtcNow },
-                new() { Description = "Session 2", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Work, DurationMinutes = 25, CreatedAt = DateTime.UtcNow }
+                new() { Description = "Session 1", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Pomodoro, DurationMinutes = 25, CreatedAt = DateTime.UtcNow },
+                new() { Description = "Session 2", StartTime = DateTime.UtcNow, SessionTypeId = SessionType.Ids.Pomodoro, DurationMinutes = 25, CreatedAt = DateTime.UtcNow }
             }
         };
 

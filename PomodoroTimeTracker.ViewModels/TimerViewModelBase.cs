@@ -92,7 +92,7 @@ public abstract class TimerViewModelBase : ViewModelBase, ITimerWindowViewModel
 
     /// <summary>
     /// Gets the session type ID for loading last session data.
-    /// Use SessionType.Ids.Work, SessionType.Ids.Regular, SessionType.Ids.StopWatch, etc.
+    /// Use SessionType.Ids.Pomodoro, SessionType.Ids.Regular, SessionType.Ids.StopWatch, etc.
     /// </summary>
     protected abstract int SessionTypeId { get; }
 

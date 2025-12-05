@@ -19,7 +19,7 @@ public class SessionType
     /// </summary>
     public static class Ids
     {
-        public const int Work = 1;
+        public const int Pomodoro = 1;
         public const int ShortBreak = 2;
         public const int LongBreak = 3;
         public const int Regular = 4;

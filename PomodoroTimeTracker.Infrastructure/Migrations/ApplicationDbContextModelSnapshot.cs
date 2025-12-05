@@ -165,7 +165,7 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                             Id = 1,
                             Description = "Pomodoro work session",
                             IsTimerType = true,
-                            Name = "Work"
+                            Name = "Pomodoro"
                         },
                         new
                         {

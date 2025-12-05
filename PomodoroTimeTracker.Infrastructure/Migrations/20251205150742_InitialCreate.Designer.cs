@@ -11,7 +11,7 @@ using PomodoroTimeTracker.Infrastructure.Data;
 namespace PomodoroTimeTracker.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251205090531_InitialCreate")]
+    [Migration("20251205150742_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -71,10 +71,16 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                     b.Property<int>("LongBreakInterval")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("LongBreaksAreBillable")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("PlaySound")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("ShortBreakDurationMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ShortBreaksAreBillable")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("ShowNotification")
@@ -162,7 +168,7 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                             Id = 1,
                             Description = "Pomodoro work session",
                             IsTimerType = true,
-                            Name = "Work"
+                            Name = "Pomodoro"
                         },
                         new
                         {
@@ -220,6 +226,9 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
 
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool?>("IsBillable")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool?>("IsCompleted")
                         .HasColumnType("INTEGER");

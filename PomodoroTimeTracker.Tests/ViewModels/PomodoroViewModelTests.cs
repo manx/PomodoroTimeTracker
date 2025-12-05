@@ -191,8 +191,8 @@ public class PomodoroViewModelTests
         {
             Id = 1,
             StartTime = DateTime.UtcNow,
-            SessionTypeId = SessionType.Ids.Work,
-            SessionTypeName = "Work",
+            SessionTypeId = SessionType.Ids.Pomodoro,
+            SessionTypeName = "Pomodoro",
             DurationMinutes = 25
         };
         _entryServiceMock.Setup(s => s.StartTimerEntryAsync(
@@ -210,7 +210,7 @@ public class PomodoroViewModelTests
         viewModel.State.Should().Be(PomodoroState.Running);
         _entryServiceMock.Verify(s => s.StartTimerEntryAsync(
             It.Is<CreateTimeEntryDto>(dto =>
-                dto.SessionTypeId == SessionType.Ids.Work &&
+                dto.SessionTypeId == SessionType.Ids.Pomodoro &&
                 dto.Description == "Write tests")), Times.Once);
         _timerMock.Verify(t => t.Start(), Times.Once);
     }
@@ -823,8 +823,8 @@ public class PomodoroViewModelTests
         {
             Id = 1,
             StartTime = DateTime.UtcNow,
-            SessionTypeId = SessionType.Ids.Work,
-            SessionTypeName = "Work",
+            SessionTypeId = SessionType.Ids.Pomodoro,
+            SessionTypeName = "Pomodoro",
             DurationMinutes = 25
         };
         _entryServiceMock.Setup(s => s.StartTimerEntryAsync(
