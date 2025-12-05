@@ -406,7 +406,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
     protected override ActiveTimerType TimerType => ActiveTimerType.Pomodoro;
 
     /// <inheritdoc/>
-    protected override int SessionTypeId => SessionType.Ids.Work;
+    protected override int SessionTypeId => SessionType.Ids.Pomodoro;
 
     /// <inheritdoc/>
     protected override string GetStopNotes()
@@ -471,7 +471,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
             var createDto = new CreateTimeEntryDto
             {
                 ProjectId = SelectedProject?.Id,
-                SessionTypeId = SessionType.Ids.Work,
+                SessionTypeId = SessionType.Ids.Pomodoro,
                 Description = Objective,
                 PlannedDurationMinutes = DurationMinutes
             };

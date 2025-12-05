@@ -132,7 +132,7 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                 columns: new[] { "Id", "Description", "IsTimerType", "Name" },
                 values: new object[,]
                 {
-                    { 1, "Pomodoro work session", true, "Work" },
+                    { 1, "Pomodoro work session", true, "Pomodoro" },
                     { 2, "Short break between pomodoros", true, "ShortBreak" },
                     { 3, "Long break after 4 pomodoros", true, "LongBreak" },
                     { 4, "Regular countdown timer session", true, "Regular" },

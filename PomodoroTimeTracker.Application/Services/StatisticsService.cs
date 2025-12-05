@@ -8,7 +8,7 @@ namespace PomodoroTimeTracker.Application.Services;
 public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
 {
     // Helper to identify timer-based work sessions
-    private static readonly int[] TimerWorkTypes = [SessionType.Ids.Work, SessionType.Ids.Regular, SessionType.Ids.StopWatch];
+    private static readonly int[] TimerWorkTypes = [SessionType.Ids.Pomodoro, SessionType.Ids.Regular, SessionType.Ids.StopWatch];
 
     public async Task<DailyStatisticsDto> GetDailyStatisticsAsync(DateTime? date = null)
     {
@@ -159,7 +159,7 @@ public class StatisticsService(IUnitOfWork unitOfWork) : IStatisticsService
         {
             Total = entries.Count,
             Completed = completableEntries.Count(e => e.IsCompleted == true),
-            WorkSessions = entries.Count(e => e.SessionTypeId == SessionType.Ids.Work),
+            WorkSessions = entries.Count(e => e.SessionTypeId == SessionType.Ids.Pomodoro),
             TotalMinutes = entries.Sum(e => e.DurationMinutes ?? 0),
             ByProject = entries
                 .Where(e => e.Project != null)

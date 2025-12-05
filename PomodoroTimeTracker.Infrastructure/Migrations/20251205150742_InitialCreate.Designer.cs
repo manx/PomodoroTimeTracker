@@ -11,7 +11,7 @@ using PomodoroTimeTracker.Infrastructure.Data;
 namespace PomodoroTimeTracker.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251205143136_InitialCreate")]
+    [Migration("20251205150742_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -168,7 +168,7 @@ namespace PomodoroTimeTracker.Infrastructure.Migrations
                             Id = 1,
                             Description = "Pomodoro work session",
                             IsTimerType = true,
-                            Name = "Work"
+                            Name = "Pomodoro"
                         },
                         new
                         {
