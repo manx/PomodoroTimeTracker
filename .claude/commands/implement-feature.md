@@ -19,28 +19,34 @@ You are the **orchestrator**. This workflow runs autonomously with no user appro
 
 ### Default Workflow
 ```
-[Analyze] → [Backend + UI] parallel → Migration → [Tests] parallel → Validate → PR
+[Analyze] → [Backend + UI] parallel → [Migration + Tests] parallel → Validate → PR
 ```
 
 - **backend-agent:** All backend layers (Domain + Application + Infrastructure)
 - **ui-agent:** ViewModels + Views together
+- **migration:** Runs in parallel with tests (orchestrator runs directly)
 - **test-agents:** Parallel agents for Service, ViewModel, Repository tests
 
-### --fast Workflow (Maximum Parallelism)
+### --fast Workflow (Maximum Parallelism + Streaming Tests)
 ```
-[Analyze + Full Spec] → [Backend + UI + Tests] ALL parallel → Migration → Validate → PR
+[Analyze + Full Spec] → [Backend + UI] with streaming test spawns → Migration → Validate → PR
 ```
 
 When `--fast` flag is used:
 1. **Generate detailed spec** with exact interface signatures, method names, properties
-2. **Spawn ALL THREE agents in single message:**
-   - backend-agent: Complete backend (Domain + App + Infra)
-   - ui-agent: ViewModels + Views
-   - test-agent: All unit tests
-3. **Each agent gets full spec** including what others are building
-4. **Migration + Validate** after all complete
+2. **Spawn code agents** (backend-agent + ui-agent) with instructions to signal file completion
+3. **Monitor agent output** for `COMPLETED:` signals
+4. **Spawn test-agent immediately** when a file is reported complete
+5. **Migration + Validate** after all complete
 
-**Trade-off:** Faster, but more token waste if spec is wrong.
+**Streaming Pipeline:**
+```
+backend-agent starts → COMPLETED: Service.cs → spawn test-agent for ServiceTests
+                    → COMPLETED: Repo.cs    → spawn test-agent for RepoTests
+ui-agent starts     → COMPLETED: ViewModel.cs → spawn test-agent for ViewModelTests
+```
+
+**Trade-off:** Fastest possible, but more token waste if spec is wrong.
 
 **Output:** PR URL (user reviews via GitHub)
 
@@ -104,30 +110,55 @@ Prompt: Implement UI for [feature]:
 
 ### Step 2: Implementation (--fast)
 
-Spawn ALL THREE agents IN PARALLEL with full spec:
+Spawn code agents with file completion signaling:
 
 ```
 # Agent 1: Backend
 Use Task tool with subagent_type="backend-agent"
 Prompt: [Full spec with interface signatures]
-Implement complete backend. Other agents building: [list ViewModels, Views, tests]
+Implement complete backend for [feature].
+
+IMPORTANT: After completing each major file, output a signal line:
+COMPLETED: <relative-path-to-file>
+
+Example signals:
+COMPLETED: Application/Services/FeatureService.cs
+COMPLETED: Infrastructure/Repositories/FeatureRepository.cs
 
 # Agent 2: UI
 Use Task tool with subagent_type="ui-agent"
 Prompt: [Full spec with ViewModel properties]
-Implement ViewModels + Views. Backend building: [list interfaces]
+Implement ViewModels + Views for [feature].
 
-# Agent 3: Tests
-Use Task tool with subagent_type="test-agent"
-Prompt: [Full spec with class/method names]
-Create all tests. Implementation building: [list classes to test]
+IMPORTANT: After completing each major file, output a signal line:
+COMPLETED: <relative-path-to-file>
+
+Example signals:
+COMPLETED: ViewModels/FeatureViewModel.cs
 ```
 
-### Step 3: Migration
+### Step 2b: Stream Test Spawning (--fast only)
 
-If entity changes were made:
+As orchestrator, monitor agent output. When you see `COMPLETED:` signals:
 
-```bash
+```
+# When backend-agent signals: COMPLETED: Application/Services/FeatureService.cs
+Use Task tool with subagent_type="test-agent"
+Prompt: Create unit tests for FeatureService (file just completed by backend-agent)
+
+# When ui-agent signals: COMPLETED: ViewModels/FeatureViewModel.cs
+Use Task tool with subagent_type="test-agent"
+Prompt: Create unit tests for FeatureViewModel (file just completed by ui-agent)
+```
+
+**Result:** Tests start writing as soon as implementation files are ready, maximizing parallelism.
+
+### Step 3: Migration + Tests (Default workflow - run in parallel)
+
+Spawn test-agents AND run migration IN PARALLEL:
+
+```
+# Orchestrator: Run migration directly (if entity changes were made)
 dotnet ef migrations add <MigrationName> \
   --project PomodoroTimeTracker.Infrastructure \
   --startup-project PomodoroTimeTracker.Infrastructure
@@ -135,21 +166,15 @@ dotnet ef migrations add <MigrationName> \
 dotnet ef database update \
   --project PomodoroTimeTracker.Infrastructure \
   --startup-project PomodoroTimeTracker.Infrastructure
-```
 
-### Step 4: Tests (Default workflow only)
-
-After implementation, spawn test-agents IN PARALLEL for each layer:
-
-```
-# Agent 1: Service Tests
+# Agent 1: Service Tests (spawned in parallel with migration)
 Use Task tool with subagent_type="test-agent"
 Prompt: Create unit tests for [Feature]Service:
 - Test in Tests\Application\ folder
 - Mock repository and other dependencies
 - Follow existing service test patterns
 
-# Agent 2: ViewModel Tests
+# Agent 2: ViewModel Tests (spawned in parallel with migration)
 Use Task tool with subagent_type="test-agent"
 Prompt: Create unit tests for [Feature]ViewModel:
 - Test in Tests\ViewModels\ folder
@@ -165,9 +190,11 @@ Prompt: Create unit tests for [Feature]Repository:
 - Follow existing repository test patterns
 ```
 
-**Note:** Only spawn repository test-agent if a new repository was created.
+**Notes:**
+- Only spawn repository test-agent if a new repository was created
+- Tests use in-memory database, so they don't depend on migration completion
 
-### Step 5: Build & Validate
+### Step 4: Build & Validate
 
 ```bash
 dotnet build PomodoroTimeTracker.sln
@@ -176,7 +203,7 @@ dotnet test PomodoroTimeTracker.Tests
 
 **If failures:** Spawn appropriate agent with error context, retry up to 3x.
 
-### Step 6: Auto-Create PR
+### Step 5: Auto-Create PR
 **Automatically** create branch, commit, push, and PR:
 
 1. **Create feature branch:**
@@ -254,30 +281,33 @@ User: `/implement-feature Add notification service`
 2. Parallel (2 agents):
    - backend-agent → INotificationService, NotificationService, all layers
    - ui-agent → ViewModels + Views integration
-3. Migration (if needed)
-4. Tests parallel (2-3 agents):
+3. Parallel (migration + tests):
+   - orchestrator → migration (if entity changes)
    - test-agent → NotificationServiceTests
    - test-agent → ViewModelNotificationTests
-5. Validate: build + test
-6. PR: https://github.com/manx/PomodoroTimeTracker/pull/XX
+4. Validate: build + test
+5. PR: https://github.com/manx/PomodoroTimeTracker/pull/XX
 ```
 
-### Example 2: --fast workflow
+### Example 2: --fast workflow (streaming tests)
 User: `/implement-feature --fast Add export feature`
 
 ```
 1. Analyze + Generate full spec:
    - IExportService: ExportToCsvAsync(), ExportToJsonAsync()
    - ExportViewModel: properties, commands
-   - Test classes: ExportServiceTests, ExportViewModelTests
 
-2. Parallel (ALL 3 agents at once):
-   - backend-agent → complete backend with spec
-   - ui-agent → ViewModels + Views with spec
-   - test-agent → all tests with spec
+2. Spawn code agents (backend + ui) with COMPLETED signaling
 
-3. Migration + Validate
-4. PR: https://github.com/manx/PomodoroTimeTracker/pull/XX
+3. Streaming test spawns as files complete:
+   t=0s:  backend-agent + ui-agent start
+   t=30s: backend signals COMPLETED: ExportService.cs → spawn test-agent
+   t=45s: ui signals COMPLETED: ExportViewModel.cs → spawn test-agent
+   t=60s: backend signals COMPLETED: ExportRepository.cs → spawn test-agent
+   t=90s: All agents complete
+
+4. Migration + Validate
+5. PR: https://github.com/manx/PomodoroTimeTracker/pull/XX
 ```
 
 ### Example 3: From plan
