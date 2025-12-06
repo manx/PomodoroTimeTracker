@@ -46,7 +46,9 @@
       "Bash(dotnet restore:*)",
       "Bash(ls:*)",
       "Bash(find:*)",
-      "Bash(Select-String -Pattern \"error|Tests.csproj\")"
+      "Bash(Select-String -Pattern \"error|Tests.csproj\")",
+      "Bash(cd:*)",
+      "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" status --short)"
     ],
     "deny": [],
     "ask": []

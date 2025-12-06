@@ -54,6 +54,7 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
 
     private readonly IPomodoroSettingsService _settingsService;
     private readonly IAudioService _audioService;
+    private readonly INavigationService _navigationService;
 
     private RegularTimerState _state = RegularTimerState.Setup;
     private int _elapsedSeconds;
@@ -77,6 +78,7 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
     /// <param name="clientService">Service for managing clients.</param>
     /// <param name="projectService">Service for managing projects.</param>
     /// <param name="audioService">Service for playing audio notifications.</param>
+    /// <param name="navigationService">Service for handling navigation.</param>
     /// <param name="activeTimerService">Service for coordinating active timer state.</param>
     /// <param name="pomodoroStateService">Service for managing Pomodoro cycle state.</param>
     /// <param name="timer">Timer for updating UI every second.</param>
@@ -86,6 +88,7 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
         IClientService clientService,
         IProjectService projectService,
         IAudioService audioService,
+        INavigationService navigationService,
         IActiveTimerService activeTimerService,
         IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
@@ -93,6 +96,7 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
     {
         _settingsService = settingsService;
         _audioService = audioService;
+        _navigationService = navigationService;
 
         Timer.Tick += Timer_Tick;
 
@@ -250,6 +254,15 @@ public sealed partial class RegularTimerViewModel : TimerViewModelBase
     private bool CanStop() => State == RegularTimerState.Running ||
                                State == RegularTimerState.Paused ||
                                State == RegularTimerState.WrapUp;
+
+    /// <summary>
+    /// Opens the Settings page at the Regular Timer tab.
+    /// </summary>
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        _navigationService.NavigateTo(PageNames.Settings, 2);
+    }
 
     #endregion
 

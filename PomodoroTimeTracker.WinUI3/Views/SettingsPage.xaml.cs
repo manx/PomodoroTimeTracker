@@ -27,6 +27,13 @@ internal sealed partial class SettingsPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+
+        // Check if navigation parameter contains a tab index
+        if (e.Parameter is int tabIndex)
+        {
+            ViewModel.InitializeFromNavigation(tabIndex);
+        }
+
         _ = InitializeAsync();
     }
 

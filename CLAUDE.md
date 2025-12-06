@@ -69,9 +69,9 @@ PomodoroTimeTracker.Tests         → Unit tests
 - Unified TimeEntry + SessionTypes schema
 - Settings with TabView (General, Pomodoro Timer, + placeholders)
 - Configurable week settings (start day, ISO 8601 vs US standard)
+- Windows toast notifications for timer completions
 
 **TODO:**
-- Windows toast notifications
 - Dashboard view
 - Export data (CSV, JSON)
 

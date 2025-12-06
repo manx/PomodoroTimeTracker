@@ -19,10 +19,21 @@
                 HorizontalAlignment="Left"
                 Spacing="24">
 
-                <TextBlock
-                    FontSize="32"
-                    FontWeight="Bold"
-                    Text="Regular Timer" />
+                <Grid>
+                    <TextBlock
+                        FontSize="32"
+                        FontWeight="Bold"
+                        Text="Regular Timer" />
+                    <Button
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Command="{x:Bind ViewModel.OpenSettingsCommand}"
+                        ToolTipService.ToolTip="Regular Timer Settings">
+                        <SymbolIcon Symbol="Setting" />
+                    </Button>
+                </Grid>
 
                 <!--  Cycle Warning InfoBar  -->
                 <InfoBar

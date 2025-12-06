@@ -19,10 +19,21 @@
                 HorizontalAlignment="Left"
                 Spacing="24">
 
-                <TextBlock
-                    FontSize="32"
-                    FontWeight="Bold"
-                    Text="Start Pomodoro" />
+                <Grid>
+                    <TextBlock
+                        FontSize="32"
+                        FontWeight="Bold"
+                        Text="Start Pomodoro" />
+                    <Button
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Command="{x:Bind ViewModel.OpenSettingsCommand}"
+                        ToolTipService.ToolTip="Pomodoro Settings">
+                        <SymbolIcon Symbol="Setting" />
+                    </Button>
+                </Grid>
 
                 <Border
                     Width="400"
