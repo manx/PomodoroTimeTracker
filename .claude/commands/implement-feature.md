@@ -19,11 +19,12 @@ You are the **orchestrator**. This workflow runs autonomously with no user appro
 
 ### Default Workflow
 ```
-[Analyze] → [Backend + UI] parallel → Migration → [Tests] parallel → Validate → PR
+[Analyze] → [Backend + UI] parallel → [Migration + Tests] parallel → Validate → PR
 ```
 
 - **backend-agent:** All backend layers (Domain + Application + Infrastructure)
 - **ui-agent:** ViewModels + Views together
+- **migration:** Runs in parallel with tests (orchestrator runs directly)
 - **test-agents:** Parallel agents for Service, ViewModel, Repository tests
 
 ### --fast Workflow (Maximum Parallelism + Streaming Tests)
@@ -152,11 +153,12 @@ Prompt: Create unit tests for FeatureViewModel (file just completed by ui-agent)
 
 **Result:** Tests start writing as soon as implementation files are ready, maximizing parallelism.
 
-### Step 3: Migration
+### Step 3: Migration + Tests (Default workflow - run in parallel)
 
-If entity changes were made:
+Spawn test-agents AND run migration IN PARALLEL:
 
-```bash
+```
+# Orchestrator: Run migration directly (if entity changes were made)
 dotnet ef migrations add <MigrationName> \
   --project PomodoroTimeTracker.Infrastructure \
   --startup-project PomodoroTimeTracker.Infrastructure
@@ -164,21 +166,15 @@ dotnet ef migrations add <MigrationName> \
 dotnet ef database update \
   --project PomodoroTimeTracker.Infrastructure \
   --startup-project PomodoroTimeTracker.Infrastructure
-```
 
-### Step 4: Tests (Default workflow only)
-
-After implementation, spawn test-agents IN PARALLEL for each layer:
-
-```
-# Agent 1: Service Tests
+# Agent 1: Service Tests (spawned in parallel with migration)
 Use Task tool with subagent_type="test-agent"
 Prompt: Create unit tests for [Feature]Service:
 - Test in Tests\Application\ folder
 - Mock repository and other dependencies
 - Follow existing service test patterns
 
-# Agent 2: ViewModel Tests
+# Agent 2: ViewModel Tests (spawned in parallel with migration)
 Use Task tool with subagent_type="test-agent"
 Prompt: Create unit tests for [Feature]ViewModel:
 - Test in Tests\ViewModels\ folder
@@ -194,9 +190,11 @@ Prompt: Create unit tests for [Feature]Repository:
 - Follow existing repository test patterns
 ```
 
-**Note:** Only spawn repository test-agent if a new repository was created.
+**Notes:**
+- Only spawn repository test-agent if a new repository was created
+- Tests use in-memory database, so they don't depend on migration completion
 
-### Step 5: Build & Validate
+### Step 4: Build & Validate
 
 ```bash
 dotnet build PomodoroTimeTracker.sln
@@ -205,7 +203,7 @@ dotnet test PomodoroTimeTracker.Tests
 
 **If failures:** Spawn appropriate agent with error context, retry up to 3x.
 
-### Step 6: Auto-Create PR
+### Step 5: Auto-Create PR
 **Automatically** create branch, commit, push, and PR:
 
 1. **Create feature branch:**
@@ -283,12 +281,12 @@ User: `/implement-feature Add notification service`
 2. Parallel (2 agents):
    - backend-agent → INotificationService, NotificationService, all layers
    - ui-agent → ViewModels + Views integration
-3. Migration (if needed)
-4. Tests parallel (2-3 agents):
+3. Parallel (migration + tests):
+   - orchestrator → migration (if entity changes)
    - test-agent → NotificationServiceTests
    - test-agent → ViewModelNotificationTests
-5. Validate: build + test
-6. PR: https://github.com/manx/PomodoroTimeTracker/pull/XX
+4. Validate: build + test
+5. PR: https://github.com/manx/PomodoroTimeTracker/pull/XX
 ```
 
 ### Example 2: --fast workflow (streaming tests)
