@@ -15,6 +15,11 @@ Work #3 → Short Break → Work #4 → Long Break → (cycle repeats)
 4. Adjust Duration if needed (defaults from settings)
 5. Click Start (enabled only when Objective is filled)
 
+**Quick Settings Access**
+- Gear icon in top-right of setup screen
+- Opens Settings with Pomodoro Timer tab selected
+- Use browser back to return to timer
+
 **Timer States**
 - **Setup**: Configuring new session
 - **Running**: Timer actively counting down work period
