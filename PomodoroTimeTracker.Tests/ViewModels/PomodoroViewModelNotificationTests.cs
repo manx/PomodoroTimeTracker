@@ -21,6 +21,7 @@ public class PomodoroViewModelNotificationTests
     private readonly Mock<IProjectService> _projectServiceMock;
     private readonly Mock<IAudioService> _audioServiceMock;
     private readonly Mock<INotificationService> _notificationServiceMock;
+    private readonly Mock<INavigationService> _navigationServiceMock;
     private readonly Mock<IActiveTimerService> _activeTimerServiceMock;
     private readonly Mock<IPomodoroStateService> _pomodoroStateServiceMock;
     private readonly Mock<IDispatcherTimer> _timerMock;
@@ -41,6 +42,7 @@ public class PomodoroViewModelNotificationTests
         _projectServiceMock = new Mock<IProjectService>();
         _audioServiceMock = new Mock<IAudioService>();
         _notificationServiceMock = new Mock<INotificationService>();
+        _navigationServiceMock = new Mock<INavigationService>();
         _activeTimerServiceMock = new Mock<IActiveTimerService>();
         _pomodoroStateServiceMock = new Mock<IPomodoroStateService>();
         _timerMock = new Mock<IDispatcherTimer>();
@@ -109,6 +111,7 @@ public class PomodoroViewModelNotificationTests
             _projectServiceMock.Object,
             _audioServiceMock.Object,
             _notificationServiceMock.Object,
+            _navigationServiceMock.Object,
             _activeTimerServiceMock.Object,
             _pomodoroStateServiceMock.Object,
             _timerMock.Object);

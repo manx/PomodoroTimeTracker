@@ -41,6 +41,8 @@ public sealed partial class StopWatchViewModel : TimerViewModelBase
     /// </summary>
     public const int DescriptionMaxLength = 90;
 
+    private readonly INavigationService _navigationService;
+
     private StopWatchState _state = StopWatchState.Setup;
     private int _elapsedSeconds;
     private string _description = string.Empty;
@@ -48,15 +50,25 @@ public sealed partial class StopWatchViewModel : TimerViewModelBase
     /// <summary>
     /// Initializes a new instance of the <see cref="StopWatchViewModel"/> class.
     /// </summary>
+    /// <param name="entryService">Service for managing time entries.</param>
+    /// <param name="clientService">Service for managing clients.</param>
+    /// <param name="projectService">Service for managing projects.</param>
+    /// <param name="navigationService">Service for handling navigation.</param>
+    /// <param name="activeTimerService">Service for coordinating active timer state.</param>
+    /// <param name="pomodoroStateService">Service for managing Pomodoro cycle state.</param>
+    /// <param name="timer">Timer for updating UI every second.</param>
     public StopWatchViewModel(
         ITimeEntryService entryService,
         IClientService clientService,
         IProjectService projectService,
+        INavigationService navigationService,
         IActiveTimerService activeTimerService,
         IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
         : base(entryService, clientService, projectService, activeTimerService, pomodoroStateService, timer)
     {
+        _navigationService = navigationService;
+
         Timer.Tick += Timer_Tick;
 
         StartTimerCommand = new AsyncRelayCommand(StartTimerAsync, CanStartTimer);
@@ -181,6 +193,15 @@ public sealed partial class StopWatchViewModel : TimerViewModelBase
     private bool CanStartTimer() => !string.IsNullOrWhiteSpace(Description) && State == StopWatchState.Setup;
     private bool CanPauseResume() => State == StopWatchState.Running || State == StopWatchState.Paused;
     private bool CanStop() => State == StopWatchState.Running || State == StopWatchState.Paused;
+
+    /// <summary>
+    /// Opens the Settings page at the Stop Watch tab.
+    /// </summary>
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        _navigationService.NavigateTo(PageNames.Settings, 3);
+    }
 
     #endregion
 

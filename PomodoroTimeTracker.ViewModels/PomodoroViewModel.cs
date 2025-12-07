@@ -76,6 +76,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
     private readonly IPomodoroSettingsService _settingsService;
     private readonly IAudioService _audioService;
     private readonly INotificationService _notificationService;
+    private readonly INavigationService _navigationService;
 
     private PomodoroState _state = PomodoroState.Setup;
     private int _remainingSeconds;
@@ -102,6 +103,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
     /// <param name="projectService">Service for managing projects.</param>
     /// <param name="audioService">Service for playing audio notifications.</param>
     /// <param name="notificationService">Service for displaying toast notifications.</param>
+    /// <param name="navigationService">Service for handling navigation.</param>
     /// <param name="activeTimerService">Service for coordinating active timer state.</param>
     /// <param name="pomodoroStateService">Service for managing Pomodoro cycle state.</param>
     /// <param name="timer">Timer for updating UI every second.</param>
@@ -112,6 +114,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
         IProjectService projectService,
         IAudioService audioService,
         INotificationService notificationService,
+        INavigationService navigationService,
         IActiveTimerService activeTimerService,
         IPomodoroStateService pomodoroStateService,
         IDispatcherTimer timer)
@@ -120,6 +123,7 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
         _settingsService = settingsService;
         _audioService = audioService;
         _notificationService = notificationService;
+        _navigationService = navigationService;
 
         Timer.Tick += Timer_Tick;
 
@@ -331,6 +335,15 @@ public sealed partial class PomodoroViewModel : TimerViewModelBase
     private bool CanStartPomodoro() => !string.IsNullOrWhiteSpace(Objective) && State == PomodoroState.Setup;
     private bool CanPauseResume() => State == PomodoroState.Running || State == PomodoroState.Paused || State == PomodoroState.WrapUp;
     private bool CanStop() => State == PomodoroState.Running || State == PomodoroState.Paused || State == PomodoroState.WrapUp;
+
+    /// <summary>
+    /// Opens the Settings page at the Pomodoro Timer tab.
+    /// </summary>
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        _navigationService.NavigateTo(PageNames.Settings, 1);
+    }
 
     #endregion
 

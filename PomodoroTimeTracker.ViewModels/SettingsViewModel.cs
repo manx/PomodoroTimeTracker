@@ -11,6 +11,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private readonly IAppSettingsService _appSettingsService;
     private int _selectedTabIndex;
     private bool _isInitialized;
+    private int? _navigationTabIndex;
 
     public SettingsViewModel(IAppSettingsService appSettingsService)
     {
@@ -39,23 +40,42 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Initializes the ViewModel with a specific tab index from navigation.
+    /// This takes precedence over the persisted last opened tab.
+    /// </summary>
+    public void InitializeFromNavigation(int? tabIndex)
+    {
+        _navigationTabIndex = tabIndex;
+    }
+
+    /// <summary>
     /// Loads the last opened settings tab from the service.
+    /// If InitializeFromNavigation was called, uses that tab index instead.
     /// </summary>
     public async Task LoadAsync()
     {
         try
         {
-            var settings = await _appSettingsService.GetSettingsAsync();
-
-            // Map tab name to index
-            _selectedTabIndex = settings.LastOpenedSettingsTab switch
+            // Use navigation parameter if provided, otherwise load from settings
+            if (_navigationTabIndex.HasValue)
             {
-                "General" => 0,
-                "PomodoroTimer" => 1,
-                "RegularTimer" => 2,
-                "StopWatch" => 3,
-                _ => 0 // Default to General if unknown
-            };
+                _selectedTabIndex = _navigationTabIndex.Value;
+                _navigationTabIndex = null; // Clear so subsequent navigations use persisted tab
+            }
+            else
+            {
+                var settings = await _appSettingsService.GetSettingsAsync();
+
+                // Map tab name to index
+                _selectedTabIndex = settings.LastOpenedSettingsTab switch
+                {
+                    "General" => 0,
+                    "PomodoroTimer" => 1,
+                    "RegularTimer" => 2,
+                    "StopWatch" => 3,
+                    _ => 0 // Default to General if unknown
+                };
+            }
 
             OnPropertyChanged(nameof(SelectedTabIndex));
             _isInitialized = true;

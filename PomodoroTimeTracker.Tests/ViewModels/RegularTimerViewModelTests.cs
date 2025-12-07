@@ -20,6 +20,7 @@ public class RegularTimerViewModelTests
     private readonly Mock<IClientService> _clientServiceMock;
     private readonly Mock<IProjectService> _projectServiceMock;
     private readonly Mock<IAudioService> _audioServiceMock;
+    private readonly Mock<INavigationService> _navigationServiceMock;
     private readonly Mock<IActiveTimerService> _activeTimerServiceMock;
     private readonly Mock<IPomodoroStateService> _pomodoroStateServiceMock;
     private readonly Mock<IDispatcherTimer> _timerMock;
@@ -31,6 +32,7 @@ public class RegularTimerViewModelTests
         _clientServiceMock = new Mock<IClientService>();
         _projectServiceMock = new Mock<IProjectService>();
         _audioServiceMock = new Mock<IAudioService>();
+        _navigationServiceMock = new Mock<INavigationService>();
         _activeTimerServiceMock = new Mock<IActiveTimerService>();
         _pomodoroStateServiceMock = new Mock<IPomodoroStateService>();
         _timerMock = new Mock<IDispatcherTimer>();
@@ -61,6 +63,7 @@ public class RegularTimerViewModelTests
             _clientServiceMock.Object,
             _projectServiceMock.Object,
             _audioServiceMock.Object,
+            _navigationServiceMock.Object,
             _activeTimerServiceMock.Object,
             _pomodoroStateServiceMock.Object,
             _timerMock.Object);
@@ -540,6 +543,36 @@ public class RegularTimerViewModelTests
 
         // Assert
         viewModel.IsClientSelected.Should().BeFalse();
+    }
+
+    #endregion
+
+    #region OpenSettingsCommand Tests
+
+    [Fact]
+    public void OpenSettingsCommand_NavigatesToRegularTimerSettingsTab()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+
+        // Act
+        viewModel.OpenSettingsCommand.Execute(null);
+
+        // Assert
+        _navigationServiceMock.Verify(n => n.NavigateTo(PageNames.Settings, 2), Times.Once);
+    }
+
+    [Fact]
+    public void OpenSettingsCommand_CanAlwaysExecute()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+
+        // Act
+        var canExecute = viewModel.OpenSettingsCommand.CanExecute(null);
+
+        // Assert
+        canExecute.Should().BeTrue();
     }
 
     #endregion

@@ -1,5 +1,16 @@
 # Changelog - Pomodoro Time Tracker
 
+## 2025-12-06
+
+### Timer Settings Navigation
+- Added gear icon button to each timer's setup screen (Pomodoro, Regular Timer, Stopwatch)
+- Clicking gear navigates to Settings with corresponding tab selected
+- Browser back button returns to timer page
+- 6 new unit tests for OpenSettingsCommand
+
+### Windows Toast Notifications
+- Added toast notifications for timer completions (PR #31)
+
 ## 2025-12-05
 
 ### Settings Window Rebuild

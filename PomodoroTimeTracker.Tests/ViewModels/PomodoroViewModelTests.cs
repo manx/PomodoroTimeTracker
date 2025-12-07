@@ -23,6 +23,7 @@ public class PomodoroViewModelTests
     private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly Mock<IActiveTimerService> _activeTimerServiceMock;
     private readonly Mock<IPomodoroStateService> _pomodoroStateServiceMock;
+    private readonly Mock<INavigationService> _navigationServiceMock;
     private readonly Mock<IDispatcherTimer> _timerMock;
 
     public PomodoroViewModelTests()
@@ -35,6 +36,7 @@ public class PomodoroViewModelTests
         _notificationServiceMock = new Mock<INotificationService>();
         _activeTimerServiceMock = new Mock<IActiveTimerService>();
         _pomodoroStateServiceMock = new Mock<IPomodoroStateService>();
+        _navigationServiceMock = new Mock<INavigationService>();
         _timerMock = new Mock<IDispatcherTimer>();
 
         // Default setup
@@ -68,6 +70,7 @@ public class PomodoroViewModelTests
             _projectServiceMock.Object,
             _audioServiceMock.Object,
             _notificationServiceMock.Object,
+            _navigationServiceMock.Object,
             _activeTimerServiceMock.Object,
             _pomodoroStateServiceMock.Object,
             _timerMock.Object);
@@ -814,6 +817,36 @@ public class PomodoroViewModelTests
         // Assert - Settings are loaded but IsBreakBillable isn't set until break starts
         // This test verifies settings are loaded correctly
         _settingsServiceMock.Verify(s => s.GetSettingsAsync(), Times.Once);
+    }
+
+    #endregion
+
+    #region OpenSettingsCommand Tests
+
+    [Fact]
+    public void OpenSettingsCommand_NavigatesToPomodoroSettingsTab()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+
+        // Act
+        viewModel.OpenSettingsCommand.Execute(null);
+
+        // Assert
+        _navigationServiceMock.Verify(n => n.NavigateTo(PageNames.Settings, 1), Times.Once);
+    }
+
+    [Fact]
+    public void OpenSettingsCommand_CanAlwaysExecute()
+    {
+        // Arrange
+        var viewModel = CreateViewModel();
+
+        // Act
+        var canExecute = viewModel.OpenSettingsCommand.CanExecute(null);
+
+        // Assert
+        canExecute.Should().BeTrue();
     }
 
     #endregion
