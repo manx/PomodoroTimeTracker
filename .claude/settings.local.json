@@ -50,7 +50,13 @@
       "Bash(cd:*)",
       "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" status --short)",
       "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" add docs/FEATURES.md docs/CHANGELOG.md CLAUDE.md)",
-      "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" commit -m \"$(cat <<''EOF''\ndocs: update documentation for timer settings navigation and toast notifications\n\n- Add Quick Settings Access section to FEATURES.md\n- Add 2025-12-06 changelog entries for settings navigation and toast notifications\n- Update CLAUDE.md to move toast notifications to implemented\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" commit -m \"$(cat <<''EOF''\ndocs: update documentation for timer settings navigation and toast notifications\n\n- Add Quick Settings Access section to FEATURES.md\n- Add 2025-12-06 changelog entries for settings navigation and toast notifications\n- Update CLAUDE.md to move toast notifications to implemented\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" stash pop)",
+      "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" stash drop)",
+      "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" diff .claude/settings.local.json)",
+      "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" checkout -b docs/timer-settings-plan)",
+      "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" add docs/plans/timer-settings-navigation.md)",
+      "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" commit -m \"$(cat <<''EOF''\ndocs: add plan for timer settings navigation feature\n\nDesign document for adding direct navigation from timer setup\nscreens to their respective settings tabs.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
