@@ -29,4 +29,9 @@ public interface IDialogService
     /// Show an input dialog and return user's input
     /// </summary>
     Task<string?> ShowInputAsync(string message, string title = "Input", string defaultValue = "");
+
+    /// <summary>
+    /// Show a non-blocking toast notification
+    /// </summary>
+    void ShowToast(string message, string title = "");
 }

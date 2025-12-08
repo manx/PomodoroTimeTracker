@@ -56,7 +56,6 @@ public class WorkScheduleService(
         {
             ClientId = dto.ClientId,
             ProjectId = dto.ProjectId,
-            WorkPercentage = dto.WorkPercentage,
             BaseHoursPerDay = dto.BaseHoursPerDay,
             WorkDays = (int)dto.WorkDays,
             IncludePublicHolidays = dto.IncludePublicHolidays,
@@ -86,7 +85,6 @@ public class WorkScheduleService(
         var schedule = await _unitOfWork.WorkSchedules.GetByIdAsync(dto.Id, cancellationToken)
             ?? throw new InvalidOperationException($"Work schedule {dto.Id} not found.");
 
-        schedule.WorkPercentage = dto.WorkPercentage;
         schedule.BaseHoursPerDay = dto.BaseHoursPerDay;
         schedule.WorkDays = (int)dto.WorkDays;
         schedule.IncludePublicHolidays = dto.IncludePublicHolidays;
@@ -126,7 +124,7 @@ public class WorkScheduleService(
 
         var workingDays = await GetWorkingDaysCountInternalAsync(schedule, startDate, endDate, cancellationToken);
 
-        return (schedule.WorkPercentage / 100.0m) * schedule.BaseHoursPerDay * workingDays;
+        return schedule.BaseHoursPerDay * workingDays;
     }
 
     public async Task<int> GetWorkingDaysCountAsync(
@@ -269,7 +267,6 @@ public class WorkScheduleService(
             ClientName = entity.Client?.Name,
             ProjectId = entity.ProjectId,
             ProjectName = entity.Project?.Name,
-            WorkPercentage = entity.WorkPercentage,
             BaseHoursPerDay = entity.BaseHoursPerDay,
             WorkDays = (WorkDaysFlags)entity.WorkDays,
             IncludePublicHolidays = entity.IncludePublicHolidays,

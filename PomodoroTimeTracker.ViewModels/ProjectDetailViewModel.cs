@@ -32,7 +32,6 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
     private bool _hasWorkSchedule;
     private bool _isWorkScheduleEnabled;
     private int? _workScheduleId;
-    private int _workPercentage = 100;
     private double _baseHoursPerDay = 8.0;
     private bool _workOnMonday = true;
     private bool _workOnTuesday = true;
@@ -41,10 +40,11 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
     private bool _workOnFriday = true;
     private bool _workOnSaturday;
     private bool _workOnSunday;
-    private bool _includePublicHolidays;
+    private bool _excludePublicHolidays;
     private CountryDto? _selectedCountry;
     private ObservableCollection<CountryDto> _countries = [];
     private bool _isLoadingCountries;
+    private bool _isFetchingHolidays;
 
     public ProjectDetailViewModel(
         IProjectService projectService,
@@ -63,8 +63,7 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
 
         SaveCommand = new AsyncRelayCommand(SaveAsync, CanSave);
         CancelCommand = new RelayCommand(Cancel);
-        SaveWorkScheduleCommand = new AsyncRelayCommand(SaveWorkScheduleAsync);
-        RemoveWorkScheduleCommand = new AsyncRelayCommand(RemoveWorkScheduleAsync);
+        FetchHolidaysCommand = new AsyncRelayCommand(FetchHolidaysAsync, CanFetchHolidays);
     }
 
     public string Name
@@ -115,8 +114,7 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
 
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
-    public ICommand SaveWorkScheduleCommand { get; }
-    public ICommand RemoveWorkScheduleCommand { get; }
+    public ICommand FetchHolidaysCommand { get; }
 
     // Work Schedule Properties
     public bool HasWorkSchedule
@@ -139,12 +137,6 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
                 }
             }
         }
-    }
-
-    public int WorkPercentage
-    {
-        get => _workPercentage;
-        set => SetProperty(ref _workPercentage, value);
     }
 
     public double BaseHoursPerDay
@@ -195,16 +187,22 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
         set => SetProperty(ref _workOnSunday, value);
     }
 
-    public bool IncludePublicHolidays
+    public bool ExcludePublicHolidays
     {
-        get => _includePublicHolidays;
-        set => SetProperty(ref _includePublicHolidays, value);
+        get => _excludePublicHolidays;
+        set => SetProperty(ref _excludePublicHolidays, value);
     }
 
     public CountryDto? SelectedCountry
     {
         get => _selectedCountry;
-        set => SetProperty(ref _selectedCountry, value);
+        set
+        {
+            if (SetProperty(ref _selectedCountry, value))
+            {
+                ((AsyncRelayCommand)FetchHolidaysCommand).NotifyCanExecuteChanged();
+            }
+        }
     }
 
     public ObservableCollection<CountryDto> Countries
@@ -217,6 +215,12 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
     {
         get => _isLoadingCountries;
         set => SetProperty(ref _isLoadingCountries, value);
+    }
+
+    public bool IsFetchingHolidays
+    {
+        get => _isFetchingHolidays;
+        set => SetProperty(ref _isFetchingHolidays, value);
     }
 
     public async Task InitializeForAddAsync()
@@ -292,6 +296,7 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
         {
             IsSaving = true;
 
+            int projectId;
             if (IsEditMode)
             {
                 var updateDto = new UpdateProjectDto
@@ -303,8 +308,7 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
                 };
 
                 await _projectService.UpdateProjectAsync(updateDto);
-                // Store the ID so the list can select it
-                _navigationService.ProjectIdToSelect = _projectId.Value;
+                projectId = _projectId.Value;
             }
             else
             {
@@ -316,11 +320,28 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
                 };
 
                 var createdProject = await _projectService.CreateProjectAsync(createDto);
-                // Store the ID so the list can select it
-                _navigationService.ProjectIdToSelect = createdProject.Id;
+                projectId = createdProject.Id;
             }
 
+            // Save work schedule if enabled (for edit mode or after creating)
+            if (IsWorkScheduleEnabled)
+            {
+                await SaveWorkScheduleInternalAsync(projectId);
+            }
+            else if (HasWorkSchedule)
+            {
+                // Work schedule was disabled - remove it
+                await RemoveWorkScheduleInternalAsync();
+            }
+
+            // Store the ID so the list can select it
+            _navigationService.ProjectIdToSelect = projectId;
+
             _navigationService.GoBack();
+        }
+        catch (OperationCanceledException)
+        {
+            // User cancelled - don't navigate, stay on page
         }
         catch (Exception ex)
         {
@@ -348,7 +369,6 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
         HasWorkSchedule = false;
         _isWorkScheduleEnabled = false;
         OnPropertyChanged(nameof(IsWorkScheduleEnabled));
-        WorkPercentage = 100;
         BaseHoursPerDay = 8.0;
         WorkOnMonday = true;
         WorkOnTuesday = true;
@@ -357,26 +377,23 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
         WorkOnFriday = true;
         WorkOnSaturday = false;
         WorkOnSunday = false;
-        IncludePublicHolidays = false;
+        ExcludePublicHolidays = false;
         SelectedCountry = null;
     }
 
     private async Task HandleWorkScheduleDisabledAsync()
     {
         var confirmed = await _dialogService.ShowConfirmationAsync(
-            "Disabling will remove the existing work schedule. Continue?",
+            "Disabling will remove the existing work schedule when you save. Continue?",
             "Remove Work Schedule");
 
-        if (confirmed)
-        {
-            await RemoveWorkScheduleInternalAsync();
-        }
-        else
+        if (!confirmed)
         {
             // User cancelled - restore toggle state
             _isWorkScheduleEnabled = true;
             OnPropertyChanged(nameof(IsWorkScheduleEnabled));
         }
+        // If confirmed, the schedule will be deleted when Save is clicked
     }
 
     private async Task RemoveWorkScheduleInternalAsync()
@@ -384,23 +401,9 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
         if (!_workScheduleId.HasValue)
             return;
 
-        try
-        {
-            IsSaving = true;
-            await _workScheduleService.DeleteAsync(_workScheduleId.Value);
-            ResetWorkSchedule();
-        }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowErrorAsync($"Failed to remove work schedule: {ex.Message}", "Error");
-            // Restore toggle state on error
-            _isWorkScheduleEnabled = true;
-            OnPropertyChanged(nameof(IsWorkScheduleEnabled));
-        }
-        finally
-        {
-            IsSaving = false;
-        }
+        await _workScheduleService.DeleteAsync(_workScheduleId.Value);
+        _workScheduleId = null;
+        HasWorkSchedule = false;
     }
 
     private async Task LoadWorkScheduleAsync(int projectId)
@@ -412,10 +415,11 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
             HasWorkSchedule = true;
             _isWorkScheduleEnabled = true;
             OnPropertyChanged(nameof(IsWorkScheduleEnabled));
-            WorkPercentage = schedule.WorkPercentage;
             BaseHoursPerDay = (double)schedule.BaseHoursPerDay;
             SetWorkDaysFromFlags(schedule.WorkDays);
-            IncludePublicHolidays = schedule.IncludePublicHolidays;
+            // Invert: IncludePublicHolidays in DTO means count them as work days
+            // ExcludePublicHolidays in UI means DON'T count them
+            ExcludePublicHolidays = !schedule.IncludePublicHolidays;
 
             // Country will be selected after countries are loaded
             if (!string.IsNullOrEmpty(schedule.CountryCode))
@@ -452,111 +456,121 @@ public sealed partial class ProjectDetailViewModel : ViewModelBase
         }
     }
 
-    private async Task SaveWorkScheduleAsync()
+    private bool CanFetchHolidays()
     {
-        if (!_projectId.HasValue)
+        return SelectedCountry != null && !IsFetchingHolidays;
+    }
+
+    private async Task FetchHolidaysAsync()
+    {
+        if (SelectedCountry == null)
             return;
 
         try
         {
-            IsSaving = true;
+            IsFetchingHolidays = true;
+            ((AsyncRelayCommand)FetchHolidaysCommand).NotifyCanExecuteChanged();
 
-            // Check for conflicts when creating a new schedule
-            if (!_workScheduleId.HasValue)
-            {
-                var conflictResult = await _workScheduleService.CheckProjectScheduleConflictsAsync(_projectId.Value);
-                if (conflictResult.HasConflicts)
-                {
-                    var message = $"The client \"{conflictResult.ConflictingClientName}\" already has a work schedule. " +
-                                  "Enabling a project-level schedule will remove the client's schedule.\n\n" +
-                                  "Do you want to continue?";
+            var currentYear = DateTime.Now.Year;
+            await _publicHolidayService.RefreshHolidaysAsync(SelectedCountry.CountryCode, currentYear);
 
-                    var confirmed = await _dialogService.ShowConfirmationAsync(message, "Schedule Conflict");
-                    if (!confirmed)
-                    {
-                        return;
-                    }
-
-                    // Delete the client's schedule
-                    if (SelectedClient is not null)
-                    {
-                        var clientSchedule = await _workScheduleService.GetByClientIdAsync(SelectedClient.Id);
-                        if (clientSchedule is not null)
-                        {
-                            await _workScheduleService.DeleteAsync(clientSchedule.Id);
-                        }
-                    }
-                }
-            }
-
-            var workDays = GetWorkDaysFlags();
-
-            if (_workScheduleId.HasValue)
-            {
-                var updateDto = new UpdateWorkScheduleDto
-                {
-                    Id = _workScheduleId.Value,
-                    WorkPercentage = WorkPercentage,
-                    BaseHoursPerDay = (decimal)BaseHoursPerDay,
-                    WorkDays = workDays,
-                    IncludePublicHolidays = IncludePublicHolidays,
-                    CountryCode = SelectedCountry?.CountryCode
-                };
-                await _workScheduleService.UpdateAsync(updateDto);
-            }
-            else
-            {
-                var createDto = new CreateWorkScheduleDto
-                {
-                    ProjectId = _projectId.Value,
-                    WorkPercentage = WorkPercentage,
-                    BaseHoursPerDay = (decimal)BaseHoursPerDay,
-                    WorkDays = workDays,
-                    IncludePublicHolidays = IncludePublicHolidays,
-                    CountryCode = SelectedCountry?.CountryCode
-                };
-                var created = await _workScheduleService.CreateAsync(createDto);
-                _workScheduleId = created.Id;
-            }
-
-            HasWorkSchedule = true;
+            _dialogService.ShowToast(
+                $"Downloaded public holidays for {currentYear} ({SelectedCountry.Name})",
+                "Public Holidays");
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync($"Failed to save work schedule: {ex.Message}", "Error");
+            await _dialogService.ShowErrorAsync($"Failed to fetch holidays: {ex.Message}", "Error");
         }
         finally
         {
-            IsSaving = false;
+            IsFetchingHolidays = false;
+            ((AsyncRelayCommand)FetchHolidaysCommand).NotifyCanExecuteChanged();
         }
     }
 
-    private async Task RemoveWorkScheduleAsync()
+    private async Task SaveWorkScheduleInternalAsync(int projectId)
     {
+        // Check for conflicts when creating a new schedule
         if (!_workScheduleId.HasValue)
+        {
+            var conflictResult = await _workScheduleService.CheckProjectScheduleConflictsAsync(projectId);
+            if (conflictResult.HasConflicts)
+            {
+                var message = $"The client \"{conflictResult.ConflictingClientName}\" already has a work schedule. " +
+                              "Enabling a project-level schedule will remove the client's schedule.\n\n" +
+                              "Do you want to continue?";
+
+                var confirmed = await _dialogService.ShowConfirmationAsync(message, "Schedule Conflict");
+                if (!confirmed)
+                {
+                    throw new OperationCanceledException("User cancelled due to schedule conflict.");
+                }
+
+                // Delete the client's schedule
+                if (SelectedClient is not null)
+                {
+                    var clientSchedule = await _workScheduleService.GetByClientIdAsync(SelectedClient.Id);
+                    if (clientSchedule is not null)
+                    {
+                        await _workScheduleService.DeleteAsync(clientSchedule.Id);
+                    }
+                }
+            }
+        }
+
+        var workDays = GetWorkDaysFlags();
+
+        if (_workScheduleId.HasValue)
+        {
+            var updateDto = new UpdateWorkScheduleDto
+            {
+                Id = _workScheduleId.Value,
+                BaseHoursPerDay = (decimal)BaseHoursPerDay,
+                WorkDays = workDays,
+                // Invert: ExcludePublicHolidays in UI -> IncludePublicHolidays in DTO
+                IncludePublicHolidays = !ExcludePublicHolidays,
+                CountryCode = SelectedCountry?.CountryCode
+            };
+            await _workScheduleService.UpdateAsync(updateDto);
+        }
+        else
+        {
+            var createDto = new CreateWorkScheduleDto
+            {
+                ProjectId = projectId,
+                BaseHoursPerDay = (decimal)BaseHoursPerDay,
+                WorkDays = workDays,
+                // Invert: ExcludePublicHolidays in UI -> IncludePublicHolidays in DTO
+                IncludePublicHolidays = !ExcludePublicHolidays,
+                CountryCode = SelectedCountry?.CountryCode
+            };
+            var created = await _workScheduleService.CreateAsync(createDto);
+            _workScheduleId = created.Id;
+        }
+
+        HasWorkSchedule = true;
+
+        // Fetch holidays in background if excluding public holidays and country is set
+        if (!ExcludePublicHolidays || SelectedCountry == null)
             return;
 
-        var confirmed = await _dialogService.ShowConfirmationAsync(
-            "Are you sure you want to remove the work schedule?",
-            "Remove Work Schedule");
-
-        if (!confirmed)
-            return;
-
-        try
+        // Fire and forget - don't block saving
+        _ = Task.Run(async () =>
         {
-            IsSaving = true;
-            await _workScheduleService.DeleteAsync(_workScheduleId.Value);
-            ResetWorkSchedule();
-        }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowErrorAsync($"Failed to remove work schedule: {ex.Message}", "Error");
-        }
-        finally
-        {
-            IsSaving = false;
-        }
+            try
+            {
+                var currentYear = DateTime.Now.Year;
+                await _publicHolidayService.RefreshHolidaysAsync(SelectedCountry.CountryCode, currentYear);
+                _dialogService.ShowToast(
+                    $"Downloaded public holidays for {currentYear} ({SelectedCountry.Name})",
+                    "Public Holidays");
+            }
+            catch
+            {
+                // Silently fail - holidays will be fetched on demand anyway
+            }
+        });
     }
 
     private WorkDaysFlags GetWorkDaysFlags()

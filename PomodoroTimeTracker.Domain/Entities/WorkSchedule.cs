@@ -19,12 +19,7 @@ public class WorkSchedule
     public int? ProjectId { get; set; }
 
     /// <summary>
-    /// Work percentage where 100 = full-time (e.g., 80 = part-time 80%).
-    /// </summary>
-    public int WorkPercentage { get; set; } = 100;
-
-    /// <summary>
-    /// Base hours per workday (e.g., 8.0).
+    /// Average hours per workday (e.g., 8.0).
     /// </summary>
     public decimal BaseHoursPerDay { get; set; } = 8.0m;
 

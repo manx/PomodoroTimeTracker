@@ -9,7 +9,6 @@ public class WorkScheduleDto
     public string? ClientName { get; set; }
     public int? ProjectId { get; set; }
     public string? ProjectName { get; set; }
-    public int WorkPercentage { get; set; }
     public decimal BaseHoursPerDay { get; set; }
     public WorkDaysFlags WorkDays { get; set; }
     public bool IncludePublicHolidays { get; set; }
@@ -22,7 +21,6 @@ public class CreateWorkScheduleDto
 {
     public int? ClientId { get; set; }
     public int? ProjectId { get; set; }
-    public int WorkPercentage { get; set; } = 100;
     public decimal BaseHoursPerDay { get; set; } = 8.0m;
     public WorkDaysFlags WorkDays { get; set; } = WorkDaysFlags.WeekdaysOnly;
     public bool IncludePublicHolidays { get; set; }
@@ -32,7 +30,6 @@ public class CreateWorkScheduleDto
 public class UpdateWorkScheduleDto
 {
     public int Id { get; set; }
-    public int WorkPercentage { get; set; }
     public decimal BaseHoursPerDay { get; set; }
     public WorkDaysFlags WorkDays { get; set; }
     public bool IncludePublicHolidays { get; set; }

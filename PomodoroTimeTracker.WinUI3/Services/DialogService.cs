@@ -1,5 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.Windows.AppNotifications;
+using Microsoft.Windows.AppNotifications.Builder;
 using PomodoroTimeTracker.ViewModels.Services;
 
 namespace PomodoroTimeTracker.WinUI3.Services;
@@ -9,6 +11,20 @@ namespace PomodoroTimeTracker.WinUI3.Services;
 /// </summary>
 internal sealed class DialogService : IDialogService
 {
+    private readonly AppNotificationManager? _notificationManager;
+
+    public DialogService()
+    {
+        try
+        {
+            _notificationManager = AppNotificationManager.Default;
+        }
+        catch
+        {
+            // Notifications not supported
+        }
+    }
+
     private static XamlRoot? GetXamlRoot()
     {
         // Get the main window's content XamlRoot
@@ -98,5 +114,30 @@ internal sealed class DialogService : IDialogService
 
         var result = await dialog.ShowAsync();
         return result == ContentDialogResult.Primary ? textBox.Text : null;
+    }
+
+    public void ShowToast(string message, string title = "")
+    {
+        if (_notificationManager == null)
+            return;
+
+        try
+        {
+            var builder = new AppNotificationBuilder();
+
+            if (!string.IsNullOrEmpty(title))
+            {
+                builder.AddText(title);
+            }
+
+            builder.AddText(message);
+
+            var notification = builder.BuildNotification();
+            _notificationManager.Show(notification);
+        }
+        catch
+        {
+            // Silently fail if notifications don't work
+        }
     }
 }

@@ -46,7 +46,6 @@ public class WorkScheduleServiceTests
         {
             ClientId = 1,
             ProjectId = 1, // Both set - invalid
-            WorkPercentage = 100,
             BaseHoursPerDay = 8,
             WorkDays = WorkDaysFlags.Monday | WorkDaysFlags.Tuesday,
             CountryCode = "US"
@@ -68,7 +67,6 @@ public class WorkScheduleServiceTests
         {
             ClientId = null,
             ProjectId = null, // Neither set - invalid
-            WorkPercentage = 100,
             BaseHoursPerDay = 8,
             WorkDays = WorkDaysFlags.Monday,
             CountryCode = "US"
@@ -90,7 +88,6 @@ public class WorkScheduleServiceTests
         {
             ClientId = 1,
             ProjectId = null,
-            WorkPercentage = 100,
             BaseHoursPerDay = 8,
             WorkDays = WorkDaysFlags.Monday | WorkDaysFlags.Tuesday,
             CountryCode = "US"
@@ -108,7 +105,6 @@ public class WorkScheduleServiceTests
         {
             Id = 10,
             ClientId = 1,
-            WorkPercentage = 100,
             BaseHoursPerDay = 8,
             WorkDays = (int)(WorkDaysFlags.Monday | WorkDaysFlags.Tuesday),
             CountryCode = "US"
@@ -134,7 +130,6 @@ public class WorkScheduleServiceTests
         {
             ClientId = null,
             ProjectId = 2,
-            WorkPercentage = 80,
             BaseHoursPerDay = 6,
             WorkDays = WorkDaysFlags.Monday | WorkDaysFlags.Wednesday | WorkDaysFlags.Friday,
             CountryCode = "DE"
@@ -152,7 +147,6 @@ public class WorkScheduleServiceTests
         {
             Id = 20,
             ProjectId = 2,
-            WorkPercentage = 80,
             BaseHoursPerDay = 6,
             WorkDays = (int)(WorkDaysFlags.Monday | WorkDaysFlags.Wednesday | WorkDaysFlags.Friday),
             CountryCode = "DE"
@@ -177,7 +171,6 @@ public class WorkScheduleServiceTests
         {
             ClientId = 1,
             ProjectId = null,
-            WorkPercentage = 100,
             BaseHoursPerDay = 8,
             WorkDays = WorkDaysFlags.Monday,
             CountryCode = "US"
@@ -207,7 +200,6 @@ public class WorkScheduleServiceTests
         {
             Id = 1,
             ClientId = 5,
-            WorkPercentage = 100,
             BaseHoursPerDay = 8,
             WorkDays = (int)(WorkDaysFlags.Monday | WorkDaysFlags.Tuesday),
             CountryCode = "US"
@@ -232,7 +224,6 @@ public class WorkScheduleServiceTests
         {
             Id = 2,
             ProjectId = 10,
-            WorkPercentage = 50,
             BaseHoursPerDay = 4,
             WorkDays = (int)WorkDaysFlags.Friday,
             CountryCode = "UK"
@@ -247,7 +238,7 @@ public class WorkScheduleServiceTests
         // Assert
         result.Should().NotBeNull();
         result!.ProjectId.Should().Be(10);
-        result.WorkPercentage.Should().Be(50);
+        result.BaseHoursPerDay.Should().Be(4);
     }
 
     [Fact]
@@ -271,12 +262,11 @@ public class WorkScheduleServiceTests
     [Fact]
     public async Task CalculateExpectedHoursAsync_ForSingleDay_ReturnsCorrectHours()
     {
-        // Arrange - Monday, 100%, 8hrs/day
+        // Arrange - Monday, 8hrs/day
         var schedule = new WorkSchedule
         {
             Id = 1,
             ClientId = 1,
-            WorkPercentage = 100,
             BaseHoursPerDay = 8,
             WorkDays = (int)(WorkDaysFlags.Monday | WorkDaysFlags.Tuesday | WorkDaysFlags.Wednesday |
                             WorkDaysFlags.Thursday | WorkDaysFlags.Friday),
@@ -294,7 +284,7 @@ public class WorkScheduleServiceTests
         var result = await _service.CalculateExpectedHoursAsync(1, monday, monday);
 
         // Assert
-        result.Should().Be(8m); // 100% * 8 hours * 1 working day
+        result.Should().Be(8m); // 8 hours * 1 working day
     }
 
     [Fact]
@@ -305,7 +295,6 @@ public class WorkScheduleServiceTests
         {
             Id = 1,
             ClientId = 1,
-            WorkPercentage = 100,
             BaseHoursPerDay = 8,
             WorkDays = (int)(WorkDaysFlags.Monday | WorkDaysFlags.Tuesday | WorkDaysFlags.Wednesday |
                             WorkDaysFlags.Thursday | WorkDaysFlags.Friday),
@@ -327,15 +316,14 @@ public class WorkScheduleServiceTests
     }
 
     [Fact]
-    public async Task CalculateExpectedHoursAsync_WithPartTimePercentage_ReturnsReducedHours()
+    public async Task CalculateExpectedHoursAsync_WithReducedHoursPerDay_ReturnsCorrectHours()
     {
-        // Arrange - 50% time
+        // Arrange - 4 hours/day
         var schedule = new WorkSchedule
         {
             Id = 1,
             ClientId = 1,
-            WorkPercentage = 50,
-            BaseHoursPerDay = 8,
+            BaseHoursPerDay = 4,
             WorkDays = (int)(WorkDaysFlags.Monday | WorkDaysFlags.Tuesday | WorkDaysFlags.Wednesday |
                             WorkDaysFlags.Thursday | WorkDaysFlags.Friday),
             IncludePublicHolidays = true,
@@ -352,7 +340,7 @@ public class WorkScheduleServiceTests
         var result = await _service.CalculateExpectedHoursAsync(1, monday, monday);
 
         // Assert
-        result.Should().Be(4m); // 50% * 8 hours = 4 hours
+        result.Should().Be(4m); // 4 hours * 1 working day
     }
 
     [Fact]
@@ -363,7 +351,6 @@ public class WorkScheduleServiceTests
         {
             Id = 1,
             ClientId = 1,
-            WorkPercentage = 100,
             BaseHoursPerDay = 8,
             WorkDays = (int)(WorkDaysFlags.Monday | WorkDaysFlags.Tuesday | WorkDaysFlags.Wednesday |
                             WorkDaysFlags.Thursday | WorkDaysFlags.Friday),
@@ -419,7 +406,6 @@ public class WorkScheduleServiceTests
         {
             Id = 1,
             ClientId = 1,
-            WorkPercentage = 100,
             BaseHoursPerDay = 8,
             WorkDays = (int)WorkDaysFlags.Monday,
             CountryCode = "US"
@@ -433,7 +419,6 @@ public class WorkScheduleServiceTests
         {
             Id = 1,
             ClientId = 1,
-            WorkPercentage = 75,
             BaseHoursPerDay = 6,
             WorkDays = (int)(WorkDaysFlags.Monday | WorkDaysFlags.Tuesday),
             IncludePublicHolidays = true,
@@ -445,7 +430,6 @@ public class WorkScheduleServiceTests
         var updateDto = new UpdateWorkScheduleDto
         {
             Id = 1,
-            WorkPercentage = 75,
             BaseHoursPerDay = 6,
             WorkDays = WorkDaysFlags.Monday | WorkDaysFlags.Tuesday,
             IncludePublicHolidays = true,
@@ -457,8 +441,8 @@ public class WorkScheduleServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.WorkPercentage.Should().Be(75);
         result.BaseHoursPerDay.Should().Be(6);
+        result.IncludePublicHolidays.Should().BeTrue();
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -472,7 +456,6 @@ public class WorkScheduleServiceTests
         var updateDto = new UpdateWorkScheduleDto
         {
             Id = 999,
-            WorkPercentage = 75,
             BaseHoursPerDay = 6,
             WorkDays = WorkDaysFlags.Monday,
             CountryCode = "US"

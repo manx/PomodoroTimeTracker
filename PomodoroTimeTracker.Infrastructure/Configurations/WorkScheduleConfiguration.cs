@@ -10,10 +10,6 @@ public class WorkScheduleConfiguration : IEntityTypeConfiguration<WorkSchedule>
     {
         builder.HasKey(ws => ws.Id);
 
-        builder.Property(ws => ws.WorkPercentage)
-            .IsRequired()
-            .HasDefaultValue(100);
-
         builder.Property(ws => ws.BaseHoursPerDay)
             .IsRequired()
             .HasPrecision(4, 2)
