@@ -17,6 +17,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<TimeEntry> TimeEntries { get; set; } = null!;
     public DbSet<PomodoroSettings> PomodoroSettings { get; set; } = null!;
     public DbSet<AppSettings> AppSettings { get; set; } = null!;
+    public DbSet<WorkSchedule> WorkSchedules { get; set; } = null!;
+    public DbSet<PublicHoliday> PublicHolidays { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,5 +31,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new TimeEntryConfiguration());
         modelBuilder.ApplyConfiguration(new PomodoroSettingsConfiguration());
         modelBuilder.ApplyConfiguration(new AppSettingsConfiguration());
+        modelBuilder.ApplyConfiguration(new WorkScheduleConfiguration());
+        modelBuilder.ApplyConfiguration(new PublicHolidayConfiguration());
     }
 }

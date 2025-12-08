@@ -14,6 +14,8 @@ public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
     public ITimeEntryRepository TimeEntries { get; } = new TimeEntryRepository(context);
     public IPomodoroSettingsRepository PomodoroSettings { get; } = new PomodoroSettingsRepository(context);
     public IAppSettingsRepository AppSettings { get; } = new AppSettingsRepository(context);
+    public IWorkScheduleRepository WorkSchedules { get; } = new WorkScheduleRepository(context);
+    public IPublicHolidayRepository PublicHolidays { get; } = new PublicHolidayRepository(context);
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

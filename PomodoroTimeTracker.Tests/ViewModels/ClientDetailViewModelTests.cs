@@ -17,12 +17,16 @@ public class ClientDetailViewModelTests
     private readonly Mock<IClientService> _clientServiceMock;
     private readonly Mock<IDialogService> _dialogServiceMock;
     private readonly Mock<INavigationService> _navigationServiceMock;
+    private readonly Mock<IWorkScheduleService> _workScheduleServiceMock;
+    private readonly Mock<IPublicHolidayService> _publicHolidayServiceMock;
 
     public ClientDetailViewModelTests()
     {
         _clientServiceMock = new Mock<IClientService>();
         _dialogServiceMock = new Mock<IDialogService>();
         _navigationServiceMock = new Mock<INavigationService>();
+        _workScheduleServiceMock = new Mock<IWorkScheduleService>();
+        _publicHolidayServiceMock = new Mock<IPublicHolidayService>();
     }
 
     private ClientDetailViewModel CreateViewModel()
@@ -30,7 +34,9 @@ public class ClientDetailViewModelTests
         return new ClientDetailViewModel(
             _clientServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _workScheduleServiceMock.Object,
+            _publicHolidayServiceMock.Object);
     }
 
     #region Initialization Tests

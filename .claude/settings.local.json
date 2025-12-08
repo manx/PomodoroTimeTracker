@@ -73,7 +73,18 @@
       "Bash(npm show:*)",
       "Bash(claude mcp add dotnet -s user -- node \"C:/Users/Lenovo/Development/mcp-dotnet-operations/index.js\")",
       "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" add .mcp.json)",
-      "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" commit -m \"chore: remove broken .mcp.json (use user-level config instead)\")"
+      "Bash(git -C \"C:/Users/Lenovo/Development/claude/PomodoroTimeTracker\" commit -m \"chore: remove broken .mcp.json (use user-level config instead)\")",
+      "mcp__dotnet__dotnet_ef_migrations_add",
+      "mcp__dotnet__dotnet_clean",
+      "Bash(Remove-Item -Recurse -Force */bin, */obj -ErrorAction SilentlyContinue)",
+      "Bash(xargs rm -rf)",
+      "mcp__dotnet__dotnet_test",
+      "mcp__dotnet__dotnet_ef_database_update",
+      "mcp__dotnet__dotnet_add_package",
+      "Bash(findstr:*)",
+      "Bash(Select-String -Pattern \"error|XamlCompiler\")",
+      "Bash(Select-String -Pattern \"error|passed|failed|Passed|Failed\")",
+      "Bash(Select-String -Pattern \"Passed|Failed|passed|failed\")"
     ],
     "deny": [],
     "ask": []

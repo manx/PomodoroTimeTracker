@@ -18,6 +18,8 @@ public class ProjectDetailViewModelTests
     private readonly Mock<IClientService> _clientServiceMock;
     private readonly Mock<IDialogService> _dialogServiceMock;
     private readonly Mock<INavigationService> _navigationServiceMock;
+    private readonly Mock<IWorkScheduleService> _workScheduleServiceMock;
+    private readonly Mock<IPublicHolidayService> _publicHolidayServiceMock;
 
     public ProjectDetailViewModelTests()
     {
@@ -25,6 +27,8 @@ public class ProjectDetailViewModelTests
         _clientServiceMock = new Mock<IClientService>();
         _dialogServiceMock = new Mock<IDialogService>();
         _navigationServiceMock = new Mock<INavigationService>();
+        _workScheduleServiceMock = new Mock<IWorkScheduleService>();
+        _publicHolidayServiceMock = new Mock<IPublicHolidayService>();
 
         // Default setup
         _clientServiceMock.Setup(s => s.GetAllClientsAsync())
@@ -37,7 +41,9 @@ public class ProjectDetailViewModelTests
             _projectServiceMock.Object,
             _clientServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _workScheduleServiceMock.Object,
+            _publicHolidayServiceMock.Object);
     }
 
     #region Initialization Tests

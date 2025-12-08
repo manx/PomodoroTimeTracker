@@ -7,6 +7,8 @@ public interface IUnitOfWork : IDisposable
     ITimeEntryRepository TimeEntries { get; }
     IPomodoroSettingsRepository PomodoroSettings { get; }
     IAppSettingsRepository AppSettings { get; }
+    IWorkScheduleRepository WorkSchedules { get; }
+    IPublicHolidayRepository PublicHolidays { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
