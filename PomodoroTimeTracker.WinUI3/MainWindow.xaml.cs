@@ -213,7 +213,7 @@ namespace PomodoroTimeTracker.WinUI3
         {
             Type? pageType = tag switch
             {
-                "Dashboard" => null,
+                "Dashboard" => typeof(Views.DashboardPage),
                 "Pomodoro" => typeof(Views.PomodoroPage),
                 "RegularTimer" => typeof(Views.RegularTimerPage),
                 "StopWatch" => typeof(Views.StopWatchPage),

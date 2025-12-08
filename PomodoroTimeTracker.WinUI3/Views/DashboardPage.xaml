@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="PomodoroTimeTracker.WinUI3.Views.DashboardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="using:PomodoroTimeTracker.WinUI3.Views"
+    xmlns:viewmodels="using:PomodoroTimeTracker.ViewModels"
+    d:DataContext="{d:DesignInstance Type=viewmodels:DashboardViewModel}"
+    mc:Ignorable="d">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0"
+                   Text="Dashboard"
+                   Style="{StaticResource TitleTextBlockStyle}"
+                   Margin="0,0,0,24"/>
+
+        <!-- Filter Bar -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="16" Margin="0,0,0,24">
+            <ComboBox Header="Client"
+                      ItemsSource="{x:Bind ViewModel.Clients, Mode=OneWay}"
+                      SelectedItem="{x:Bind ViewModel.SelectedClient, Mode=TwoWay}"
+                      DisplayMemberPath="Name"
+                      PlaceholderText="All Clients"
+                      MinWidth="200"/>
+
+            <ComboBox Header="Project"
+                      ItemsSource="{x:Bind ViewModel.Projects, Mode=OneWay}"
+                      SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
+                      DisplayMemberPath="Name"
+                      PlaceholderText="All Projects"
+                      MinWidth="200"/>
+
+            <Button Content="Refresh"
+                    Command="{x:Bind ViewModel.RefreshCommand}"
+                    VerticalAlignment="Bottom"
+                    Margin="0,0,0,0"/>
+        </StackPanel>
+
+        <!-- No Schedule Message -->
+        <InfoBar Grid.Row="2"
+                 IsOpen="{x:Bind ViewModel.ShowNoScheduleMessage, Mode=OneWay}"
+                 Severity="Informational"
+                 Title="No Work Schedule Configured"
+                 Message="To see goal progress, configure a work schedule on a Client or Project detail page."
+                 IsClosable="False"
+                 Margin="0,0,0,24"/>
+
+        <!-- Loading Indicator -->
+        <ProgressRing Grid.Row="3"
+                      IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+                      Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+                      Width="60"
+                      Height="60"/>
+
+        <!-- Goal Cards -->
+        <StackPanel Grid.Row="3"
+                    Orientation="Horizontal"
+                    Spacing="24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Visibility="{x:Bind ViewModel.HasSchedule, Mode=OneWay}">
+
+            <!-- Daily Goal -->
+            <local:GoalCard Title="Today"
+                            Progress="{x:Bind ViewModel.DailyProgress, Mode=OneWay}"
+                            ActualHours="{x:Bind ViewModel.DailyActualHours, Mode=OneWay}"
+                            ExpectedHours="{x:Bind ViewModel.DailyExpectedHours, Mode=OneWay}"
+                            DifferenceHours="{x:Bind ViewModel.DailyDifferenceHours, Mode=OneWay}"
+                            IsAhead="{x:Bind ViewModel.DailyIsAhead, Mode=OneWay}"/>
+
+            <!-- Weekly Goal -->
+            <local:GoalCard Title="This Week"
+                            Progress="{x:Bind ViewModel.WeeklyProgress, Mode=OneWay}"
+                            ActualHours="{x:Bind ViewModel.WeeklyActualHours, Mode=OneWay}"
+                            ExpectedHours="{x:Bind ViewModel.WeeklyExpectedHours, Mode=OneWay}"
+                            DifferenceHours="{x:Bind ViewModel.WeeklyDifferenceHours, Mode=OneWay}"
+                            IsAhead="{x:Bind ViewModel.WeeklyIsAhead, Mode=OneWay}"/>
+
+            <!-- Monthly Goal -->
+            <local:GoalCard Title="This Month"
+                            Progress="{x:Bind ViewModel.MonthlyProgress, Mode=OneWay}"
+                            ActualHours="{x:Bind ViewModel.MonthlyActualHours, Mode=OneWay}"
+                            ExpectedHours="{x:Bind ViewModel.MonthlyExpectedHours, Mode=OneWay}"
+                            DifferenceHours="{x:Bind ViewModel.MonthlyDifferenceHours, Mode=OneWay}"
+                            IsAhead="{x:Bind ViewModel.MonthlyIsAhead, Mode=OneWay}"/>
+        </StackPanel>
+    </Grid>
+</Page>

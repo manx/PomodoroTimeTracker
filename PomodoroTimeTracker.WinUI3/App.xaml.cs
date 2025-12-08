@@ -72,6 +72,12 @@ namespace PomodoroTimeTracker.WinUI3
                     services.AddScoped<IPomodoroSettingsService, PomodoroSettingsService>();
                     services.AddScoped<IAppSettingsService, Application.Services.AppSettingsService>();
 
+                    // Register Work Schedule & Goals Services
+                    services.AddHttpClient<INagerDateApiClient, Infrastructure.Services.NagerDateApiClient>();
+                    services.AddScoped<IPublicHolidayService, PublicHolidayService>();
+                    services.AddScoped<IWorkScheduleService, WorkScheduleService>();
+                    services.AddScoped<IGoalService, GoalService>();
+
                     // Register ViewModels
                     services.AddTransient<MainWindowViewModel>();
                     services.AddTransient<ClientListViewModel>();
@@ -84,6 +90,7 @@ namespace PomodoroTimeTracker.WinUI3
                     services.AddTransient<ReportViewModel>();
                     services.AddTransient<SettingsViewModel>();
                     services.AddTransient<GeneralSettingsViewModel>();
+                    services.AddTransient<DashboardViewModel>();
                     // Timer ViewModels are Singleton to preserve state when navigating away
                     services.AddSingleton<PomodoroViewModel>();
                     services.AddSingleton<RegularTimerViewModel>();

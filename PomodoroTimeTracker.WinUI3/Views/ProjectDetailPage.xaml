@@ -53,6 +53,71 @@
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                            TextWrapping="Wrap"
                            Margin="0,8,0,0"/>
+
+                <!-- Work Schedule Section (only visible in edit mode) -->
+                <StackPanel Spacing="12"
+                            Visibility="{x:Bind ViewModel.IsEditMode, Mode=OneWay}"
+                            Margin="0,16,0,0">
+                    <!-- Enable Toggle -->
+                    <ToggleSwitch Header="Work Schedule"
+                                  IsOn="{x:Bind ViewModel.IsWorkScheduleEnabled, Mode=TwoWay}"
+                                  OffContent="Disabled"
+                                  OnContent="Enabled"/>
+
+                    <!-- Configuration (visible when enabled) -->
+                    <StackPanel Spacing="12"
+                                Visibility="{x:Bind ViewModel.IsWorkScheduleEnabled, Mode=OneWay}"
+                                Padding="0,0,0,0">
+                        <!-- Base Hours Per Day -->
+                        <NumberBox Header="Hours/Day (average)"
+                                   Value="{x:Bind ViewModel.BaseHoursPerDay, Mode=TwoWay}"
+                                   Minimum="0.5"
+                                   Maximum="24"
+                                   SmallChange="0.5"
+                                   SpinButtonPlacementMode="Compact"/>
+
+                        <!-- Work Days -->
+                        <TextBlock Text="Work Days"
+                                   Style="{StaticResource BodyStrongTextBlockStyle}"
+                                   Margin="0,8,0,4"/>
+                        <StackPanel Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <CheckBox Content="Mon" IsChecked="{x:Bind ViewModel.WorkOnMonday, Mode=TwoWay}"/>
+                                <CheckBox Content="Tue" IsChecked="{x:Bind ViewModel.WorkOnTuesday, Mode=TwoWay}"/>
+                                <CheckBox Content="Wed" IsChecked="{x:Bind ViewModel.WorkOnWednesday, Mode=TwoWay}"/>
+                                <CheckBox Content="Thu" IsChecked="{x:Bind ViewModel.WorkOnThursday, Mode=TwoWay}"/>
+                                <CheckBox Content="Fri" IsChecked="{x:Bind ViewModel.WorkOnFriday, Mode=TwoWay}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <CheckBox Content="Sat" IsChecked="{x:Bind ViewModel.WorkOnSaturday, Mode=TwoWay}"/>
+                                <CheckBox Content="Sun" IsChecked="{x:Bind ViewModel.WorkOnSunday, Mode=TwoWay}"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Public Holidays -->
+                        <CheckBox Content="Exclude public holidays"
+                                  IsChecked="{x:Bind ViewModel.ExcludePublicHolidays, Mode=TwoWay}"/>
+
+                        <!-- Country Selection (only visible when excluding holidays) -->
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8"
+                                    Visibility="{x:Bind ViewModel.ExcludePublicHolidays, Mode=OneWay}">
+                            <ComboBox Header="Holiday Country"
+                                      ItemsSource="{x:Bind ViewModel.Countries, Mode=OneWay}"
+                                      SelectedItem="{x:Bind ViewModel.SelectedCountry, Mode=TwoWay}"
+                                      DisplayMemberPath="Name"
+                                      PlaceholderText="Select country"
+                                      Width="200"/>
+                            <Button Content="Fetch Holidays"
+                                    Command="{x:Bind ViewModel.FetchHolidaysCommand}"
+                                    VerticalAlignment="Bottom"/>
+                            <ProgressRing IsActive="{x:Bind ViewModel.IsFetchingHolidays, Mode=OneWay}"
+                                          Width="20" Height="20"
+                                          VerticalAlignment="Bottom"
+                                          Margin="0,0,0,6"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
 
